@@ -20,11 +20,11 @@ Conforme solicitado, **o instalador sera pratico e funcional**, focado em simpli
        - Token da Vercel (Full Account) com botao "Buscar" que valida e lista projetos.
        - Seletor de projeto Vercel (auto-detectado em dominios `.vercel.app`).
        - Supabase Access Token (PAT) com busca automatica que valida, lista organizacoes e usa fallback de projetos diretos quando nenhuma organizacao e retornada.
-       - URL do projeto Supabase (auto-preenchida ao selecionar projeto). Projeto existente pode ser usado mesmo sem organizacao visivel.
-       - **DATABASE_URL e resolvida automaticamente** via Supabase Management API — usuario nao precisa colar connection string. O instalador testa pooler regional e conexao direta, usando a primeira URL funcional.
-   *   **Passo 2 (Administrador)**: Senha Mestra administrativa e ID do Google Tag Manager (GTM, opcional).
+   *   **Passo 2 (Setup)**:
+       - Selecao/Criacao de projeto Supabase. **Se selecionado um projeto existente, e exibido um campo seguro para digitar a senha mestre do banco (postgres).** Se for criar um projeto novo, a senha do novo banco e informada.
+       - Senha Mestra administrativa do Painel e ID do Google Tag Manager (GTM, opcional).
    *   **Passo 3 (Execucao)**: 
-       - Resolve DATABASE_URL via Supabase API (`/v1/projects/{ref}/cli/login-role`).
+       - Resolve DATABASE_URL via Supabase API. **Se a senha do banco for fornecida (projeto existente ou criado dinamicamente), o sistema monta a string de conexao usando o usuario mestre `postgres.[projectRef]` (para o Pooler Regional) e a senha real, contornando falhas do Pooler com roles temporarias de CLI.** Caso contrario, usa o fluxo legado de CLI login role.
        - Configura env vars na Vercel via API (`upsertProjectEnvs`): `DATABASE_URL`, `ADMIN_PASSWORD`, `NEXT_PUBLIC_APP_URL`.
        - Aplica schema e semeia dados iniciais via API usando SQL direto (`pg`), sem depender de Prisma CLI no runtime da Vercel. As variaveis na Vercel sao salvas apenas depois que a conexao do banco e validada.
        - **Ajuste Robusto de SSL:** Para evitar erros de certificados autoassinados (`self-signed certificate in certificate chain`) em proxies locais ou restrições da cadeia de conexão do pooler regional da Supabase, a rota POST do instalador desativa temporariamente a verificação TLS rígida (`NODE_TLS_REJECT_UNAUTHORIZED = "0"`) e a restaura perfeitamente no bloco `finally`.

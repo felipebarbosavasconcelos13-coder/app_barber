@@ -34,6 +34,7 @@ export default function InstallWizardPage() {
   const [selectedProjectRef, setSelectedProjectRef] = useState('');
   const [selectedSupabaseUrl, setSelectedSupabaseUrl] = useState('');
   const [supabaseTokenValidated, setSupabaseTokenValidated] = useState(false);
+  const [existingProjectDbPass, setExistingProjectDbPass] = useState('');
 
   // Criar projeto
   const [creatingProject, setCreatingProject] = useState(false);
@@ -180,6 +181,10 @@ export default function InstallWizardPage() {
     const wantsCreate = newProjectName.trim().length > 0;
     if (wantsCreate && !selectedOrg) { setStepError('Para criar um projeto novo, selecione uma organizacao Supabase.'); return false; }
     if (!selectedProjectRef && !newProjectName.trim()) { setStepError('Selecione um projeto ou crie um novo.'); return false; }
+    if (selectedProjectRef && !wantsCreate && !existingProjectDbPass.trim()) {
+      setStepError('Senha do banco de dados do projeto existente e obrigatoria.');
+      return false;
+    }
     if (!adminPassword.trim() || adminPassword.length < 4) { setStepError('Senha: min 4 caracteres.'); return false; }
     if (adminPassword !== confirmPassword) { setStepError('Senhas nao conferem.'); return false; }
     setStepError(''); return true;
@@ -201,10 +206,12 @@ export default function InstallWizardPage() {
     setRunStatus('running'); setLogs([]); setErrorMsg('');
     addLog('Iniciando instalacao...');
     try {
+      const dbPass = newProjectName.trim() ? newProjectDbPass : existingProjectDbPass;
       const r = await fetch('/api/install/run', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           supabaseToken: supabaseToken.trim(), supabaseUrl: selectedSupabaseUrl,
+          dbPass: dbPass.trim() || undefined,
           vercelToken: vercelToken.trim() || undefined, vercelProjectId: vercelProjectId.trim() || undefined,
           nextPublicAppUrl: appUrl, adminPassword: adminPassword.trim(), gtmId: gtmId.trim() || '',
         }),
@@ -374,6 +381,14 @@ export default function InstallWizardPage() {
                       </div>
                   }
                 </div>
+
+                {selectedProjectRef && !newProjectName.trim() && (
+                  <div className="install-form-group" style={{ marginTop: 12 }}>
+                    <label className="install-form-label">Senha do Banco de Dados do Projeto Selecionado</label>
+                    <input className="install-form-input" type="password" value={existingProjectDbPass} onChange={e => { setExistingProjectDbPass(e.target.value); setStepError(''); }} placeholder="Senha mestre do banco de dados (postgres)" />
+                    <div className="install-form-hint">A senha que voce definiu ao criar esse projeto no Supabase. E necessaria para aplicar o schema e conectar via pooler regional.</div>
+                  </div>
+                )}
 
                 <div className="install-create-box">
                   <h4><Plus size={14} style={{ display: 'inline', marginRight: 4 }} />Criar Novo Projeto</h4>

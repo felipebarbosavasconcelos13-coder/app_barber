@@ -157,6 +157,7 @@ export async function POST(req: Request) {
       databaseUrl,
       supabaseToken,
       supabaseUrl,
+      dbPass,
       vercelToken,
       vercelProjectId,
       nextPublicAppUrl,
@@ -184,7 +185,7 @@ export async function POST(req: Request) {
           }, { status: 400 });
         }
 
-        const dbResult = await resolveSupabaseDbUrl(supabaseToken, projectRef);
+        const dbResult = await resolveSupabaseDbUrl(supabaseToken, projectRef, dbPass);
         if (!dbResult.ok) {
           return NextResponse.json({
             success: false,

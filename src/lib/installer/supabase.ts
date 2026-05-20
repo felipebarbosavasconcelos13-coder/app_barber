@@ -140,7 +140,7 @@ export async function getSupabaseProject(accessToken: string, projectRef: string
 
 // ── Resolve DB URL ──
 
-export async function resolveSupabaseDbUrl(accessToken: string, projectRef: string) {
+export async function resolveSupabaseDbUrl(accessToken: string, projectRef: string, dbPass?: string) {
   const projectRes = await supabaseFetch(`/v1/projects/${encodeURIComponent(projectRef)}`, accessToken);
   if (!projectRes.ok) return { ok: false, error: `Failed to get project info: ${projectRes.error}` };
 
@@ -150,6 +150,29 @@ export async function resolveSupabaseDbUrl(accessToken: string, projectRef: stri
     return { ok: false, error: "Could not resolve database host from project info." };
   }
 
+  const dbUrls: Array<{ label: string; url: string; host: string }> = [];
+
+  // Se dbPass for fornecido, usamos o usuário mestre 'postgres' e pulamos a criação de role temporária
+  if (dbPass && dbPass.trim()) {
+    const password = dbPass.trim();
+    const safePassword = encodeURIComponent(password);
+    const directUrl = `postgresql://${encodeURIComponent("postgres")}:${safePassword}@${host.trim()}:5432/postgres?sslmode=require`;
+    
+    if (typeof region === "string" && region.trim()) {
+      const poolerHost = `aws-0-${region.trim()}.pooler.supabase.com`;
+      dbUrls.push({
+        label: "pooler",
+        url: `postgresql://${encodeURIComponent(`postgres.${projectRef}`)}:${safePassword}@${poolerHost}:6543/postgres?sslmode=require`,
+        host: poolerHost,
+      });
+    }
+    
+    dbUrls.push({ label: "direct", url: directUrl, host: host.trim() });
+    
+    return { ok: true, dbUrl: dbUrls[0].url, dbUrls, role: "postgres", host: dbUrls[0].host };
+  }
+
+  // Comportamento original de fallback via cli/login-role
   const loginRes = await supabaseFetch(
     `/v1/projects/${encodeURIComponent(projectRef)}/cli/login-role`,
     accessToken,
@@ -167,7 +190,7 @@ export async function resolveSupabaseDbUrl(accessToken: string, projectRef: stri
   const safeRole = encodeURIComponent(String(role));
   const safePassword = encodeURIComponent(String(password));
   const directUrl = `postgresql://${safeRole}:${safePassword}@${host.trim()}:5432/postgres?sslmode=require`;
-  const dbUrls = [{ label: "direct", url: directUrl, host: host.trim() }];
+  dbUrls.push({ label: "direct", url: directUrl, host: host.trim() });
 
   if (typeof region === "string" && region.trim()) {
     const poolerHost = `aws-0-${region.trim()}.pooler.supabase.com`;
