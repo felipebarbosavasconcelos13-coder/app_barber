@@ -34,6 +34,14 @@ export type SupabaseProject = {
   dbHost?: string;
 };
 
+export type SupabaseOrg = {
+  slug: string;
+  name: string;
+  id?: string;
+};
+
+// ── Projects ──
+
 export async function listSupabaseProjects(accessToken: string): Promise<SupabaseProject[]> {
   const res = await supabaseFetch("/v1/projects", accessToken);
   if (!res.ok) return [];
@@ -46,17 +54,75 @@ export async function listSupabaseProjects(accessToken: string): Promise<Supabas
   }));
 }
 
+// ── Organizations ──
+
+export async function listSupabaseOrganizations(accessToken: string): Promise<SupabaseOrg[]> {
+  const res = await supabaseFetch("/v1/organizations", accessToken);
+  if (!res.ok) return [];
+  const items = Array.isArray(res.data) ? res.data : [];
+  return items
+    .filter((o: any) => o.slug && o.name)
+    .map((o: any) => ({ slug: o.slug, name: o.name, id: o.id }));
+}
+
+export async function listOrgProjects(accessToken: string, orgSlug: string): Promise<SupabaseProject[]> {
+  const res = await supabaseFetch(`/v1/organizations/${encodeURIComponent(orgSlug)}/projects`, accessToken);
+  if (!res.ok) return [];
+  const items = Array.isArray(res.data?.projects) ? res.data.projects : Array.isArray(res.data) ? res.data : [];
+  return items
+    .filter((p: any) => p.ref && p.name)
+    .map((p: any) => ({
+      ref: p.ref,
+      name: p.name,
+      status: p.status,
+      region: p.region,
+    }));
+}
+
+// ── Create Project ──
+
+export async function createSupabaseProject(params: {
+  accessToken: string;
+  organizationSlug: string;
+  name: string;
+  dbPass: string;
+  region?: string;
+}): Promise<{ ok: true; projectRef: string; supabaseUrl: string } | { ok: false; error: string }> {
+  const body: any = {
+    name: params.name,
+    organization_slug: params.organizationSlug,
+    db_pass: params.dbPass,
+  };
+
+  if (params.region) {
+    body.region_selection = { type: "smartGroup", code: params.region };
+  }
+
+  const res = await supabaseFetch("/v1/projects", params.accessToken, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) return { ok: false, error: res.error };
+
+  const ref = res.data?.ref;
+  if (!ref || typeof ref !== "string") return { ok: false, error: "Unexpected response creating project." };
+
+  return { ok: true, projectRef: ref.trim(), supabaseUrl: `https://${ref.trim()}.supabase.co` };
+}
+
+// ── Validate ──
+
 export async function validateSupabaseToken(accessToken: string) {
-  const res = await supabaseFetch("/v1/projects", accessToken);
+  const res = await supabaseFetch("/v1/organizations", accessToken);
   if (!res.ok) return { ok: false, error: res.error };
   return { ok: true };
 }
 
+// ── Project Info ──
+
 export async function getSupabaseProject(accessToken: string, projectRef: string) {
-  const res = await supabaseFetch(
-    `/v1/projects/${encodeURIComponent(projectRef)}`,
-    accessToken
-  );
+  const res = await supabaseFetch(`/v1/projects/${encodeURIComponent(projectRef)}`, accessToken);
   if (!res.ok) return { ok: false, error: res.error };
 
   const data = res.data;
@@ -72,27 +138,17 @@ export async function getSupabaseProject(accessToken: string, projectRef: string
   };
 }
 
+// ── Resolve DB URL ──
+
 export async function resolveSupabaseDbUrl(accessToken: string, projectRef: string) {
-  // 1. Get project info to find db host
-  const projectRes = await supabaseFetch(
-    `/v1/projects/${encodeURIComponent(projectRef)}`,
-    accessToken
-  );
+  const projectRes = await supabaseFetch(`/v1/projects/${encodeURIComponent(projectRef)}`, accessToken);
+  if (!projectRes.ok) return { ok: false, error: `Failed to get project info: ${projectRes.error}` };
 
-  if (!projectRes.ok) {
-    return { ok: false, error: `Failed to get project info: ${projectRes.error}` };
-  }
-
-  const host =
-    projectRes.data?.database?.host ||
-    projectRes.data?.db_host ||
-    projectRes.data?.dbHost;
-
+  const host = projectRes.data?.database?.host || projectRes.data?.db_host || projectRes.data?.dbHost;
   if (!host || typeof host !== "string" || !host.trim()) {
     return { ok: false, error: "Could not resolve database host from project info." };
   }
 
-  // 2. Create a temporary CLI login role to get credentials
   const loginRes = await supabaseFetch(
     `/v1/projects/${encodeURIComponent(projectRef)}/cli/login-role`,
     accessToken,
@@ -100,35 +156,21 @@ export async function resolveSupabaseDbUrl(accessToken: string, projectRef: stri
   );
 
   if (!loginRes.ok) {
-    return {
-      ok: false,
-      error: `Failed to create login role: ${loginRes.error}. Try using Connection Pooling (port 6543) or enable IPv4 add-on.`,
-    };
+    return { ok: false, error: `Failed to create login role: ${loginRes.error}. Try port 6543 or enable IPv4.` };
   }
 
   const role = loginRes.data?.role;
   const password = loginRes.data?.password;
+  if (!role || !password) return { ok: false, error: "Could not resolve CLI login role credentials." };
 
-  if (!role || !password || typeof role !== "string" || typeof password !== "string") {
-    return { ok: false, error: "Could not resolve CLI login role credentials." };
-  }
-
-  // Use transaction pooler (port 6543) for better compatibility
   const dbUrl = `postgresql://${role}:${password}@${host.trim()}:6543/postgres?pgbouncer=true`;
 
-  return {
-    ok: true,
-    dbUrl,
-    role,
-    host: host.trim(),
-  };
+  return { ok: true, dbUrl, role, host: host.trim() };
 }
 
 export function extractProjectRefFromUrl(supabaseUrl: string): string | null {
   try {
-    const url = new URL(supabaseUrl);
-    const host = url.hostname;
-    // Format: xxxxxxxxxxxxxxxxxxxx.supabase.co
+    const host = new URL(supabaseUrl).hostname;
     const match = host.match(/^(.+)\.supabase\.(co|com)$/);
     if (match) return match[1];
   } catch {}
