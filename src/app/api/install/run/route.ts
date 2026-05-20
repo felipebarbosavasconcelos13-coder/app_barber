@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
 import { Pool } from "pg";
-import { upsertProjectEnvs } from "@/lib/installer/vercel";
+import { triggerProjectRedeploy, upsertProjectEnvs, waitForVercelDeploymentReady } from "@/lib/installer/vercel";
 import { resolveSupabaseDbUrl, extractProjectRefFromUrl } from "@/lib/installer/supabase";
 
 export const maxDuration = 300;
@@ -305,8 +305,23 @@ export async function POST(req: Request) {
           { key: "NEXT_PUBLIC_APP_URL", value: nextPublicAppUrl || "http://localhost:3000", targets: ["production", "preview", "development"] },
         ]);
         steps.push({ id: "vercel_env", status: "ok", message: "Variaveis configuradas na Vercel." });
+
+        steps.push({ id: "vercel_redeploy", status: "running", message: "Iniciando redeploy na Vercel para aplicar as variaveis..." });
+        const redeploy = await triggerProjectRedeploy(vercelToken, vercelProjectId);
+        steps.push({ id: "vercel_redeploy", status: "ok", message: "Redeploy iniciado na Vercel." });
+
+        steps.push({ id: "vercel_wait", status: "running", message: "Aguardando redeploy ficar pronto..." });
+        const wait = await waitForVercelDeploymentReady({ token: vercelToken, deploymentId: redeploy.deploymentId });
+        if (!wait.ok) throw new Error(wait.error);
+        steps.push({ id: "vercel_wait", status: "ok", message: "Redeploy concluido. Painel pronto para acesso." });
       } catch (vercelErr: any) {
-        steps.push({ id: "vercel_env", status: "warning", message: `Vercel API: ${vercelErr.message}` });
+        steps.push({ id: "vercel_env", status: "warning", message: `Vercel API/Redeploy: ${vercelErr.message}` });
+        return NextResponse.json({
+          success: false,
+          steps,
+          error: "Instalacao aplicada no banco, mas o redeploy da Vercel falhou. O painel so fica acessivel apos redeploy com as novas variaveis.",
+          details: String(vercelErr.message || vercelErr),
+        }, { status: 500 });
       }
     }
 

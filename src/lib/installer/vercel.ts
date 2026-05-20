@@ -6,6 +6,14 @@ type VercelProject = {
   accountId?: string;
 };
 
+type VercelDeployment = {
+  id?: string;
+  uid?: string;
+  name?: string;
+  target?: string;
+  readyState?: string;
+};
+
 type VercelEnv = {
   id: string;
   key: string;
@@ -123,6 +131,78 @@ export async function upsertProjectEnvs(
       );
     }
   }
+}
+
+export async function triggerProjectRedeploy(token: string, projectId: string, teamId?: string) {
+  let data = await vercelFetch<{ deployments?: VercelDeployment[] }>(
+    `/v6/deployments?projectId=${projectId}&target=production&limit=1`,
+    token,
+    {},
+    teamId
+  );
+
+  let latest = data.deployments?.[0];
+  if (!latest) {
+    data = await vercelFetch<{ deployments?: VercelDeployment[] }>(
+      `/v6/deployments?projectId=${projectId}&limit=5`,
+      token,
+      {},
+      teamId
+    );
+    latest = data.deployments?.find((d) => d.target === "production") ?? data.deployments?.[0];
+  }
+
+  const deploymentId = latest?.id ?? latest?.uid;
+  if (!deploymentId) throw new Error("Nenhum deployment encontrado para redeploy.");
+
+  let deploymentName = latest?.name;
+  if (!deploymentName) {
+    const project = await vercelFetch<VercelProject>(`/v9/projects/${projectId}`, token, {}, teamId);
+    deploymentName = project.name;
+  }
+
+  const created = await vercelFetch<VercelDeployment>(
+    "/v13/deployments",
+    token,
+    { method: "POST", body: JSON.stringify({ deploymentId, name: deploymentName, target: "production" }) },
+    teamId
+  );
+
+  const newDeploymentId = created.id ?? created.uid;
+  if (!newDeploymentId) throw new Error("Redeploy iniciado sem retornar ID do deployment.");
+
+  return { deploymentId: newDeploymentId };
+}
+
+export async function waitForVercelDeploymentReady(params: {
+  token: string;
+  deploymentId: string;
+  teamId?: string;
+  timeoutMs?: number;
+  pollMs?: number;
+}) {
+  const timeoutMs = params.timeoutMs ?? 240000;
+  const pollMs = params.pollMs ?? 2500;
+  const start = Date.now();
+  let lastReadyState = "UNKNOWN";
+
+  while (Date.now() - start < timeoutMs) {
+    const deployment = await vercelFetch<VercelDeployment>(
+      `/v13/deployments/${encodeURIComponent(params.deploymentId)}`,
+      params.token,
+      {},
+      params.teamId
+    );
+
+    lastReadyState = deployment.readyState || lastReadyState;
+    if (String(lastReadyState).toUpperCase() === "READY") {
+      return { ok: true, deployment };
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, pollMs));
+  }
+
+  return { ok: false, error: `Redeploy ainda nao finalizou (${lastReadyState}).`, lastReadyState };
 }
 
 export async function getProject(token: string, projectId: string, teamId?: string) {

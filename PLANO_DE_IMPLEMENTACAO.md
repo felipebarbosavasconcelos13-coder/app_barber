@@ -10,7 +10,7 @@ Este documento apresenta o plano de acao detalhado para criar um **Wizard de Ins
 
 Inspirado no instalador do CRM de referencia, desenvolvemos um assistente visual automatizado que permite a configuracao da base de dados diretamente no navegador Web na primeira inicializacao da aplicacao, sem exigir que o usuario final configure arquivos ou execute comandos de terminal manualmente.
 
-Conforme solicitado, **o instalador sera pratico e funcional**, focado em simplicidade, clareza e feedback visual em tempo real do progresso das tarefas de banco de dados (push e seed do Prisma).
+Conforme solicitado, **o instalador sera pratico e funcional**, focado em simplicidade, clareza e feedback visual em tempo real do progresso das tarefas de banco de dados (schema e seed via SQL direto).
 
 ### Fluxo de Funcionamento
 1. **Verificacao de Inicializacao**: A aplicacao consulta o banco. Se a tabela `SystemSettings` ja estiver devidamente populada e com senha administrativa configurada, a rota `/install` e imediatamente travada e redireciona para `/admin`.
@@ -27,6 +27,7 @@ Conforme solicitado, **o instalador sera pratico e funcional**, focado em simpli
        - Resolve DATABASE_URL via Supabase API. **Se a senha do banco for fornecida (projeto existente ou criado dinamicamente), o sistema monta a string de conexao usando o usuario mestre `postgres.[projectRef]` (para o Pooler Regional) e a senha real, contornando falhas do Pooler com roles temporarias de CLI.** Caso contrario, usa o fluxo legado de CLI login role.
        - Configura env vars na Vercel via API (`upsertProjectEnvs`): `DATABASE_URL`, `ADMIN_PASSWORD`, `NEXT_PUBLIC_APP_URL`.
        - Aplica schema e semeia dados iniciais via API usando SQL direto (`pg`), sem depender de Prisma CLI no runtime da Vercel. As variaveis na Vercel sao salvas apenas depois que a conexao do banco e validada.
+       - Dispara redeploy de producao na Vercel e aguarda o deployment ficar `READY`, garantindo que `/admin` execute com a nova `DATABASE_URL` antes de exibir sucesso.
        - **Ajuste Robusto de SSL:** Para evitar erros de certificados autoassinados (`self-signed certificate in certificate chain`) em proxies locais ou restrições da cadeia de conexão do pooler regional da Supabase, a rota POST do instalador desativa temporariamente a verificação TLS rígida (`NODE_TLS_REJECT_UNAUTHORIZED = "0"`) e a restaura perfeitamente no bloco `finally`.
        - Feedback visual em tempo real com logs de cada etapa.
 
@@ -107,6 +108,7 @@ model Booking {
 - **[NEW] `src/app/api/install/supabase/projects/route.ts`**: API que valida token Supabase e retorna projetos.
 - **[UPDATED] `src/app/api/install/run/route.ts`**: Resolve DATABASE_URL via Supabase API, testa candidatos pooler/direto, aplica schema/seed via SQL direto e so entao seta env vars Vercel.
 - **[NEW] `src/lib/installer/vercel.ts`**: `upsertProjectEnvs`, `listVercelProjects`, `validateVercelToken`.
+- **[UPDATED] `src/lib/installer/vercel.ts`**: `triggerProjectRedeploy` e `waitForVercelDeploymentReady` para aplicar env vars no deployment ativo antes de liberar o painel.
 - **[NEW] `src/lib/installer/supabase.ts`**: `resolveSupabaseDbUrl`, `listSupabaseProjects`, `extractProjectRefFromUrl`; a resolucao retorna candidatos de DATABASE_URL para pooler regional e conexao direta.
 
 ### 2. Redirecionamento Automatico

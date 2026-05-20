@@ -90,7 +90,7 @@ gantt
    - Opção de selecionar projeto existente OU criar novo (nome, senha do banco, região).
    - DATABASE_URL resolvida automaticamente via Supabase Management API.
    - Env vars configuradas na Vercel via API.
-   - Prisma db push + seed executados.
+   - Schema e seed aplicados via SQL direto usando `pg`.
 2. **APIs Supabase** ✅:
    - `/api/install/supabase/organizations`: lista orgs + projetos por org.
    - `/api/install/supabase/create-project`: cria projeto via `POST /v1/projects`.
@@ -139,4 +139,4 @@ gantt
 | **20/05/2026** | Wizard & Run Route | Erro `tenant/user postgres... not found` e `getaddrinfo ENOTFOUND` causado por banco Supabase pausado. | Adicionado tratamento de erro inteligente no backend e no frontend com aviso didático, link direto e orientações claras de como restaurar o projeto no Supabase. |
 | **20/05/2026** | `src/lib/installer/supabase.ts` | **CAUSA RAIZ ENCONTRADA:** Host do pooler era montado manualmente como `aws-0-{region}.pooler.supabase.com`, mas o cluster real do projeto era `aws-1-sa-east-1.pooler.supabase.com`. O prefixo `aws-0` vs `aws-1` varia por projeto e não pode ser deduzido da região. | Refatorado `resolveSupabaseDbUrl` para consultar a API `/v1/projects/:ref/config/database/pooler` e obter o host exato do pooler dinamicamente (`aws-1-...`). Fallback para `aws-0` apenas se a API não retornar dados. Script de diagnóstico `scripts/diagnose-supabase.mjs` criado para validação. |
 | **20/05/2026** | `src/app/api/install/check/route.ts` + `src/app/admin/page.tsx` | Após instalação bem-sucedida, clicar em "Acessar Painel" voltava à etapa 1 do Wizard. O `/api/install/check` usava `PrismaClient()` sem adapter `PrismaPg` (Prisma v7) e o `process.env.DATABASE_URL` ainda continha o placeholder antigo, pois o dev server não recarregou o `.env` após a escrita. | Reescrito `/api/install/check` para usar `PrismaPg` adapter e ler o `.env` do disco caso `process.env` esteja desatualizado. Admin page agora chama `/api/install/check` via fetch em vez de usar o singleton Prisma global cacheado. |
-
+| **20/05/2026** | `src/lib/installer/vercel.ts` + `src/app/api/install/run/route.ts` | O erro "Acessar Painel" -> Wizard persistia na Vercel porque salvar `DATABASE_URL` via API nao atualiza `process.env` do deployment atual; as novas env vars so entram apos novo deployment. | Adicionadas funcoes `triggerProjectRedeploy` e `waitForVercelDeploymentReady`; o instalador agora dispara redeploy de producao, aguarda `READY` e so entao conclui. Se o redeploy falhar, a instalacao retorna erro explicito em vez de liberar o botao do painel. |
