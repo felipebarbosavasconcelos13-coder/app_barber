@@ -24,6 +24,7 @@ gantt
     Fase 9: Calendário Próprio (sem Google)  :done,    des9, 2026-05-20, 2026-05-20
     Fase 10: Integração Vercel API no Wizard  :done,    des10, 2026-05-20, 2026-05-20
     Fase 11: Instalador 100% Automático (Supabase API) :done, des11, 2026-05-20, 2026-05-20
+    Fase 12: Criação Automática de Projeto Supabase :done, des12, 2026-05-20, 2026-05-20
 ```
 
 ---
@@ -75,29 +76,27 @@ gantt
 
 ---
 
-## 🚀 Fase Atual: Instalador 100% Automático com Supabase API (20/05/2026)
+## 🚀 Fase Atual: Criação Automática de Projeto Supabase pelo Instalador (20/05/2026)
 
 ### **Ações Realizadas**
-1. **Instalador Totalmente Automático** ✅:
-   - Usuário fornece apenas: **Vercel API Token** + **Supabase Access Token** + **URL do Projeto Supabase**.
-   - DATABASE_URL resolvida automaticamente via Supabase Management API (`/v1/projects/{ref}/cli/login-role`).
-   - Env vars configuradas na Vercel automaticamente via API (`upsertProjectEnvs`).
-   - Prisma db push + seed executados sem intervenção manual.
-2. **Integração Supabase Management API** ✅:
-   - Nova lib `src/lib/installer/supabase.ts`: `resolveSupabaseDbUrl`, `listSupabaseProjects`, `extractProjectRefFromUrl`.
-   - Usa transaction pooler (porta 6543) para compatibilidade IPv4/IPv6.
-   - Nova API `/api/install/supabase/projects` para listar projetos via PAT.
-3. **Integração Vercel API** ✅:
-   - Lib `src/lib/installer/vercel.ts`: `upsertProjectEnvs`, `listVercelProjects`, `validateVercelToken`.
-   - API `/api/install/vercel/projects` para buscar projetos Vercel.
-4. **Wizard Redesenhado** ✅:
-   - Passo 1: Vercel Token + Supabase Token + URL (com busca automática de projetos).
-   - Passo 2: Senha Admin + GTM.
-   - Passo 3: Execução com logs em tempo real.
-5. **Compatibilidade** ✅:
-   - Build validado (`npm run build`).
-   - Deploy Vercel funcionando.
-   - Redirecionamento automático Home/Admin → `/install` quando banco não configurado.
+1. **Instalador Cria Projeto Supabase Sozinho** ✅:
+   - Usuário fornece **Vercel Token** + **Supabase PAT**.
+   - Sistema lista organizações e projetos existentes.
+   - Opção de selecionar projeto existente OU criar novo (nome, senha do banco, região).
+   - DATABASE_URL resolvida automaticamente via Supabase Management API.
+   - Env vars configuradas na Vercel via API.
+   - Prisma db push + seed executados.
+2. **APIs Supabase** ✅:
+   - `/api/install/supabase/organizations`: lista orgs + projetos por org.
+   - `/api/install/supabase/create-project`: cria projeto via `POST /v1/projects`.
+   - `/api/install/supabase/projects`: lista projetos diretos (fallback).
+   - Lib `supabase.ts`: `listSupabaseOrganizations`, `listOrgProjects`, `createSupabaseProject`.
+3. **Wizard 3 Passos** ✅:
+   - Passo 1: Tokens (Vercel + Supabase com validação).
+   - Passo 2: Setup (org → selecionar/criar projeto → Vercel project → Admin).
+   - Passo 3: Executar.
+4. **Compatibilidade** ✅:
+   - Build validado, deploy Vercel funcionando.
 
 ---
 
