@@ -17,10 +17,13 @@ Conforme solicitado, **o instalador sera pratico e funcional**, focado em simpli
    *   **Passo 1 (Conexao)**: 
        - Token da Vercel (Full Account) com botao "Buscar" que valida e lista projetos.
        - Seletor de projeto Vercel (auto-detectado em dominios `.vercel.app`).
-       - URL de banco do Supabase (`DATABASE_URL`).
+       - Supabase Access Token (PAT) com botao "Buscar" que valida e lista projetos.
+       - URL do projeto Supabase (auto-preenchida ao selecionar projeto).
+       - **DATABASE_URL e resolvida automaticamente** via Supabase Management API — usuario nao precisa colar connection string.
    *   **Passo 2 (Administrador)**: Senha Mestra administrativa e ID do Google Tag Manager (GTM, opcional).
    *   **Passo 3 (Execucao)**: 
-       - Configura env vars na Vercel via API (`upsertProjectEnvs`): `DATABASE_URL`, `ADMIN_PASSWORD`.
+       - Resolve DATABASE_URL via Supabase API (`/v1/projects/{ref}/cli/login-role`).
+       - Configura env vars na Vercel via API (`upsertProjectEnvs`): `DATABASE_URL`, `ADMIN_PASSWORD`, `NEXT_PUBLIC_APP_URL`.
        - Aplica migracao Prisma (`prisma db push`) e semeia dados iniciais (`prisma db seed`).
        - Feedback visual em tempo real com logs de cada etapa.
 
@@ -92,14 +95,16 @@ model Booking {
 
 ## Alteracoes Propostas
 
-### 1. Novo Modulo: Wizard de Instalacao (3 passos com integracao Vercel)
+### 1. Novo Modulo: Wizard de Instalacao (3 passos com integracao total)
 
-- **[NEW] `src/app/install/page.tsx`**: Rota de entrada que detecta o estado de inicializacao e redireciona para `/install/start` ou `/admin`.
-- **[NEW] `src/app/install/start/page.tsx`**: Interface de boas-vindas com pre-requisitos (Token Vercel + Banco Supabase + Config Admin).
-- **[UPDATED] `src/app/install/wizard/page.tsx`**: Formulario interativo de 3 passos com busca de projetos Vercel via API.
-- **[NEW] `src/app/api/install/vercel/projects/route.ts`**: API que valida token Vercel e retorna projetos do usuario.
-- **[UPDATED] `src/app/api/install/run/route.ts`**: Executa instalacao com integracao Vercel API (`upsertProjectEnvs`).
-- **[NEW] `src/lib/installer/vercel.ts`**: Lib com funcoes Vercel API: `upsertProjectEnvs`, `listVercelProjects`, `validateVercelToken`.
+- **[NEW] `src/app/install/page.tsx`**: Rota de entrada que detecta o estado de inicializacao e redireciona.
+- **[NEW] `src/app/install/start/page.tsx`**: Interface de boas-vindas com pre-requisitos.
+- **[UPDATED] `src/app/install/wizard/page.tsx`**: Wizard com busca de projetos Vercel + Supabase. DATABASE_URL resolvida automaticamente.
+- **[NEW] `src/app/api/install/vercel/projects/route.ts`**: API que valida token Vercel e retorna projetos.
+- **[NEW] `src/app/api/install/supabase/projects/route.ts`**: API que valida token Supabase e retorna projetos.
+- **[UPDATED] `src/app/api/install/run/route.ts`**: Resolve DATABASE_URL via Supabase API + seta env vars Vercel + prisma push/seed.
+- **[NEW] `src/lib/installer/vercel.ts`**: `upsertProjectEnvs`, `listVercelProjects`, `validateVercelToken`.
+- **[NEW] `src/lib/installer/supabase.ts`**: `resolveSupabaseDbUrl`, `listSupabaseProjects`, `extractProjectRefFromUrl`.
 
 ### 2. Redirecionamento Automatico
 

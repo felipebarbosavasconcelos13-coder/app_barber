@@ -23,6 +23,7 @@ gantt
     Fase 8: Migração Supabase & GitHub      :done,    des8, 2026-05-20, 2026-05-20
     Fase 9: Calendário Próprio (sem Google)  :done,    des9, 2026-05-20, 2026-05-20
     Fase 10: Integração Vercel API no Wizard  :done,    des10, 2026-05-20, 2026-05-20
+    Fase 11: Instalador 100% Automático (Supabase API) :done, des11, 2026-05-20, 2026-05-20
 ```
 
 ---
@@ -74,37 +75,29 @@ gantt
 
 ---
 
-## 🚀 Fase Atual: Integração Vercel API no Wizard de Instalação (20/05/2026)
+## 🚀 Fase Atual: Instalador 100% Automático com Supabase API (20/05/2026)
 
 ### **Ações Realizadas**
-1. **Wizard de Instalação Web (`/install`)** ✅:
-   - Interface visual de 3 passos: Conexão Vercel+Supabase, Admin, Execução.
-   - Passo 1: Vercel API Token com botão "Buscar" que valida e lista projetos automaticamente.
-   - Auto-detecção de projeto em domínios `.vercel.app`.
-   - Seletor de projeto Vercel + campo DATABASE_URL do Supabase.
-2. **Integração com Vercel API** ✅:
-   - Nova lib `src/lib/installer/vercel.ts` com funções: `upsertProjectEnvs`, `listVercelProjects`, `validateVercelToken`.
-   - Nova API `/api/install/vercel/projects` para busca de projetos com token Vercel.
-   - API `/api/install/run` agora seta `DATABASE_URL` e `ADMIN_PASSWORD` como env vars permanentes na Vercel via API (`/v10/projects/{id}/env`).
-   - Fallback para `.env` local em ambiente de desenvolvimento.
-3. **Redirecionamento Automático** ✅:
-   - Home page (`/`) e Admin (`/admin`) redirecionam para `/install` quando banco não configurado.
-   - `/install` redireciona para `/admin` quando banco já configurado.
-4. **Compatibilidade Vercel (Read-Only FS)** ✅:
-   - Escrita do `.env` envolvida em try/catch (ignorada em cloud).
-   - PrismaClient sempre usa adapter pg (mesmo sem DATABASE_URL no build).
-   - `postinstall` e `build` scripts incluem `prisma generate`.
-   - `seed.js` usa adapter pg para compatibilidade com Prisma v7.
-5. **Sistema de Calendário Próprio (Fase 9)** ✅:
-   - Removidos campos Google do modelo Barber.
-   - Adicionados `openingTime`/`closingTime` ao Barber.
-   - Novo `src/lib/schedule.ts` substitui `src/lib/google.ts`.
-   - APIs de booking usam horários do barbeiro + agendamentos locais.
-6. **Validação de Build** ✅:
-   - `npm run build` executado com sucesso.
-   - Deploy na Vercel concluído com sucesso.
-7. **Versionamento e Envio ao GitHub** ✅:
-   - Repositório: `https://github.com/felipebarbosavasconcelos13-coder/app_barber`.
+1. **Instalador Totalmente Automático** ✅:
+   - Usuário fornece apenas: **Vercel API Token** + **Supabase Access Token** + **URL do Projeto Supabase**.
+   - DATABASE_URL resolvida automaticamente via Supabase Management API (`/v1/projects/{ref}/cli/login-role`).
+   - Env vars configuradas na Vercel automaticamente via API (`upsertProjectEnvs`).
+   - Prisma db push + seed executados sem intervenção manual.
+2. **Integração Supabase Management API** ✅:
+   - Nova lib `src/lib/installer/supabase.ts`: `resolveSupabaseDbUrl`, `listSupabaseProjects`, `extractProjectRefFromUrl`.
+   - Usa transaction pooler (porta 6543) para compatibilidade IPv4/IPv6.
+   - Nova API `/api/install/supabase/projects` para listar projetos via PAT.
+3. **Integração Vercel API** ✅:
+   - Lib `src/lib/installer/vercel.ts`: `upsertProjectEnvs`, `listVercelProjects`, `validateVercelToken`.
+   - API `/api/install/vercel/projects` para buscar projetos Vercel.
+4. **Wizard Redesenhado** ✅:
+   - Passo 1: Vercel Token + Supabase Token + URL (com busca automática de projetos).
+   - Passo 2: Senha Admin + GTM.
+   - Passo 3: Execução com logs em tempo real.
+5. **Compatibilidade** ✅:
+   - Build validado (`npm run build`).
+   - Deploy Vercel funcionando.
+   - Redirecionamento automático Home/Admin → `/install` quando banco não configurado.
 
 ---
 
@@ -128,4 +121,4 @@ gantt
 | **20/05/2026** | `src/lib/prisma.ts` | `PrismaClient()` sem adapter quebrava no build Vercel quando `DATABASE_URL` não existe em tempo de build. | Sempre usa `PrismaPg` adapter com fallback `postgresql://localhost:5432/postgres`. |
 | **20/05/2026** | `package.json` | `prisma generate` não rodava antes do build, causando erro `Module has no exported member 'Barber'`. | Adicionado `prisma generate` nos scripts `build` e `postinstall`. |
 | **20/05/2026** | `prisma/seed.js` | Seed usava `PrismaClient()` sem adapter, incompatível com Prisma v7 engine `client`. | Adicionado `PrismaPg` adapter com `connectionString`. |
-| **20/05/2026** | Wizard `/install/wizard` | Instalador solicitava DATABASE_URL mas não integrava com Vercel API. | Adicionado campo Vercel Token + busca de projetos + auto-detecção. API `/install/run` agora seta env vars via Vercel API. |
+| **20/05/2026** | Wizard `/install/wizard` | Instalador solicitava DATABASE_URL manual. | Substituído por Supabase Token + URL. DATABASE_URL resolvida automaticamente via Supabase Management API (`cli/login-role`). |
