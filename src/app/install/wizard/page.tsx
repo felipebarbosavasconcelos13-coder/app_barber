@@ -112,7 +112,7 @@ export default function InstallWizardPage() {
     setErrorMsg('');
 
     addLog('Iniciando o processo de instalacao...');
-    addLog('Gravando as variaveis de ambiente no arquivo .env...');
+    addLog('Configurando conexao com o banco de dados...');
 
     try {
       const res = await fetch('/api/install/run', {
@@ -138,7 +138,6 @@ export default function InstallWizardPage() {
         return;
       }
 
-      addLog('Arquivo .env gravado com sucesso.', 'success');
       addLog('Schema do Prisma aplicado ao banco (db push).', 'success');
       addLog('Dados iniciais inseridos no banco (db seed).', 'success');
       addLog('Senha administrativa configurada.', 'success');
@@ -624,6 +623,9 @@ export default function InstallWizardPage() {
               />
               <div className="install-form-hint">
                 Encontre em: Supabase &rarr; Settings &rarr; Database &rarr; Connection String (URI).
+              </div>
+              <div className="install-form-hint" style={{ marginTop: '8px', color: 'var(--status-warning)' }}>
+                No Vercel, adicione tambem <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>DATABASE_URL</code> como variavel de ambiente do projeto (Settings &rarr; Environment Variables).
               </div>
             </div>
 

@@ -30,17 +30,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "A URL de banco do Supabase é obrigatória." }, { status: 400 });
     }
 
-    // 1. Gravar as novas variáveis de ambiente no arquivo .env localmente
-    const envPath = path.join(process.cwd(), ".env");
-    const newEnvContent = `# Variaveis geradas pelo assistente de instalacao em ${new Date().toISOString()}
+    // 1. Tenta gravar o .env localmente (funciona em dev local, ignora em Vercel/cloud)
+    try {
+      const envPath = path.join(process.cwd(), ".env");
+      const newEnvContent = `# Variaveis geradas pelo assistente de instalacao em ${new Date().toISOString()}
 DATABASE_URL="${databaseUrl}"
 
 # Configuracoes do App
 NEXT_PUBLIC_APP_URL="${nextPublicAppUrl || "http://localhost:3000"}"
 ADMIN_PASSWORD="${adminPassword || "admin123"}"
 `;
-
-    fs.writeFileSync(envPath, newEnvContent, "utf-8");
+      fs.writeFileSync(envPath, newEnvContent, "utf-8");
+      console.log("[installer-run] Arquivo .env gravado com sucesso.");
+    } catch (envErr) {
+      console.warn("[installer-run] Nao foi possivel gravar .env (ambiente cloud/read-only). Continuando...");
+    }
 
     // Também injeta no process.env global do processo atual para as chamadas seguintes
     process.env.DATABASE_URL = databaseUrl;

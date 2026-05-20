@@ -1,10 +1,14 @@
 const { PrismaClient } = require("@prisma/client");
+const { PrismaPg } = require("@prisma/adapter-pg");
 
 require("dotenv").config();
 
 console.log("DATABASE_URL no seed:", process.env.DATABASE_URL);
 
+const databaseUrl = process.env.DATABASE_URL || "postgresql://localhost:5432/postgres";
+const adapter = new PrismaPg({ connectionString: databaseUrl });
 const prisma = new PrismaClient({
+  adapter,
   log: ["warn", "error"],
 });
 
