@@ -129,15 +129,34 @@ export default function InstallWizardPage() {
   };
 
   const validateStep2 = () => {
-    if (!selectedOrg) { setStepError('Selecione uma organizacao.'); return false; }
+    if (!selectedOrg && orgs.length !== 1) { setStepError('Selecione uma organizacao.'); return false; }
     if (!selectedProjectRef && !newProjectName.trim()) { setStepError('Selecione um projeto existente ou crie um novo.'); return false; }
     if (!adminPassword.trim() || adminPassword.length < 4) { setStepError('Senha admin: min 4 caracteres.'); return false; }
     if (adminPassword !== confirmPassword) { setStepError('Senhas nao conferem.'); return false; }
     setStepError(''); return true;
   };
 
-  const handleNext = () => {
-    if (step === 1 && validateStep1()) setStep(2);
+  const goToStep2 = async () => {
+    if (!validateStep1()) return;
+    // Auto-search Supabase se ainda nao carregou
+    if (orgs.length === 0 && supabaseToken.trim()) {
+      setStepError('');
+      setLoadingSupabase(true);
+      try {
+        const r = await fetch('/api/install/supabase/organizations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: supabaseToken.trim() }) });
+        const d = await r.json();
+        if (r.ok && d.organizations) {
+          setOrgs(d.organizations);
+          if (d.organizations.length === 1) { setSelectedOrg(d.organizations[0].slug); loadProjects(d.organizations[0].slug); }
+        } else setStepError(d.error || 'Token Supabase invalido');
+      } catch { setStepError('Erro ao buscar organizacoes'); } finally { setLoadingSupabase(false); }
+    }
+    if (stepError) return;
+    setStep(2);
+  };
+
+  const handleNext = async () => {
+    if (step === 1) { goToStep2(); return; }
     if (step === 2 && validateStep2()) { setStep(3); runInstall(); }
   };
 
@@ -290,7 +309,9 @@ export default function InstallWizardPage() {
 
             <div className="install-nav-buttons">
               <button className="install-btn-back" onClick={() => router.push('/install/start')}><ArrowLeft size={16} /> Voltar</button>
-              <button className="install-btn-next" onClick={handleNext}>Proximo <ArrowRight size={16} /></button>
+              <button className="install-btn-next" onClick={handleNext} disabled={loadingSupabase}>
+                {loadingSupabase ? <><Loader2 size={16} className="install-spinner" /> Buscando...</> : <>Proximo <ArrowRight size={16} /></>}
+              </button>
             </div>
           </div>
         )}
