@@ -1,52 +1,128 @@
-# Plano de Implementação: Wizard de Instalação Web & Migração para o Supabase
+# Plano de Implementacao: Wizard de Instalacao Web & Migracao para o Supabase
 
-Este documento apresenta o plano de ação detalhado para criar um **Wizard de Instalação na Web (`/install`)** para o aplicativo de agendamento online de barbearia, unindo-o à migração para o **Supabase (PostgreSQL)** e ao versionamento completo no **GitHub**.
+Este documento apresenta o plano de acao detalhado para criar um **Wizard de Instalacao na Web (`/install`)** para o aplicativo de agendamento online de barbearia, unindo-o a migracao para o **Supabase (PostgreSQL)** e ao versionamento completo no **GitHub**.
 
 ---
 
-## Detalhes do Novo Recurso: Wizard de Instalação (`/install`)
+## Detalhes do Novo Recurso: Wizard de Instalacao (`/install`)
 
-Inspirado no instalador do CRM de referência, desenvolveremos um assistente visual automatizado que permite a configuração da base de dados e das APIs integradas diretamente no navegador Web na primeira inicialização da aplicação, sem exigir que o usuário final configure arquivos ou execute comandos de terminal manualmente.
+Inspirado no instalador do CRM de referencia, desenvolvemos um assistente visual automatizado que permite a configuracao da base de dados diretamente no navegador Web na primeira inicializacao da aplicacao, sem exigir que o usuario final configure arquivos ou execute comandos de terminal manualmente.
 
-Conforme solicitado, **o instalador será prático e funcional**, focado em simplicidade, clareza e feedback visual em tempo real do progresso das tarefas de banco de dados (push e seed do Prisma).
+Conforme solicitado, **o instalador sera pratico e funcional**, focado em simplicidade, clareza e feedback visual em tempo real do progresso das tarefas de banco de dados (push e seed do Prisma).
 
 ### Fluxo de Funcionamento
-1. **Verificação de Inicialização**: A aplicação consulta o banco. Se a tabela `SystemSettings` já estiver devidamente populada e com senha administrativa configurada, a rota `/install` é imediatamente travada e redireciona para `/admin`.
-2. **Formulário de Instalação Multi-passos**:
-   *   **Passo 1 (Supabase)**: Inserção da URL de banco do Supabase (`DATABASE_URL`).
-   *   **Passo 2 (Google APIs)**: Inserção das chaves `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` (exibindo a URL de redirecionamento que ele deve cadastrar no Google Developer Console).
-   *   **Passo 3 (Administrador)**: Definição da Senha Mestra administrativa e inserção opcional do ID do Google Tag Manager (GTM).
-3. **Execução em Tempo Real**: O assistente grava o `.env` localmente, valida a conexão, aplica a migração Prisma (`prisma db push`) e semeia os dados iniciais (`prisma db seed`).
+1. **Verificacao de Inicializacao**: A aplicacao consulta o banco. Se a tabela `SystemSettings` ja estiver devidamente populada e com senha administrativa configurada, a rota `/install` e imediatamente travada e redireciona para `/admin`.
+2. **Formulario de Instalacao Multi-passos** (3 passos):
+   *   **Passo 1 (Supabase)**: Insercao da URL de banco do Supabase (`DATABASE_URL`).
+   *   **Passo 2 (Administrador)**: Definicao da Senha Mestra administrativa e insercao opcional do ID do Google Tag Manager (GTM).
+   *   **Passo 3 (Execucao)**: O assistente grava o `.env` localmente, valida a conexao, aplica a migracao Prisma (`prisma db push`) e semeia os dados iniciais (`prisma db seed`).
 
 ---
 
-## Alterações Propostas
+## Arquitetura do Sistema de Agendamento
 
-### 1. Novo Módulo: Wizard de Instalação
+### Modelo de Calendario Proprio (Sem Dependencia do Google)
 
-#### [NEW] [src/app/install/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/install/page.tsx)
-- Rota de entrada que detecta o estado de inicialização no cliente e redireciona o usuário para `/install/start` ou para o Painel Admin `/admin`.
+Cada barbeiro possui seus proprios horarios de atendimento definidos no cadastro:
+- **`openingTime`**: Horario de entrada do barbeiro (ex: "09:00")
+- **`closingTime`**: Horario de saida do barbeiro (ex: "19:00")
 
-#### [NEW] [src/app/install/start/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/install/start/page.tsx)
-- Interface de boas-vindas do instalador com Vanilla CSS prático e funcional. Explica os requisitos necessários e dá início ao processo.
-
-#### [NEW] [src/app/install/wizard/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/install/wizard/page.tsx)
-- O formulário interativo de passos com feedback visual em tempo real para conectar o banco, configurar a Google Calendar API, a senha administrativa e rodar a criação das tabelas.
+O sistema calcula automaticamente os slots disponiveis com base nos horarios do barbeiro, cruzando com os agendamentos locais existentes. Nao ha dependencia de APIs externas (Google Calendar).
 
 ---
 
-### 2. Versionamento & GitHub
-- Commit completo de todas as alterações (landing page de luxo, admin dashboard, google APIs, e o novo instalador `/install`).
-- Configuração do Git remoto com a URL fornecida: `https://github.com/felipebarbosavasconcelos13-coder/app_barber`.
-- Push inicial para o repositório no GitHub do usuário.
+## Estrutura de Dados (Schema Prisma - PostgreSQL)
+
+```prisma
+model SystemSettings {
+  id            String   @id @default("default")
+  gtmId         String?
+  openingTime   String   @default("09:00")
+  closingTime   String   @default("19:00")
+  adminPassword String   @default("admin123")
+  updatedAt     DateTime @updatedAt
+}
+
+model Barber {
+  id          String    @id @default(uuid())
+  name        String
+  email       String    @unique
+  openingTime String    @default("09:00")
+  closingTime String    @default("19:00")
+  services    Service[] @relation("BarberServices")
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Service {
+  id        String   @id @default(uuid())
+  name      String
+  price     Float
+  duration  Int
+  barbers   Barber[] @relation("BarberServices")
+  bookings  Booking[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Booking {
+  id          String   @id @default(uuid())
+  clientName  String
+  clientEmail String
+  clientPhone String
+  dateTime    DateTime
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  barberId    String
+  barber      Barber   @relation(fields: [barberId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+```
 
 ---
 
-## Plano de Verificação
+## Alteracoes Propostas
 
-1.  **Testes do Instalador Web**:
-    - Abrir o app localmente desconfigurado (ou com banco vazio) e garantir que a rota `/install` seja exibida perfeitamente.
-    - Fornecer credenciais de teste, concluir o instalador e verificar se o arquivo `.env` local é gerado/atualizado e se as tabelas foram devidamente populadas.
-    - Acessar `/install` novamente após a conclusão e verificar se o redirecionamento automático de segurança para `/admin` é executado instantaneamente.
-2.  **Build de Produção local**:
-    - Executar `npm run build` para validar se todo o código TypeScript e rotas do Next.js compilam perfeitamente sem falhas.
+### 1. Novo Modulo: Wizard de Instalacao (3 passos)
+
+- **[NEW] `src/app/install/page.tsx`**: Rota de entrada que detecta o estado de inicializacao e redireciona para `/install/start` ou `/admin`.
+- **[NEW] `src/app/install/start/page.tsx`**: Interface de boas-vindas com pre-requisitos (Banco Supabase + Config Admin).
+- **[NEW] `src/app/install/wizard/page.tsx`**: Formulario interativo de 3 passos com feedback visual em tempo real.
+
+### 2. Sistema de Calendario Proprio
+
+- **[UPDATED] `src/lib/schedule.ts`**: Logica de calculo de slots disponiveis baseada nos horarios do barbeiro e agendamentos locais (sem Google Calendar).
+- **[UPDATED] `src/app/api/booking/available-slots/route.ts`**: Usa `getBarberAvailableSlots` com os horarios customizados do barbeiro.
+- **[UPDATED] `src/app/api/booking/create/route.ts`**: Cria agendamento local sem integracao com Google Calendar.
+- **[UPDATED] `src/app/api/admin/barbers/route.ts`**: Inclui `openingTime` e `closingTime` no cadastro e listagem de barbeiros.
+- **[UPDATED] `src/components/AdminDashboard.tsx`**: Formulario de barbeiro com campos de horario de entrada/saida.
+- **[UPDATED] `src/components/BookingFlow.tsx`**: Exibe horarios do barbeiro em vez de status de conexao Google.
+
+### 3. Remocao da Dependencia Google Calendar
+
+- As APIs de Google OAuth (`/api/auth/google`) permanecem no codigo mas nao sao mais referenciadas pelo fluxo principal.
+- Os pacotes `googleapis` e `google-auth-library` permanecem instalados para compatibilidade futura opcional.
+
+### 4. Versionamento & GitHub
+
+- Repositorio: `https://github.com/felipebarbosavasconcelos13-coder/app_barber`
+- Commits estruturados com todas as alteracoes.
+
+---
+
+## Plano de Verificacao
+
+1. **Testes do Instalador Web**:
+   - Abrir o app localmente e garantir que a rota `/install` seja exibida.
+   - Fornecer credenciais de teste, concluir o instalador e verificar se o `.env` e gerado e as tabelas populadas.
+   - Acessar `/install` apos conclusao e verificar redirecionamento para `/admin`.
+
+2. **Testes do Sistema de Agendamento**:
+   - Cadastrar barbeiro com horarios customizados.
+   - Verificar se os slots disponiveis respeitam os horarios do barbeiro.
+   - Criar agendamento e verificar se o slot fica indisponivel.
+
+3. **Build de Producao**:
+   - Executar `npm run build` para validar compilacao TypeScript e rotas Next.js.

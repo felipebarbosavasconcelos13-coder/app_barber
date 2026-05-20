@@ -23,7 +23,8 @@ interface Barber {
   id: string;
   name: string;
   email: string;
-  isGoogleConnected: boolean;
+  openingTime: string;
+  closingTime: string;
 }
 
 interface Service {
@@ -61,7 +62,7 @@ export default function AdminDashboard() {
   });
 
   // States de Formulários
-  const [newBarber, setNewBarber] = useState({ name: "", email: "" });
+  const [newBarber, setNewBarber] = useState({ name: "", email: "", openingTime: "09:00", closingTime: "19:00" });
   const [newService, setNewService] = useState({ name: "", price: "", duration: "30" });
   const [changePassword, setChangePassword] = useState({ current: "", new: "", confirm: "" });
   const [actionLoading, setActionLoading] = useState(false);
@@ -133,7 +134,7 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error(data.error || "Erro ao adicionar barbeiro.");
 
       setBarbers([data.barber, ...barbers]);
-      setNewBarber({ name: "", email: "" });
+      setNewBarber({ name: "", email: "", openingTime: "09:00", closingTime: "19:00" });
       setSuccess("Barbeiro cadastrado com sucesso!");
     } catch (err: any) {
       setError(err.message);
@@ -407,7 +408,7 @@ export default function AdminDashboard() {
                     <div className="pane-list">
                       <div className="pane-header">
                         <h3 className="title-serif">Profissionais Cadastrados</h3>
-                        <p>Agendas sincronizadas com o Google Calendar individual.</p>
+                        <p>Cada barbeiro define seus proprios horarios de atendimento.</p>
                       </div>
 
                       <div className="barbers-list">
@@ -424,29 +425,12 @@ export default function AdminDashboard() {
                                 <h4>{barber.name}</h4>
                                 <p>{barber.email}</p>
                                 <div className="sync-status">
-                                  {barber.isGoogleConnected ? (
-                                    <span className="status-indicator success">
-                                      <CheckCircle size={14} /> Agenda Google Sincronizada
-                                    </span>
-                                  ) : (
-                                    <span className="status-indicator error">
-                                      <XCircle size={14} /> Google Desconectado
-                                    </span>
-                                  )}
+                                  <span className="status-indicator success">
+                                    <Clock size={14} /> {barber.openingTime} as {barber.closingTime}
+                                  </span>
                                 </div>
                               </div>
                               <div className="barber-card-actions">
-                                {!barber.isGoogleConnected ? (
-                                  <a
-                                    href={`/api/auth/google?barberId=${barber.id}`}
-                                    className="btn-gold btn-sm"
-                                    style={{ padding: "8px 14px", fontSize: "0.85rem" }}
-                                  >
-                                    Conectar Agenda Google
-                                  </a>
-                                ) : (
-                                  <span className="badge badge-success">Integrado</span>
-                                )}
                                 <button
                                   onClick={() => handleDeleteBarber(barber.id)}
                                   className="btn-delete"
@@ -466,7 +450,7 @@ export default function AdminDashboard() {
                       <div className="glass-card form-card">
                         <h3 className="title-serif gold-glow">Cadastrar Novo Barbeiro</h3>
                         <p style={{ marginBottom: "20px", fontSize: "0.9rem" }}>
-                          Adicione um profissional. Posteriormente, ele deverá conectar sua própria conta do Google.
+                          Adicione um profissional e defina seus horarios de atendimento.
                         </p>
 
                         <form onSubmit={handleAddBarber}>
@@ -475,7 +459,7 @@ export default function AdminDashboard() {
                             <input
                               type="text"
                               className="form-input"
-                              placeholder="Ex: João Silva"
+                              placeholder="Ex: Joao Silva"
                               value={newBarber.name}
                               onChange={(e) => setNewBarber({ ...newBarber, name: e.target.value })}
                               required
@@ -483,18 +467,38 @@ export default function AdminDashboard() {
                           </div>
 
                           <div className="form-group">
-                            <label className="form-label">E-mail do Google (Gmail)</label>
+                            <label className="form-label">E-mail</label>
                             <input
                               type="email"
                               className="form-input"
-                              placeholder="Ex: joaosilva@gmail.com"
+                              placeholder="Ex: joaosilva@email.com"
                               value={newBarber.email}
                               onChange={(e) => setNewBarber({ ...newBarber, email: e.target.value })}
                               required
                             />
-                            <small style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
-                              Deve ser o e-mail associado à agenda do Google que ele usará.
-                            </small>
+                          </div>
+
+                          <div className="form-group-row">
+                            <div className="form-group">
+                              <label className="form-label">Horario de Entrada</label>
+                              <input
+                                type="time"
+                                className="form-input"
+                                value={newBarber.openingTime}
+                                onChange={(e) => setNewBarber({ ...newBarber, openingTime: e.target.value })}
+                                required
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label className="form-label">Horario de Saida</label>
+                              <input
+                                type="time"
+                                className="form-input"
+                                value={newBarber.closingTime}
+                                onChange={(e) => setNewBarber({ ...newBarber, closingTime: e.target.value })}
+                                required
+                              />
+                            </div>
                           </div>
 
                           <button type="submit" className="btn-gold" style={{ width: "100%", marginTop: "10px" }} disabled={actionLoading}>

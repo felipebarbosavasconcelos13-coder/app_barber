@@ -17,16 +17,15 @@ model SystemSettings {
 }
 
 model Barber {
-  id                 String    @id @default(uuid())
-  name               String
-  email              String    @unique
-  googleAccessToken  String?
-  googleRefreshToken String?
-  googleTokenExpiry  DateTime?
-  services           Service[] @relation("BarberServices")
-  bookings           Booking[]
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  name            String
+  email           String    @unique
+  openingTime     String    @default("09:00")
+  closingTime     String    @default("19:00")
+  services        Service[] @relation("BarberServices")
+  bookings        Booking[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Service {

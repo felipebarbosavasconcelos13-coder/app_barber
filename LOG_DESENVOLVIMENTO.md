@@ -21,6 +21,7 @@ gantt
     Fase 6: Validação de Build & Guias      :done,    des6, 2026-05-20, 2026-05-20
     Fase 7: Wizard de Instalação (/install)  :done,    des7, 2026-05-20, 2026-05-20
     Fase 8: Migração Supabase & GitHub      :done,    des8, 2026-05-20, 2026-05-20
+    Fase 9: Calendário Próprio (sem Google)  :done,    des9, 2026-05-20, 2026-05-20
 ```
 
 ---
@@ -72,23 +73,31 @@ gantt
 
 ---
 
-## 🚀 Fase Atual: Projeto Concluído e Enviado ao GitHub (20/05/2026)
+## 🚀 Fase Atual: Calendário Próprio e Remoção da Dependência Google Calendar (20/05/2026)
 
 ### **Ações Realizadas**
 1. **Wizard de Instalação Web (`/install`)** ✅:
-   - Interface visual de 4 passos de alta fidelidade implementada (Banco Supabase, Google Cloud APIs, Cadastro Administrativo, Execução).
-   - Rotas de checagem (`/api/install/check`) e execução (`/api/install/run`) criadas para gravar `.env`, validar conexões de banco e rodar migração e seed do Prisma.
+   - Interface visual de 3 passos implementada (Banco Supabase, Cadastro Administrativo, Execução).
+   - Removido o passo de credenciais Google Cloud (não mais necessário).
+   - Rotas de checagem (`/api/install/check`) e execução (`/api/install/run`) mantidas.
 2. **Migração do Banco de Dados para Supabase (PostgreSQL)** ✅:
    - `provider` no `schema.prisma` alterado de `"sqlite"` para `"postgresql"`.
-   - Removido o adapter `@prisma/adapter-libsql` do `prisma/seed.js` (era incompatível com PostgreSQL).
+   - Removido o adapter `@prisma/adapter-libsql` do `prisma/seed.js`.
    - Instalado o adapter oficial `@prisma/adapter-pg` + `pg` para compatibilidade com Prisma v7.
-   - Adicionado `engineType = "library"` ao generator do Prisma Client no schema.
-3. **Validação de Build** ✅:
-   - Executado `npm run build` com sucesso (39.4s compile, 28.1s TypeScript).
-   - Erros de Prisma durante o build são capturados pelo try/catch no layout (DATABASE_URL placeholder).
-4. **Versionamento e Envio ao GitHub** ✅:
-   - Commit estruturado com 39 arquivos, 7392 inserções, 175 exclusões.
-   - Push completo para o repositório GitHub: `https://github.com/felipebarbosavasconcelos13-coder/app_barber`.
+3. **Sistema de Calendário Próprio (Fase 9)** ✅:
+   - **Schema**: Removidos campos Google (`googleAccessToken`, `googleRefreshToken`, `googleTokenExpiry`) do modelo `Barber`.
+   - **Schema**: Adicionados `openingTime` e `closingTime` ao modelo `Barber` - cada barbeiro define seus próprios horários.
+   - **Novo módulo**: `src/lib/schedule.ts` substitui `src/lib/google.ts` - cálculo de slots disponíveis baseado nos horários do barbeiro e agendamentos locais (sem APIs externas).
+   - **API `/booking/available-slots`**: Usa os horários customizados do barbeiro em vez do SystemSettings global.
+   - **API `/booking/create`**: Removeu toda a lógica de criação de evento no Google Calendar.
+   - **API `/admin/barbers`**: POST/PUT incluem `openingTime` e `closingTime`.
+   - **AdminDashboard**: Formulário de barbeiro agora inclui campos de horário de entrada/saída. Removido botão "Conectar Agenda Google" e indicadores de status.
+   - **BookingFlow**: Exibe horários do barbeiro ("09:00 às 19:00") em vez de status Google.
+   - **Wizard**: Reduzido de 4 para 3 passos (removido passo Google Cloud APIs).
+4. **Validação de Build** ✅:
+   - `npm run build` executado com sucesso após todas as alterações.
+5. **Versionamento e Envio ao GitHub** ✅:
+   - Repositório: `https://github.com/felipebarbosavasconcelos13-coder/app_barber`.
 
 ---
 
@@ -101,3 +110,9 @@ gantt
 | **20/05/2026** | `prisma/seed.js` | `@prisma/adapter-libsql` (SQLite/Turso) causaria falha no seed com PostgreSQL no Supabase. | Removido o adapter LibSQL e substituído por `PrismaClient` nativo com `engineType = "library"`. |
 | **20/05/2026** | `prisma/schema.prisma` | Prisma v7 exige `adapter` ou `accelerateUrl` no construtor do PrismaClient com engine `client` padrão. | Instalado `@prisma/adapter-pg` + `pg` e atualizado `src/lib/prisma.ts` para usar o adapter PostgreSQL. Adicionado `engineType = "library"` ao generator. |
 | **20/05/2026** | `.gitignore` | Padrão `.env*` ignorava o arquivo de template `.env.example` e o `dev.db` (SQLite legado) não era ignorado. | Substituído `.env*` por `.env`, `.env.local`, `.env.*.local` e adicionado `dev.db`. |
+| **20/05/2026** | `src/app/api/admin/barbers/route.ts` | TypeScript no Vercel: `Parameter 'b' implicitly has an 'any' type` no `.map()`. | Adicionado `import type { Barber }` e tipagem explícita `(b: Barber)` no callback. |
+| **20/05/2026** | `prisma/schema.prisma` | Remoção dos campos `googleAccessToken`, `googleRefreshToken`, `googleTokenExpiry` do modelo `Barber` e adição de `openingTime`/`closingTime` para calendário próprio. | Migração de schema: cada barbeiro agora define seus próprios horários de atendimento, eliminando dependência do Google Calendar. |
+| **20/05/2026** | `src/lib/google.ts` → `src/lib/schedule.ts` | Lógica de slots dependia da Google Calendar API. | Reescrevido para calcular slots usando apenas os horários do barbeiro e agendamentos locais no banco. |
+| **20/05/2026** | `src/app/install/wizard/page.tsx` | Wizard tinha 4 passos incluindo credenciais Google. | Reduzido para 3 passos: Banco, Admin, Executar. Campos Google removidos do formulário e da chamada API. |
+| **20/05/2026** | `src/components/AdminDashboard.tsx` | Formulário de barbeiro não tinha campos de horário, usava botão de conexão Google. | Adicionados `openingTime`/`closingTime` com inputs `type="time"`. Removido status Google e botão "Conectar Agenda Google". |
+| **20/05/2026** | `src/components/BookingFlow.tsx` | Exibia "Agenda Google Ativa" / "Google Desconectado" para cada barbeiro. | Substituído por exibição dos horários do barbeiro ("09:00 às 19:00"). |

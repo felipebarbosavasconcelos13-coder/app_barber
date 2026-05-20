@@ -5,7 +5,7 @@ import { isAdminAuthenticated } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   if (!isAdminAuthenticated(request)) {
-    return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+    return NextResponse.json({ error: "Nao autorizado." }, { status: 401 });
   }
 
   try {
@@ -13,12 +13,12 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    // Formata o retorno ocultando dados sensíveis e gerando a flag de conexão do Google
     const formattedBarbers = barbers.map((b: Barber) => ({
       id: b.id,
       name: b.name,
       email: b.email,
-      isGoogleConnected: !!b.googleRefreshToken,
+      openingTime: b.openingTime,
+      closingTime: b.closingTime,
       createdAt: b.createdAt,
     }));
 
@@ -31,28 +31,27 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!isAdminAuthenticated(request)) {
-    return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+    return NextResponse.json({ error: "Nao autorizado." }, { status: 401 });
   }
 
   try {
     const body = await request.json();
-    const { name, email } = body;
+    const { name, email, openingTime, closingTime } = body;
 
     if (!name || !email) {
       return NextResponse.json(
-        { error: "Nome e e-mail do Google são obrigatórios." },
+        { error: "Nome e e-mail sao obrigatorios." },
         { status: 400 }
       );
     }
 
-    // Verifica se já existe barbeiro com este e-mail do Google
     const existing = await prisma.barber.findUnique({
       where: { email },
     });
 
     if (existing) {
       return NextResponse.json(
-        { error: "Já existe um barbeiro cadastrado com este e-mail do Google." },
+        { error: "Ja existe um barbeiro cadastrado com este e-mail." },
         { status: 400 }
       );
     }
@@ -61,6 +60,8 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         email,
+        openingTime: openingTime || "09:00",
+        closingTime: closingTime || "19:00",
       },
     });
 
@@ -70,7 +71,8 @@ export async function POST(request: NextRequest) {
         id: newBarber.id,
         name: newBarber.name,
         email: newBarber.email,
-        isGoogleConnected: false,
+        openingTime: newBarber.openingTime,
+        closingTime: newBarber.closingTime,
       },
     });
   } catch (error) {
@@ -81,7 +83,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   if (!isAdminAuthenticated(request)) {
-    return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+    return NextResponse.json({ error: "Nao autorizado." }, { status: 401 });
   }
 
   try {
@@ -89,10 +91,9 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "ID do barbeiro é obrigatório." }, { status: 400 });
+      return NextResponse.json({ error: "ID do barbeiro e obrigatorio." }, { status: 400 });
     }
 
-    // Deleta o barbeiro (a cascade ou exclusão simples)
     await prisma.barber.delete({
       where: { id },
     });

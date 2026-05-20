@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Database,
-  KeyRound,
   Settings,
   ArrowRight,
   ArrowLeft,
@@ -13,11 +12,9 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
-  Copy,
-  ExternalLink,
 } from 'lucide-react';
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3;
 type RunStatus = 'idle' | 'running' | 'success' | 'error';
 
 interface LogEntry {
@@ -27,40 +24,30 @@ interface LogEntry {
 }
 
 /**
- * Wizard de instalação multi-passos.
+ * Wizard de instalacao multi-passos.
  * Passo 1: URL do banco Supabase
- * Passo 2: Credenciais Google OAuth 2.0
- * Passo 3: Senha do Admin e GTM ID
- * Passo 4: Execução (gravação .env, prisma db push, prisma db seed)
+ * Passo 2: Senha do Admin e GTM ID
+ * Passo 3: Execucao (gravacao .env, prisma db push, prisma db seed)
  */
 export default function InstallWizardPage() {
   const router = useRouter();
 
   const [step, setStep] = useState<Step>(1);
 
-  // Passo 1 - Supabase
   const [databaseUrl, setDatabaseUrl] = useState('');
 
-  // Passo 2 - Google
-  const [googleClientId, setGoogleClientId] = useState('');
-  const [googleClientSecret, setGoogleClientSecret] = useState('');
-
-  // Passo 3 - Admin
   const [adminPassword, setAdminPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [gtmId, setGtmId] = useState('');
 
-  // Passo 4 - Execução
   const [runStatus, setRunStatus] = useState<RunStatus>('idle');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Validação por passo
   const [stepError, setStepError] = useState('');
 
   const appUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-  const redirectUri = `${appUrl}/api/auth/google/callback`;
 
   const addLog = (message: string, type: LogEntry['type'] = 'info') => {
     const time = new Date().toLocaleTimeString('pt-BR');
@@ -69,7 +56,7 @@ export default function InstallWizardPage() {
 
   const validateStep1 = (): boolean => {
     if (!databaseUrl.trim()) {
-      setStepError('Informe a URL de conexão do banco de dados.');
+      setStepError('Informe a URL de conexao do banco de dados.');
       return false;
     }
     if (!databaseUrl.includes('postgresql://') && !databaseUrl.includes('postgres://')) {
@@ -81,12 +68,6 @@ export default function InstallWizardPage() {
   };
 
   const validateStep2 = (): boolean => {
-    // Google é opcional, então a gente permite avançar sem preencher
-    setStepError('');
-    return true;
-  };
-
-  const validateStep3 = (): boolean => {
     if (!adminPassword.trim()) {
       setStepError('Defina uma senha para o painel administrativo.');
       return false;
@@ -96,7 +77,7 @@ export default function InstallWizardPage() {
       return false;
     }
     if (adminPassword !== confirmPassword) {
-      setStepError('As senhas não conferem.');
+      setStepError('As senhas nao conferem.');
       return false;
     }
     setStepError('');
@@ -107,15 +88,13 @@ export default function InstallWizardPage() {
     let valid = false;
     if (step === 1) valid = validateStep1();
     if (step === 2) valid = validateStep2();
-    if (step === 3) valid = validateStep3();
 
-    if (valid && step < 4) {
+    if (valid && step < 3) {
       setStep((step + 1) as Step);
     }
 
-    // Ao chegar no passo 4, executa automaticamente
-    if (valid && step === 3) {
-      setStep(4);
+    if (valid && step === 2) {
+      setStep(3);
       runInstall();
     }
   };
@@ -132,8 +111,8 @@ export default function InstallWizardPage() {
     setLogs([]);
     setErrorMsg('');
 
-    addLog('Iniciando o processo de instalação...');
-    addLog('Gravando as variáveis de ambiente no arquivo .env...');
+    addLog('Iniciando o processo de instalacao...');
+    addLog('Gravando as variaveis de ambiente no arquivo .env...');
 
     try {
       const res = await fetch('/api/install/run', {
@@ -141,8 +120,8 @@ export default function InstallWizardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           databaseUrl: databaseUrl.trim(),
-          googleClientId: googleClientId.trim() || '',
-          googleClientSecret: googleClientSecret.trim() || '',
+          googleClientId: '',
+          googleClientSecret: '',
           nextPublicAppUrl: appUrl,
           adminPassword: adminPassword.trim(),
           gtmId: gtmId.trim() || '',
@@ -155,7 +134,7 @@ export default function InstallWizardPage() {
         addLog(`Erro: ${data.error || 'Falha desconhecida'}`, 'error');
         if (data.details) addLog(`Detalhes: ${data.details}`, 'error');
         setRunStatus('error');
-        setErrorMsg(data.error || 'Erro ao executar a instalação');
+        setErrorMsg(data.error || 'Erro ao executar a instalacao');
         return;
       }
 
@@ -163,25 +142,20 @@ export default function InstallWizardPage() {
       addLog('Schema do Prisma aplicado ao banco (db push).', 'success');
       addLog('Dados iniciais inseridos no banco (db seed).', 'success');
       addLog('Senha administrativa configurada.', 'success');
-      addLog('✅ Instalação concluída com sucesso!', 'success');
+      addLog('Instalacao concluida com sucesso!', 'success');
       setRunStatus('success');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      addLog(`Erro crítico: ${msg}`, 'error');
+      addLog(`Erro critico: ${msg}`, 'error');
       setRunStatus('error');
       setErrorMsg(msg);
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).catch(() => {});
-  };
-
   const steps = [
     { num: 1, label: 'Banco', icon: Database },
-    { num: 2, label: 'Google', icon: KeyRound },
-    { num: 3, label: 'Admin', icon: Settings },
-    { num: 4, label: 'Executar', icon: CheckCircle2 },
+    { num: 2, label: 'Admin', icon: Settings },
+    { num: 3, label: 'Executar', icon: CheckCircle2 },
   ];
 
   return (
@@ -207,7 +181,6 @@ export default function InstallWizardPage() {
           box-shadow: var(--shadow-premium);
         }
 
-        /* ===== Stepper ===== */
         .install-stepper {
           display: flex;
           align-items: center;
@@ -272,7 +245,6 @@ export default function InstallWizardPage() {
           background: var(--status-success);
         }
 
-        /* ===== Conteúdo ===== */
         .install-step-title {
           font-size: 1.25rem;
           font-weight: 700;
@@ -354,41 +326,6 @@ export default function InstallWizardPage() {
           color: var(--text-secondary);
         }
 
-        .install-redirect-box {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 12px 14px;
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid var(--border-light);
-          border-radius: 8px;
-          margin-top: 8px;
-        }
-
-        .install-redirect-url {
-          flex: 1;
-          font-size: 0.8rem;
-          color: var(--accent-gold);
-          word-break: break-all;
-          font-family: monospace;
-        }
-
-        .install-copy-btn {
-          flex-shrink: 0;
-          background: none;
-          border: none;
-          color: var(--text-muted);
-          cursor: pointer;
-          padding: 4px;
-          display: flex;
-          align-items: center;
-          transition: color 0.2s;
-        }
-
-        .install-copy-btn:hover {
-          color: var(--accent-gold);
-        }
-
         .install-optional-tag {
           display: inline-block;
           padding: 2px 8px;
@@ -400,7 +337,6 @@ export default function InstallWizardPage() {
           margin-left: 8px;
         }
 
-        /* ===== Botões de Navegação ===== */
         .install-nav-buttons {
           display: flex;
           gap: 12px;
@@ -461,7 +397,6 @@ export default function InstallWizardPage() {
           transform: none;
         }
 
-        /* ===== Erro ===== */
         .install-error-box {
           display: flex;
           align-items: flex-start;
@@ -479,7 +414,6 @@ export default function InstallWizardPage() {
           line-height: 1.4;
         }
 
-        /* ===== Tela de Execução (Passo 4) ===== */
         .install-run-logs {
           max-height: 260px;
           overflow-y: auto;
@@ -610,20 +544,6 @@ export default function InstallWizardPage() {
           color: var(--text-primary);
         }
 
-        .install-link-external {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          color: var(--accent-gold);
-          font-size: 0.82rem;
-          text-decoration: none;
-          margin-top: 4px;
-        }
-
-        .install-link-external:hover {
-          text-decoration: underline;
-        }
-
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
@@ -652,7 +572,6 @@ export default function InstallWizardPage() {
       `}</style>
 
       <div className="install-wizard-card">
-        {/* ===== Stepper ===== */}
         <div className="install-stepper">
           {steps.map((s, i) => {
             const Icon = s.icon;
@@ -678,20 +597,19 @@ export default function InstallWizardPage() {
           })}
         </div>
 
-        {/* ===== Erro ===== */}
-        {stepError && step < 4 && (
+        {stepError && step < 3 && (
           <div className="install-error-box">
             <AlertCircle size={18} style={{ color: 'var(--status-error)', flexShrink: 0, marginTop: '2px' }} />
             <div className="install-error-text">{stepError}</div>
           </div>
         )}
 
-        {/* ===== PASSO 1: Supabase ===== */}
+        {/* PASSO 1: Supabase */}
         {step === 1 && (
           <div>
-            <h2 className="install-step-title">Conexão com o Banco de Dados</h2>
+            <h2 className="install-step-title">Conexao com o Banco de Dados</h2>
             <p className="install-step-desc">
-              Cole a Connection String (URL de conexão) do seu projeto no Supabase.
+              Cole a Connection String (URL de conexao) do seu projeto no Supabase.
             </p>
 
             <div className="install-form-group">
@@ -705,7 +623,7 @@ export default function InstallWizardPage() {
                 autoFocus
               />
               <div className="install-form-hint">
-                Encontre em: Supabase → Settings → Database → Connection String (URI).
+                Encontre em: Supabase &rarr; Settings &rarr; Database &rarr; Connection String (URI).
               </div>
             </div>
 
@@ -718,92 +636,17 @@ export default function InstallWizardPage() {
                 Voltar
               </button>
               <button className="install-btn-next" onClick={handleNext}>
-                Próximo
+                Proximo
                 <ArrowRight size={16} />
               </button>
             </div>
           </div>
         )}
 
-        {/* ===== PASSO 2: Google OAuth ===== */}
+        {/* PASSO 2: Administrador */}
         {step === 2 && (
           <div>
-            <h2 className="install-step-title">
-              Google Calendar API
-              <span className="install-optional-tag">Opcional</span>
-            </h2>
-            <p className="install-step-desc">
-              Insira as credenciais do Google Cloud para a integração com o Google Calendar.
-              Você pode pular e configurar depois.
-            </p>
-
-            <div className="install-form-group">
-              <label className="install-form-label">Client ID</label>
-              <input
-                className="install-form-input"
-                type="text"
-                value={googleClientId}
-                onChange={(e) => setGoogleClientId(e.target.value)}
-                placeholder="xxxxx.apps.googleusercontent.com"
-                autoFocus
-              />
-            </div>
-
-            <div className="install-form-group">
-              <label className="install-form-label">Client Secret</label>
-              <input
-                className="install-form-input"
-                type="text"
-                value={googleClientSecret}
-                onChange={(e) => setGoogleClientSecret(e.target.value)}
-                placeholder="GOCSPX-xxxxxxxxxxx"
-              />
-            </div>
-
-            <div className="install-form-group">
-              <label className="install-form-label">URI de Redirecionamento</label>
-              <div className="install-form-hint" style={{ marginTop: 0, marginBottom: 6 }}>
-                Cadastre esta URL como &quot;Authorized redirect URI&quot; no Google Cloud Console:
-              </div>
-              <div className="install-redirect-box">
-                <span className="install-redirect-url">{redirectUri}</span>
-                <button
-                  className="install-copy-btn"
-                  onClick={() => copyToClipboard(redirectUri)}
-                  title="Copiar URI"
-                >
-                  <Copy size={16} />
-                </button>
-              </div>
-            </div>
-
-            <a
-              href="https://console.cloud.google.com/apis/credentials"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="install-link-external"
-            >
-              Abrir Google Cloud Console
-              <ExternalLink size={14} />
-            </a>
-
-            <div className="install-nav-buttons">
-              <button className="install-btn-back" onClick={handleBack}>
-                <ArrowLeft size={16} />
-                Voltar
-              </button>
-              <button className="install-btn-next" onClick={handleNext}>
-                Próximo
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ===== PASSO 3: Administrador ===== */}
-        {step === 3 && (
-          <div>
-            <h2 className="install-step-title">Configurações do Administrador</h2>
+            <h2 className="install-step-title">Configuracoes do Administrador</h2>
             <p className="install-step-desc">
               Defina a senha de acesso ao painel administrativo e, opcionalmente, o ID do GTM para tracking.
             </p>
@@ -870,17 +713,16 @@ export default function InstallWizardPage() {
           </div>
         )}
 
-        {/* ===== PASSO 4: Execução ===== */}
-        {step === 4 && (
+        {/* PASSO 3: Execucao */}
+        {step === 3 && (
           <div>
             <h2 className="install-step-title">
-              {runStatus === 'running' && 'Executando Instalação...'}
-              {runStatus === 'success' && 'Instalação Concluída!'}
-              {runStatus === 'error' && 'Erro na Instalação'}
+              {runStatus === 'running' && 'Executando Instalacao...'}
+              {runStatus === 'success' && 'Instalacao Concluida!'}
+              {runStatus === 'error' && 'Erro na Instalacao'}
               {runStatus === 'idle' && 'Preparando...'}
             </h2>
 
-            {/* Status Bar */}
             <div className={`install-run-status ${runStatus}`}>
               {runStatus === 'running' && (
                 <>
@@ -894,7 +736,7 @@ export default function InstallWizardPage() {
                 <>
                   <CheckCircle2 size={22} style={{ color: 'var(--status-success)' }} />
                   <span className="install-run-status-text">
-                    Tudo pronto! O aplicativo está configurado.
+                    Tudo pronto! O aplicativo esta configurado.
                   </span>
                 </>
               )}
@@ -908,7 +750,6 @@ export default function InstallWizardPage() {
               )}
             </div>
 
-            {/* Logs */}
             <div className="install-run-logs">
               {logs.map((log, i) => (
                 <div key={i} className="install-log-entry">
@@ -927,7 +768,6 @@ export default function InstallWizardPage() {
               )}
             </div>
 
-            {/* Ações após conclusão */}
             {runStatus === 'success' && (
               <div className="install-success-actions">
                 <button

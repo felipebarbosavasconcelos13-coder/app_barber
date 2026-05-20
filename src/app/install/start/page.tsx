@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Database, KeyRound, Settings, ArrowRight } from 'lucide-react';
+import { Database, Settings, ArrowRight } from 'lucide-react';
 
 /**
  * Tela de boas-vindas do instalador.
@@ -14,16 +14,11 @@ export default function InstallStartPage() {
     {
       icon: Database,
       titulo: 'Banco de Dados Supabase',
-      descricao: 'Tenha em mãos a URL de conexão (Connection String) do seu projeto no Supabase.',
-    },
-    {
-      icon: KeyRound,
-      titulo: 'Credenciais Google Cloud',
-      descricao: 'Client ID e Client Secret do Google OAuth 2.0 (para integração com o Google Calendar).',
+      descricao: 'Tenha em maos a URL de conexao (Connection String) do seu projeto no Supabase.',
     },
     {
       icon: Settings,
-      titulo: 'Configurações do Admin',
+      titulo: 'Configuracoes do Admin',
       descricao: 'Defina a senha de acesso ao painel administrativo e, opcionalmente, o ID do Google Tag Manager.',
     },
   ];

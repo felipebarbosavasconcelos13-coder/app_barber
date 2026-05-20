@@ -11,7 +11,8 @@ export default async function HomePage() {
     id: string;
     name: string;
     email: string;
-    isGoogleConnected: boolean;
+    openingTime: string;
+    closingTime: string;
   }> = [];
 
   let services: Array<{
@@ -34,7 +35,8 @@ export default async function HomePage() {
       id: b.id,
       name: b.name,
       email: b.email,
-      isGoogleConnected: !!b.googleRefreshToken,
+      openingTime: b.openingTime,
+      closingTime: b.closingTime,
     }));
 
     services = rawServices.map((s) => ({

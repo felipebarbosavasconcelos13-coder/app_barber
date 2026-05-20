@@ -20,7 +20,8 @@ interface InitialBarber {
   id: string;
   name: string;
   email: string;
-  isGoogleConnected: boolean;
+  openingTime: string;
+  closingTime: string;
 }
 
 interface InitialService {
@@ -232,7 +233,7 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
                     </div>
                     <h3>{barber.name}</h3>
                     <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                      {barber.isGoogleConnected ? "Agenda Google Ativa" : "Agendamento Local"}
+                      {barber.openingTime} as {barber.closingTime}
                     </p>
                   </div>
                 ))
@@ -331,7 +332,7 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
               {loadingSlots ? (
                 <div className="loading-slots flex-center">
                   <Loader2 size={32} className="spinner" style={{ color: "var(--accent-gold)" }} />
-                  <span style={{ marginLeft: "12px", color: "var(--text-secondary)" }}>Consultando agenda do Google...</span>
+                  <span style={{ marginLeft: "12px", color: "var(--text-secondary)" }}>Consultando agenda...</span>
                 </div>
               ) : availableSlots.length === 0 ? (
                 <div className="empty-state" style={{ padding: "40px" }}>
@@ -427,7 +428,7 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
                     disabled={submitting}
                   />
                   <small style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
-                    Você receberá um convite por e-mail para adicionar à sua própria agenda do Google!
+                    Usado para identificacao do seu agendamento.
                   </small>
                 </div>
 
@@ -500,7 +501,7 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
             <div className="google-notification-box glass-card animate-fade-in" style={{ marginTop: "24px", maxWidth: "500px", padding: "18px", display: "flex", gap: "14px", alignItems: "center" }}>
               <Mail size={32} style={{ color: "var(--accent-gold)", flexShrink: 0 }} />
               <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                Enviamos uma notificação oficial de calendário para <strong>{clientData.email}</strong>. Lembre-se de aceitar o convite para receber alertas automáticos da sua agenda Google.
+                Seu agendamento foi registrado com sucesso. Guarde o codigo da reserva para referencia.
               </div>
             </div>
 
