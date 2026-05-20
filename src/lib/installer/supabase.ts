@@ -145,6 +145,7 @@ export async function resolveSupabaseDbUrl(accessToken: string, projectRef: stri
   if (!projectRes.ok) return { ok: false, error: `Failed to get project info: ${projectRes.error}` };
 
   const host = projectRes.data?.database?.host || projectRes.data?.db_host || projectRes.data?.dbHost;
+  const region = projectRes.data?.region;
   if (!host || typeof host !== "string" || !host.trim()) {
     return { ok: false, error: "Could not resolve database host from project info." };
   }
@@ -163,12 +164,21 @@ export async function resolveSupabaseDbUrl(accessToken: string, projectRef: stri
   const password = loginRes.data?.password;
   if (!role || !password) return { ok: false, error: "Could not resolve CLI login role credentials." };
 
-  // Supabase project database hosts (`db.<ref>.supabase.co`) use the direct
-  // Postgres port. The transaction pooler uses a different pooler host, so
-  // using port 6543 here makes schema setup fail even with valid credentials.
-  const dbUrl = `postgresql://${role}:${password}@${host.trim()}:5432/postgres?sslmode=require`;
+  const safeRole = encodeURIComponent(String(role));
+  const safePassword = encodeURIComponent(String(password));
+  const directUrl = `postgresql://${safeRole}:${safePassword}@${host.trim()}:5432/postgres?sslmode=require`;
+  const dbUrls = [{ label: "direct", url: directUrl, host: host.trim() }];
 
-  return { ok: true, dbUrl, role, host: host.trim() };
+  if (typeof region === "string" && region.trim()) {
+    const poolerHost = `aws-0-${region.trim()}.pooler.supabase.com`;
+    dbUrls.unshift({
+      label: "pooler",
+      url: `postgresql://${encodeURIComponent(`${role}.${projectRef}`)}:${safePassword}@${poolerHost}:6543/postgres?sslmode=require`,
+      host: poolerHost,
+    });
+  }
+
+  return { ok: true, dbUrl: dbUrls[0].url, dbUrls, role, host: dbUrls[0].host };
 }
 
 export function extractProjectRefFromUrl(supabaseUrl: string): string | null {

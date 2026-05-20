@@ -21,12 +21,12 @@ Conforme solicitado, **o instalador sera pratico e funcional**, focado em simpli
        - Seletor de projeto Vercel (auto-detectado em dominios `.vercel.app`).
        - Supabase Access Token (PAT) com busca automatica que valida, lista organizacoes e usa fallback de projetos diretos quando nenhuma organizacao e retornada.
        - URL do projeto Supabase (auto-preenchida ao selecionar projeto). Projeto existente pode ser usado mesmo sem organizacao visivel.
-       - **DATABASE_URL e resolvida automaticamente** via Supabase Management API — usuario nao precisa colar connection string.
+       - **DATABASE_URL e resolvida automaticamente** via Supabase Management API — usuario nao precisa colar connection string. O instalador testa pooler regional e conexao direta, usando a primeira URL funcional.
    *   **Passo 2 (Administrador)**: Senha Mestra administrativa e ID do Google Tag Manager (GTM, opcional).
    *   **Passo 3 (Execucao)**: 
        - Resolve DATABASE_URL via Supabase API (`/v1/projects/{ref}/cli/login-role`).
        - Configura env vars na Vercel via API (`upsertProjectEnvs`): `DATABASE_URL`, `ADMIN_PASSWORD`, `NEXT_PUBLIC_APP_URL`.
-       - Aplica schema e semeia dados iniciais via API usando SQL direto (`pg`), sem depender de Prisma CLI no runtime da Vercel.
+       - Aplica schema e semeia dados iniciais via API usando SQL direto (`pg`), sem depender de Prisma CLI no runtime da Vercel. As variaveis na Vercel sao salvas apenas depois que a conexao do banco e validada.
        - Feedback visual em tempo real com logs de cada etapa.
 
 ---
@@ -104,9 +104,9 @@ model Booking {
 - **[UPDATED] `src/app/install/wizard/page.tsx`**: Wizard com busca de projetos Vercel + Supabase. DATABASE_URL resolvida automaticamente.
 - **[NEW] `src/app/api/install/vercel/projects/route.ts`**: API que valida token Vercel e retorna projetos.
 - **[NEW] `src/app/api/install/supabase/projects/route.ts`**: API que valida token Supabase e retorna projetos.
-- **[UPDATED] `src/app/api/install/run/route.ts`**: Resolve DATABASE_URL via Supabase API + seta env vars Vercel + aplica schema/seed via SQL direto.
+- **[UPDATED] `src/app/api/install/run/route.ts`**: Resolve DATABASE_URL via Supabase API, testa candidatos pooler/direto, aplica schema/seed via SQL direto e so entao seta env vars Vercel.
 - **[NEW] `src/lib/installer/vercel.ts`**: `upsertProjectEnvs`, `listVercelProjects`, `validateVercelToken`.
-- **[NEW] `src/lib/installer/supabase.ts`**: `resolveSupabaseDbUrl`, `listSupabaseProjects`, `extractProjectRefFromUrl`.
+- **[NEW] `src/lib/installer/supabase.ts`**: `resolveSupabaseDbUrl`, `listSupabaseProjects`, `extractProjectRefFromUrl`; a resolucao retorna candidatos de DATABASE_URL para pooler regional e conexao direta.
 
 ### 2. Redirecionamento Automatico
 

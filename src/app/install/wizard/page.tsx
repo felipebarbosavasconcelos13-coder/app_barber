@@ -212,8 +212,9 @@ export default function InstallWizardPage() {
       const d = await r.json();
       if (!r.ok || !d.success) {
         addLog(`Erro: ${d.error || 'Falha'}`, 'error');
+        if (d.details) addLog(`Detalhes: ${d.details}`, 'error');
         if (d.steps) d.steps.forEach((s: any) => addLog(s.message, s.status === 'ok' ? 'success' : 'error'));
-        setRunStatus('error'); setErrorMsg(d.error || 'Erro');
+        setRunStatus('error'); setErrorMsg(d.details || d.error || 'Erro');
         return;
       }
       if (d.steps) d.steps.forEach((s: any) => addLog(s.message, s.status === 'ok' ? 'success' : 'error'));

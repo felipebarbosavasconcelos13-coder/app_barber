@@ -91,6 +91,7 @@ function createPool(databaseUrl: string) {
     connectionString: databaseUrl,
     ssl: databaseUrl.includes("sslmode=require") ? { rejectUnauthorized: false } : undefined,
     max: 1,
+    connectionTimeoutMillis: 10000,
   });
 }
 
@@ -155,6 +156,9 @@ export async function POST(req: Request) {
 
     // Resolve DATABASE_URL
     let resolvedDbUrl = databaseUrl?.trim();
+    let dbUrlCandidates: Array<{ label: string; url: string; host?: string }> = resolvedDbUrl
+      ? [{ label: "manual", url: resolvedDbUrl }]
+      : [];
 
     if (!resolvedDbUrl && supabaseToken && supabaseUrl) {
       steps.push({ id: "supabase_resolve", status: "running", message: "Resolvendo DATABASE_URL via Supabase API..." });
@@ -177,7 +181,13 @@ export async function POST(req: Request) {
           }, { status: 400 });
         }
 
-        resolvedDbUrl = dbResult.dbUrl;
+        dbUrlCandidates = Array.isArray(dbResult.dbUrls)
+          ? dbResult.dbUrls.filter((c: any) => typeof c?.url === "string" && c.url.trim())
+          : [];
+        if (dbUrlCandidates.length === 0 && typeof dbResult.dbUrl === "string" && dbResult.dbUrl.trim()) {
+          dbUrlCandidates = [{ label: "supabase", url: dbResult.dbUrl, host: dbResult.host }];
+        }
+        resolvedDbUrl = dbUrlCandidates[0]?.url;
         steps.push({ id: "supabase_resolve", status: "ok", message: `DATABASE_URL resolvida (host: ${dbResult.host}).` });
       } catch (err: any) {
         return NextResponse.json({
@@ -196,7 +206,60 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    // 1. Configurar env vars na Vercel via API
+    // 1. Aplicar schema diretamente. Executar `npx prisma db push` dentro da
+    // Vercel e fragil porque o runtime serverless nao e um ambiente de CLI.
+    steps.push({ id: "prisma_push", status: "running", message: "Aplicando schema no banco..." });
+    const schemaErrors: string[] = [];
+    try {
+      let applied = false;
+      for (const candidate of dbUrlCandidates) {
+        try {
+          await applySchema(candidate.url);
+          resolvedDbUrl = candidate.url;
+          process.env.DATABASE_URL = resolvedDbUrl;
+          steps.push({ id: "prisma_push", status: "ok", message: `Schema aplicado (${candidate.label}).` });
+          applied = true;
+          break;
+        } catch (err: any) {
+          schemaErrors.push(`${candidate.label}${candidate.host ? ` ${candidate.host}` : ""}: ${String(err.message || err)}`);
+        }
+      }
+      if (!applied) throw new Error(schemaErrors.join(" | "));
+    } catch (pushError: any) {
+      return NextResponse.json({
+        success: false,
+        steps,
+        error: "Falha ao aplicar o schema. Verifique a conexao com o banco.",
+        details: schemaErrors.length ? schemaErrors.join(" | ") : String(pushError.message || pushError),
+      }, { status: 500 });
+    }
+
+    // 2. Seed inicial
+    steps.push({ id: "prisma_seed", status: "running", message: "Inserindo dados iniciais..." });
+    try {
+      await seedInitialData(resolvedDbUrl, adminPassword || "admin123", gtmId || null);
+      steps.push({ id: "prisma_seed", status: "ok", message: "Dados iniciais inseridos." });
+    } catch (seedError: any) {
+      return NextResponse.json({
+        success: false,
+        steps,
+        error: "Falha ao inserir dados iniciais.",
+        details: String(seedError.message || seedError),
+      }, { status: 500 });
+    }
+
+    // 3. Gravar .env localmente (dev) apenas depois de validar a URL final
+    try {
+      const envPath = path.join(process.cwd(), ".env");
+      fs.writeFileSync(envPath, [
+        `DATABASE_URL="${resolvedDbUrl}"`,
+        `NEXT_PUBLIC_APP_URL="${nextPublicAppUrl || "http://localhost:3000"}"`,
+        `ADMIN_PASSWORD="${adminPassword || "admin123"}"`,
+        "",
+      ].join("\n"), "utf-8");
+    } catch {}
+
+    // 4. Configurar env vars na Vercel via API apenas depois de validar a URL final
     if (vercelToken && vercelProjectId) {
       steps.push({ id: "vercel_env", status: "running", message: "Configurando variaveis na Vercel..." });
       try {
@@ -209,49 +272,6 @@ export async function POST(req: Request) {
       } catch (vercelErr: any) {
         steps.push({ id: "vercel_env", status: "warning", message: `Vercel API: ${vercelErr.message}` });
       }
-    }
-
-    // 2. Gravar .env localmente (dev)
-    try {
-      const envPath = path.join(process.cwd(), ".env");
-      fs.writeFileSync(envPath, [
-        `DATABASE_URL="${resolvedDbUrl}"`,
-        `NEXT_PUBLIC_APP_URL="${nextPublicAppUrl || "http://localhost:3000"}"`,
-        `ADMIN_PASSWORD="${adminPassword || "admin123"}"`,
-        "",
-      ].join("\n"), "utf-8");
-    } catch {}
-
-    // 3. Inject no processo atual
-    process.env.DATABASE_URL = resolvedDbUrl;
-
-    // 4. Aplicar schema diretamente. Executar `npx prisma db push` dentro da
-    // Vercel e fragil porque o runtime serverless nao e um ambiente de CLI.
-    steps.push({ id: "prisma_push", status: "running", message: "Aplicando schema no banco..." });
-    try {
-      await applySchema(resolvedDbUrl);
-      steps.push({ id: "prisma_push", status: "ok", message: "Schema aplicado." });
-    } catch (pushError: any) {
-      return NextResponse.json({
-        success: false,
-        steps,
-        error: "Falha ao aplicar o schema. Verifique a conexao com o banco.",
-        details: String(pushError.message || pushError),
-      }, { status: 500 });
-    }
-
-    // 5. Seed inicial
-    steps.push({ id: "prisma_seed", status: "running", message: "Inserindo dados iniciais..." });
-    try {
-      await seedInitialData(resolvedDbUrl, adminPassword || "admin123", gtmId || null);
-      steps.push({ id: "prisma_seed", status: "ok", message: "Dados iniciais inseridos." });
-    } catch (seedError: any) {
-      return NextResponse.json({
-        success: false,
-        steps,
-        error: "Falha ao inserir dados iniciais.",
-        details: String(seedError.message || seedError),
-      }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, steps, message: "Aplicativo configurado com sucesso!" });
