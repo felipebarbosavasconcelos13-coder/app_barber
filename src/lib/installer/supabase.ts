@@ -163,7 +163,10 @@ export async function resolveSupabaseDbUrl(accessToken: string, projectRef: stri
   const password = loginRes.data?.password;
   if (!role || !password) return { ok: false, error: "Could not resolve CLI login role credentials." };
 
-  const dbUrl = `postgresql://${role}:${password}@${host.trim()}:6543/postgres?pgbouncer=true`;
+  // Supabase project database hosts (`db.<ref>.supabase.co`) use the direct
+  // Postgres port. The transaction pooler uses a different pooler host, so
+  // using port 6543 here makes schema setup fail even with valid credentials.
+  const dbUrl = `postgresql://${role}:${password}@${host.trim()}:5432/postgres?sslmode=require`;
 
   return { ok: true, dbUrl, role, host: host.trim() };
 }

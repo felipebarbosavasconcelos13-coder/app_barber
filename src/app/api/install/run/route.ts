@@ -1,15 +1,137 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
-import { exec } from "child_process";
-import { promisify } from "util";
+import { Pool } from "pg";
 import { upsertProjectEnvs } from "@/lib/installer/vercel";
 import { resolveSupabaseDbUrl, extractProjectRefFromUrl } from "@/lib/installer/supabase";
 
-const execAsync = promisify(exec);
-
 export const maxDuration = 300;
+
+const schemaSql = `
+CREATE SCHEMA IF NOT EXISTS "public";
+
+CREATE TABLE IF NOT EXISTS "SystemSettings" (
+  "id" TEXT NOT NULL DEFAULT 'default',
+  "gtmId" TEXT,
+  "openingTime" TEXT NOT NULL DEFAULT '09:00',
+  "closingTime" TEXT NOT NULL DEFAULT '19:00',
+  "adminPassword" TEXT NOT NULL DEFAULT 'admin123',
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "SystemSettings_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "Barber" (
+  "id" TEXT NOT NULL,
+  "name" TEXT NOT NULL,
+  "email" TEXT NOT NULL,
+  "openingTime" TEXT NOT NULL DEFAULT '09:00',
+  "closingTime" TEXT NOT NULL DEFAULT '19:00',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "Barber_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "Service" (
+  "id" TEXT NOT NULL,
+  "name" TEXT NOT NULL,
+  "price" DOUBLE PRECISION NOT NULL,
+  "duration" INTEGER NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "Service_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "Booking" (
+  "id" TEXT NOT NULL,
+  "clientName" TEXT NOT NULL,
+  "clientEmail" TEXT NOT NULL,
+  "clientPhone" TEXT NOT NULL,
+  "dateTime" TIMESTAMP(3) NOT NULL,
+  "serviceId" TEXT NOT NULL,
+  "barberId" TEXT NOT NULL,
+  "googleEventId" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "_BarberServices" (
+  "A" TEXT NOT NULL,
+  "B" TEXT NOT NULL,
+  CONSTRAINT "_BarberServices_AB_pkey" PRIMARY KEY ("A", "B")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "Barber_email_key" ON "Barber"("email");
+CREATE INDEX IF NOT EXISTS "_BarberServices_B_index" ON "_BarberServices"("B");
+
+DO $$ BEGIN
+  ALTER TABLE "Booking" ADD CONSTRAINT "Booking_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "Service"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "Booking" ADD CONSTRAINT "Booking_barberId_fkey" FOREIGN KEY ("barberId") REFERENCES "Barber"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "_BarberServices" ADD CONSTRAINT "_BarberServices_A_fkey" FOREIGN KEY ("A") REFERENCES "Barber"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "_BarberServices" ADD CONSTRAINT "_BarberServices_B_fkey" FOREIGN KEY ("B") REFERENCES "Service"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+`;
+
+function createPool(databaseUrl: string) {
+  return new Pool({
+    connectionString: databaseUrl,
+    ssl: databaseUrl.includes("sslmode=require") ? { rejectUnauthorized: false } : undefined,
+    max: 1,
+  });
+}
+
+async function applySchema(databaseUrl: string) {
+  const pool = createPool(databaseUrl);
+  try {
+    await pool.query(schemaSql);
+  } finally {
+    await pool.end();
+  }
+}
+
+async function seedInitialData(databaseUrl: string, adminPassword: string, gtmId?: string | null) {
+  const pool = createPool(databaseUrl);
+  const services = [
+    { name: "Corte de Cabelo Masculino", price: 45.0, duration: 30 },
+    { name: "Barba Completa", price: 30.0, duration: 30 },
+    { name: "Combo Corte + Barba", price: 70.0, duration: 60 },
+    { name: "Sobrancelha na Navalha", price: 15.0, duration: 15 },
+  ];
+
+  try {
+    await pool.query(
+      `INSERT INTO "SystemSettings" ("id", "gtmId", "openingTime", "closingTime", "adminPassword", "updatedAt")
+       VALUES ('default', $1, '09:00', '19:00', $2, NOW())
+       ON CONFLICT ("id") DO UPDATE SET "gtmId" = EXCLUDED."gtmId", "adminPassword" = EXCLUDED."adminPassword", "updatedAt" = NOW()`,
+      [gtmId || null, adminPassword]
+    );
+
+    for (const service of services) {
+      await pool.query(
+        `INSERT INTO "Service" ("id", "name", "price", "duration", "createdAt", "updatedAt")
+         SELECT $1, $2, $3, $4, NOW(), NOW()
+         WHERE NOT EXISTS (SELECT 1 FROM "Service" WHERE "name" = $2)`,
+        [randomUUID(), service.name, service.price, service.duration]
+      );
+    }
+  } finally {
+    await pool.end();
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -103,44 +225,33 @@ export async function POST(req: Request) {
     // 3. Inject no processo atual
     process.env.DATABASE_URL = resolvedDbUrl;
 
-    // 4. prisma db push
+    // 4. Aplicar schema diretamente. Executar `npx prisma db push` dentro da
+    // Vercel e fragil porque o runtime serverless nao e um ambiente de CLI.
     steps.push({ id: "prisma_push", status: "running", message: "Aplicando schema no banco..." });
     try {
-      await execAsync("npx prisma db push", { env: { ...process.env, DATABASE_URL: resolvedDbUrl } });
+      await applySchema(resolvedDbUrl);
       steps.push({ id: "prisma_push", status: "ok", message: "Schema aplicado." });
     } catch (pushError: any) {
       return NextResponse.json({
         success: false,
         steps,
         error: "Falha ao aplicar o schema. Verifique a conexao com o banco.",
-        details: String(pushError.stderr || pushError.message || pushError),
+        details: String(pushError.message || pushError),
       }, { status: 500 });
     }
 
-    // 5. prisma db seed
+    // 5. Seed inicial
     steps.push({ id: "prisma_seed", status: "running", message: "Inserindo dados iniciais..." });
     try {
-      await execAsync("npx prisma db seed", { env: { ...process.env, DATABASE_URL: resolvedDbUrl } });
+      await seedInitialData(resolvedDbUrl, adminPassword || "admin123", gtmId || null);
       steps.push({ id: "prisma_seed", status: "ok", message: "Dados iniciais inseridos." });
     } catch (seedError: any) {
-      if (!String(seedError).includes("Unique constraint")) {
-        steps.push({ id: "prisma_seed", status: "warning", message: "Dados ja existentes." });
-      }
-    }
-
-    // 6. SystemSettings
-    steps.push({ id: "settings", status: "running", message: "Salvando configuracoes..." });
-    const prismaClient = new PrismaClient({ log: ["error"] });
-    try {
-      await prismaClient.systemSettings.upsert({
-        where: { id: "default" },
-        update: { adminPassword: adminPassword || "admin123", gtmId: gtmId || null },
-        create: { id: "default", adminPassword: adminPassword || "admin123", gtmId: gtmId || null, openingTime: "09:00", closingTime: "19:00" },
-      });
-      await prismaClient.$disconnect();
-      steps.push({ id: "settings", status: "ok", message: "Configuracoes salvas." });
-    } catch {
-      await prismaClient.$disconnect();
+      return NextResponse.json({
+        success: false,
+        steps,
+        error: "Falha ao inserir dados iniciais.",
+        details: String(seedError.message || seedError),
+      }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, steps, message: "Aplicativo configurado com sucesso!" });

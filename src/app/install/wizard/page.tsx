@@ -117,9 +117,27 @@ export default function InstallWizardPage() {
       if (r.ok && d.organizations) {
         setOrgs(d.organizations);
         setSupabaseTokenValidated(true);
-        if (d.organizations.length === 1) { setSelectedOrg(d.organizations[0].slug); loadProjects(d.organizations[0].slug); }
+        if (d.organizations.length === 1) {
+          setSelectedOrg(d.organizations[0].slug);
+          loadProjects(d.organizations[0].slug);
+        } else if (d.organizations.length === 0) {
+          await loadDirectProjects();
+        }
+        return true;
       } else setStepError(d.error || 'Token Supabase invalido');
     } catch { setStepError('Erro ao buscar organizacoes.'); } finally { setLoadingOrgs(false); }
+    return false;
+  };
+
+  const loadDirectProjects = async () => {
+    setSelectedOrg('');
+    setOrgProjects([]);
+    setLoadingProjects(true);
+    try {
+      const r = await fetch('/api/install/supabase/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: supabaseToken.trim() }) });
+      const d = await r.json();
+      if (r.ok && d.projects) setOrgProjects(d.projects);
+    } catch {} finally { setLoadingProjects(false); }
   };
 
   const loadProjects = async (slug: string) => {
@@ -134,6 +152,10 @@ export default function InstallWizardPage() {
   };
 
   const handleCreateProject = async () => {
+    if (!selectedOrg) {
+      setStepError('Para criar um projeto novo, selecione uma organizacao Supabase. Se sua conta nao retornar organizacoes, selecione um projeto existente.');
+      return;
+    }
     if (!newProjectName.trim() || !newProjectDbPass || newProjectDbPass.length < 12) {
       setStepError('Nome do projeto e senha do banco (min 12 caracteres) obrigatorios.');
       return;
@@ -155,7 +177,8 @@ export default function InstallWizardPage() {
   const selectProject = (ref: string) => { setSelectedProjectRef(ref); setSelectedSupabaseUrl(`https://${ref}.supabase.co`); };
 
   const validateStep2 = () => {
-    if (!selectedOrg && orgs.length !== 1) { setStepError('Selecione uma organizacao.'); return false; }
+    const wantsCreate = newProjectName.trim().length > 0;
+    if (wantsCreate && !selectedOrg) { setStepError('Para criar um projeto novo, selecione uma organizacao Supabase.'); return false; }
     if (!selectedProjectRef && !newProjectName.trim()) { setStepError('Selecione um projeto ou crie um novo.'); return false; }
     if (!adminPassword.trim() || adminPassword.length < 4) { setStepError('Senha: min 4 caracteres.'); return false; }
     if (adminPassword !== confirmPassword) { setStepError('Senhas nao conferem.'); return false; }
@@ -165,8 +188,8 @@ export default function InstallWizardPage() {
   const goToStep2 = async () => {
     if (!supabaseToken.trim()) { setStepError('Token Supabase obrigatorio.'); return; }
     if (!supabaseTokenValidated) {
-      await searchSupabaseOrgs();
-      if (!supabaseTokenValidated) return;
+      const ok = await searchSupabaseOrgs();
+      if (!ok) return;
     }
     setStepError(''); setStep(2);
   };
@@ -299,7 +322,7 @@ export default function InstallWizardPage() {
             <div className="install-form-group">
               <label className="install-form-label"><Database size={13} style={{ display: 'inline', marginRight: 4 }} />Supabase Access Token</label>
               <input className="install-form-input" type="password" value={supabaseToken}
-                onChange={e => { setSupabaseToken(e.target.value); setSupabaseTokenValidated(false); setOrgs([]); }}
+                onChange={e => { setSupabaseToken(e.target.value); setSupabaseTokenValidated(false); setOrgs([]); setSelectedOrg(''); setOrgProjects([]); setSelectedProjectRef(''); setSelectedSupabaseUrl(''); }}
                 placeholder="Cole seu Personal Access Token (PAT)" />
               {loadingOrgs && <span className="install-tag warn"><Loader2 size={10} className="install-spinner" style={{ display: 'inline' }} /> Buscando...</span>}
               {orgs.length > 0 && <span className="install-tag ok">{orgs.length} org(s) encontrada(s)</span>}
@@ -331,12 +354,12 @@ export default function InstallWizardPage() {
               </div>
             )}
 
-            {selectedOrg && (
+            {(selectedOrg || orgs.length === 0) && (
               <>
                 <div className="install-form-group">
                   <label className="install-form-label">Projeto Supabase</label>
                   {loadingProjects ? <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}><Loader2 size={20} className="install-spinner" /></div> :
-                    orgProjects.length === 0 ? <div style={{ padding: '14px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Nenhum projeto. Crie um abaixo.</div> :
+                    orgProjects.length === 0 ? <div style={{ padding: '14px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{orgs.length === 0 ? 'Nenhum projeto encontrado para este token.' : 'Nenhum projeto. Crie um abaixo.'}</div> :
                       <div style={{ maxHeight: 200, overflowY: 'auto' }}>
                         {orgProjects.map(p => (
                           <div key={p.ref} className={`install-project-card ${selectedProjectRef === p.ref ? 'selected' : ''}`} onClick={() => selectProject(p.ref)}>
@@ -353,20 +376,27 @@ export default function InstallWizardPage() {
 
                 <div className="install-create-box">
                   <h4><Plus size={14} style={{ display: 'inline', marginRight: 4 }} />Criar Novo Projeto</h4>
-                  <div className="install-form-group"><input className="install-form-input" type="text" value={newProjectName} onChange={e => setNewProjectName(e.target.value)} placeholder="Nome do projeto" /></div>
-                  <div className="install-form-group"><input className="install-form-input" type="password" value={newProjectDbPass} onChange={e => setNewProjectDbPass(e.target.value)} placeholder="Senha do banco (min 12 caracteres)" /></div>
-                  <div className="install-form-group">
-                    <select className="install-form-select" value={newProjectRegion} onChange={e => setNewProjectRegion(e.target.value)}>
-                      <option value="">Regiao (auto)</option>
-                      <option value="americas">Americas</option>
-                      <option value="emea">Europa / Medio Oriente</option>
-                      <option value="apac">Asia-Pacifico</option>
-                    </select>
-                  </div>
-                  <button className="install-btn-create" onClick={handleCreateProject} disabled={creatingProject}>
+                  {!selectedOrg && orgs.length === 0 ? (
+                    <div className="install-form-hint">Sua conta nao retornou organizacoes pela API do Supabase. Neste caso, selecione um projeto existente acima.</div>
+                  ) : (
+                    <>
+                      <div className="install-form-group"><input className="install-form-input" type="text" value={newProjectName} onChange={e => setNewProjectName(e.target.value)} placeholder="Nome do projeto" /></div>
+                      <div className="install-form-group"><input className="install-form-input" type="password" value={newProjectDbPass} onChange={e => setNewProjectDbPass(e.target.value)} placeholder="Senha do banco (min 12 caracteres)" /></div>
+                      <div className="install-form-group">
+                        <select className="install-form-select" value={newProjectRegion} onChange={e => setNewProjectRegion(e.target.value)}>
+                          <option value="">Regiao (auto)</option>
+                          <option value="americas">Americas</option>
+                          <option value="emea">Europa / Medio Oriente</option>
+                          <option value="apac">Asia-Pacifico</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+                  <button className="install-btn-create" onClick={handleCreateProject} disabled={creatingProject || !selectedOrg}>
                     {creatingProject ? <Loader2 size={14} className="install-spinner" /> : <Plus size={14} />}
                     {creatingProject ? 'Criando...' : 'Criar Projeto'}
                   </button>
+                  {!selectedOrg && orgs.length > 1 && <div className="install-form-hint">Selecione uma organizacao para habilitar a criacao.</div>}
                 </div>
               </>
             )}

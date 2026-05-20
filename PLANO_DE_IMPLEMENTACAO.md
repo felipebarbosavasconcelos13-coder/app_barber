@@ -2,6 +2,8 @@
 
 Este documento apresenta o plano de acao detalhado para criar um **Wizard de Instalacao na Web (`/install`)** para o aplicativo de agendamento online de barbearia, unindo-o a migracao para o **Supabase (PostgreSQL)** e ao versionamento completo no **GitHub**.
 
+**Regra operacional:** apos cada alteracao no projeto, atualizar este `PLANO_DE_IMPLEMENTACAO.md` e o `LOG_DESENVOLVIMENTO.md` antes de finalizar a tarefa.
+
 ---
 
 ## Detalhes do Novo Recurso: Wizard de Instalacao (`/install`)
@@ -17,14 +19,14 @@ Conforme solicitado, **o instalador sera pratico e funcional**, focado em simpli
    *   **Passo 1 (Conexao)**: 
        - Token da Vercel (Full Account) com botao "Buscar" que valida e lista projetos.
        - Seletor de projeto Vercel (auto-detectado em dominios `.vercel.app`).
-       - Supabase Access Token (PAT) com botao "Buscar" que valida e lista projetos.
-       - URL do projeto Supabase (auto-preenchida ao selecionar projeto).
+       - Supabase Access Token (PAT) com busca automatica que valida, lista organizacoes e usa fallback de projetos diretos quando nenhuma organizacao e retornada.
+       - URL do projeto Supabase (auto-preenchida ao selecionar projeto). Projeto existente pode ser usado mesmo sem organizacao visivel.
        - **DATABASE_URL e resolvida automaticamente** via Supabase Management API — usuario nao precisa colar connection string.
    *   **Passo 2 (Administrador)**: Senha Mestra administrativa e ID do Google Tag Manager (GTM, opcional).
    *   **Passo 3 (Execucao)**: 
        - Resolve DATABASE_URL via Supabase API (`/v1/projects/{ref}/cli/login-role`).
        - Configura env vars na Vercel via API (`upsertProjectEnvs`): `DATABASE_URL`, `ADMIN_PASSWORD`, `NEXT_PUBLIC_APP_URL`.
-       - Aplica migracao Prisma (`prisma db push`) e semeia dados iniciais (`prisma db seed`).
+       - Aplica schema e semeia dados iniciais via API usando SQL direto (`pg`), sem depender de Prisma CLI no runtime da Vercel.
        - Feedback visual em tempo real com logs de cada etapa.
 
 ---
@@ -102,7 +104,7 @@ model Booking {
 - **[UPDATED] `src/app/install/wizard/page.tsx`**: Wizard com busca de projetos Vercel + Supabase. DATABASE_URL resolvida automaticamente.
 - **[NEW] `src/app/api/install/vercel/projects/route.ts`**: API que valida token Vercel e retorna projetos.
 - **[NEW] `src/app/api/install/supabase/projects/route.ts`**: API que valida token Supabase e retorna projetos.
-- **[UPDATED] `src/app/api/install/run/route.ts`**: Resolve DATABASE_URL via Supabase API + seta env vars Vercel + prisma push/seed.
+- **[UPDATED] `src/app/api/install/run/route.ts`**: Resolve DATABASE_URL via Supabase API + seta env vars Vercel + aplica schema/seed via SQL direto.
 - **[NEW] `src/lib/installer/vercel.ts`**: `upsertProjectEnvs`, `listVercelProjects`, `validateVercelToken`.
 - **[NEW] `src/lib/installer/supabase.ts`**: `resolveSupabaseDbUrl`, `listSupabaseProjects`, `extractProjectRefFromUrl`.
 
@@ -136,7 +138,7 @@ model Booking {
 
 1. **Testes do Instalador Web**:
    - Abrir o app localmente e garantir que a rota `/install` seja exibida.
-   - Fornecer credenciais de teste, concluir o instalador e verificar se o `.env` e gerado e as tabelas populadas.
+   - Fornecer credenciais de teste, concluir o instalador e verificar se o `.env` e gerado e as tabelas populadas via SQL direto.
    - Acessar `/install` apos conclusao e verificar redirecionamento para `/admin`.
 
 2. **Testes do Sistema de Agendamento**:

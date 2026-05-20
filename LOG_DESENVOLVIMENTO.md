@@ -2,6 +2,8 @@
 
 Este arquivo registra a evolução cronológica, decisões arquiteturais, correções de bugs e o status de desenvolvimento do aplicativo de agendamento online de barbearia. Ele serve de base de acompanhamento contínuo e histórico técnico do projeto.
 
+**Regra operacional:** apos cada alteracao no projeto, atualizar este `LOG_DESENVOLVIMENTO.md` e o `PLANO_DE_IMPLEMENTACAO.md` antes de finalizar a tarefa.
+
 ---
 
 ## 📅 Linha do Tempo e Progresso do Projeto
@@ -121,3 +123,6 @@ gantt
 | **20/05/2026** | `package.json` | `prisma generate` não rodava antes do build, causando erro `Module has no exported member 'Barber'`. | Adicionado `prisma generate` nos scripts `build` e `postinstall`. |
 | **20/05/2026** | `prisma/seed.js` | Seed usava `PrismaClient()` sem adapter, incompatível com Prisma v7 engine `client`. | Adicionado `PrismaPg` adapter com `connectionString`. |
 | **20/05/2026** | Wizard `/install/wizard` | Instalador solicitava DATABASE_URL manual. | Substituído por Supabase Token + URL. DATABASE_URL resolvida automaticamente via Supabase Management API (`cli/login-role`). |
+| **20/05/2026** | `src/lib/installer/supabase.ts` | DATABASE_URL resolvida com host direto `db.<ref>.supabase.co` usando porta `6543`, que pertence ao pooler e pode falhar ao aplicar schema. | Corrigida a URL para porta direta `5432` com `sslmode=require`. |
+| **20/05/2026** | `src/app/api/install/run/route.ts` | Instalador executava `npx prisma db push` e `npx prisma db seed` dentro do runtime da Vercel, fluxo fragil em serverless e sujeito a falha mesmo com banco correto. | Substituido por aplicacao de schema e seed via SQL direto usando `pg`, sem depender do Prisma CLI em runtime. |
+| **20/05/2026** | `src/app/install/wizard/page.tsx` | Wizard exibia erro "Selecione uma organizacao." mesmo quando o seletor de organizacao nao aparecia ou a API do Supabase retornava lista vazia. | Comparado com o instalador do CRM `gsdcrm`; ajustado fallback para buscar projetos diretos, permitir projeto existente sem organizacao e exigir organizacao apenas para criar projeto novo. |
