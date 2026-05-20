@@ -240,16 +240,25 @@ export async function POST(req: Request) {
       if (!applied) throw new Error(schemaErrors.join(" | "));
     } catch (pushError: any) {
       const errMessage = schemaErrors.join(" | ");
-      const isPaused = (errMessage.includes("tenant/user") && errMessage.includes("not found")) ||
-                       (errMessage.includes("ENOTFOUND") && (errMessage.includes("supabase.co") || errMessage.includes("supabase.com")));
+      
+      // Erro clássico de host não encontrado (ENOTFOUND)
+      const isDnsError = errMessage.includes("ENOTFOUND") && 
+                         (errMessage.includes("supabase.co") || errMessage.includes("supabase.com") || errMessage.includes("pooler"));
+                         
+      // Erro clássico de tenant/user não encontrado no pooler do Supavisor
+      const isPoolerTenantError = errMessage.includes("tenant/user") && errMessage.includes("not found");
 
-      if (isPaused) {
+      if (isDnsError || isPoolerTenantError) {
         return NextResponse.json({
           success: false,
           steps,
-          error: "O projeto do Supabase está PAUSADO ou INATIVO.",
-          details: "Não foi possível conectar ao banco de dados porque o projeto está inativo ou suspenso na plataforma Supabase. Por favor, acesse o painel da Supabase (https://supabase.com/dashboard), certifique-se de que o projeto está ativo (se estiver pausado, clique em 'Restaurar' / 'Restore') e tente rodar a instalação novamente.",
+          error: "O banco de dados da Supabase está inacessível ou o Connection Pooler está inativo.",
+          details: "Não foi possível conectar ao banco de dados. Isso geralmente ocorre por dois motivos:\n\n" +
+                   "1. O seu projeto está PAUSADO ou INATIVO na Supabase (se estiver, clique em 'Restaurar / Restore' no painel da Supabase).\n" +
+                   "2. Se o seu projeto estiver ativo e saudável, o recurso de 'Connection Pooler' pode estar DESATIVADO (Disabled) nas configurações de banco da Supabase, ou a infraestrutura do pooler ainda está se propagando/sincronizando na rede (projetos criados recentemente podem levar de 5 a 15 minutos para ativar o pooler de conexões).\n\n" +
+                   "Por favor, acesse o painel (https://supabase.com/dashboard), ative o seu Connection Pooler em 'Settings -> Database' se necessário, e tente novamente.",
           supabasePaused: true,
+          supabasePoolerError: true,
         }, { status: 503 });
       }
 

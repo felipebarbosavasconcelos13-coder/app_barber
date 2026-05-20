@@ -28,7 +28,8 @@ gantt
     Fase 11: Instalador 100% Automático (Supabase API) :done, des11, 2026-05-20, 2026-05-20
     Fase 12: Criação Automática de Projeto Supabase :done, des12, 2026-05-20, 2026-05-20
     Fase 13: Correção do Pooler Supabase & Senha do Banco :done, des13, 2026-05-20, 2026-05-20
-    Fase 14: Diagnóstico e Resiliência contra Banco Supabase Pausado :active, des14, 2026-05-20, 2026-05-20
+    Fase 14: Diagnóstico e Resiliência contra Banco Supabase Pausado :done, des14, 2026-05-20, 2026-05-20
+    Fase 15: Diagnóstico Avançado de Connection Pooler e Projetos Novos :active, des15, 2026-05-20, 2026-05-20
 ```
 
 ---
@@ -80,7 +81,7 @@ gantt
 
 ---
 
-## 🚀 Fase Atual: Criação Automática de Projeto Supabase pelo Instalador (20/05/2026)
+## 🚀 Fase Atual: Diagnóstico Avançado de Connection Pooler do Supabase (20/05/2026)
 
 ### **Ações Realizadas**
 1. **Instalador Cria Projeto Supabase Sozinho** ✅:
@@ -99,8 +100,11 @@ gantt
    - Passo 1: Tokens (Vercel + Supabase com validação).
    - Passo 2: Setup (org → selecionar/criar projeto → Vercel project → Admin).
    - Passo 3: Executar.
-4. **Compatibilidade** ✅:
-   - Build validado, deploy Vercel funcionando.
+4. **Resiliência contra Banco Supabase Pausado ou Pooler Inativo** ✅:
+   - Backend intercepta falhas de rede (`ENOTFOUND`) e erros de pooler (`tenant/user postgres... not found`) gerados por projetos Supabase inativos, pausados ou criados hoje (onde o pooler leva de 5 a 15 minutos para propagar/ativar).
+   - Frontend exibe caixa didática elegante em tom de laranja/dourado detalhando os dois cenários potenciais e oferecendo links diretos de autoatendimento para visualizar os projetos ou acessar diretamente a página de configurações de banco correspondente (`Settings -> Database`).
+5. **Compatibilidade** ✅:
+   - Build de produção validado com 100% de sucesso.
 
 ---
 

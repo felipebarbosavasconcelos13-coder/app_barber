@@ -138,6 +138,11 @@ model Booking {
 - **[UPDATED] `src/app/api/install/run/route.ts`**: Intercepta falhas de rede (`ENOTFOUND`) e erros de pooler (`tenant/user ... not found`) gerados por projetos Supabase inativos, pausados ou deletados, e responde com orientações amigáveis de como restaurar o projeto no painel da Supabase.
 - **[UPDATED] `src/app/install/wizard/page.tsx`**: Melhora a apresentação visual de falhas técnicas do banco, detectando se o erro envolve bancos pausados e orientando o usuário passo a passo com link para o dashboard do Supabase.
 
+### 6. Diagnóstico Aprimorado do Connection Pooler Supabase [NEW]
+
+- **[UPDATED] `src/app/api/install/run/route.ts`**: Atualiza a lógica de detecção de erros de pooler. Além do banco pausado, trata explicitamente o caso de projetos ativos mas com **Connection Pooler desativado** ou em **processo de propagação/sincronização regional**.
+- **[UPDATED] `src/app/install/wizard/page.tsx`**: Exibe no card de erro instruções guiadas sobre como acessar as configurações de banco (Database Settings) no painel da Supabase, verificar o estado do Connection Pooler, ativá-lo ou aguardar alguns minutos caso o projeto seja muito recente.
+
 ---
 
 ## Plano de Verificacao
@@ -146,7 +151,7 @@ model Booking {
    - Abrir o app localmente e garantir que a rota `/install` seja exibida.
    - Fornecer credenciais de teste, concluir o instalador e verificar se o `.env` e gerado e as tabelas populadas via SQL direto.
    - Acessar `/install` apos conclusao e verificar redirecionamento para `/admin`.
-   - **Caso de Teste - Banco Pausado**: Simular a conexão com um banco pausado e validar se a mensagem didática e os links são renderizados de forma perfeita na tela.
+   - **Caso de Teste - Banco Pausado / Pooler Inativo**: Simular a conexão com um banco pausado ou com pooler inativo e validar se a mensagem didática refinada e os links são renderizados de forma perfeita na tela.
 
 2. **Testes do Sistema de Agendamento**:
    - Cadastrar barbeiro com horarios customizados.

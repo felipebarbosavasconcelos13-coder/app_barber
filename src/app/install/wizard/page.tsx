@@ -479,32 +479,62 @@ export default function InstallWizardPage() {
                 padding: '18px',
                 marginBottom: '20px',
                 fontSize: '0.85rem',
-                lineHeight: '1.5',
+                lineHeight: '1.6',
                 color: 'var(--text-secondary)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: '#f59e0b', fontWeight: '600' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#f59e0b', fontWeight: '600', fontSize: '0.92rem' }}>
                   <Database size={18} />
-                  <span>Seu Banco Supabase está Inativo ou Pausado</span>
+                  <span>O Banco Supabase está Inacessível ou o Pooler está Inativo</span>
                 </div>
+                
                 <p style={{ margin: '0 0 12px 0' }}>
-                  Projetos do plano gratuito da Supabase entram em hibernação após 7 dias de inatividade. Para corrigir isso e concluir a instalação, siga os passos abaixo:
+                  Detectamos que a conexão falhou. Como seu projeto foi criado hoje ou está ativo, isso geralmente significa uma das duas situações abaixo:
                 </p>
-                <ol style={{ margin: '0 0 16px 0', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <li>Acesse o <strong><a href="https://supabase.com/dashboard/projects" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-gold)', textDecoration: 'underline' }}>Dashboard da Supabase</a></strong>.</li>
-                  <li>Localize seu projeto (ID: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 5px', borderRadius: '4px', fontFamily: 'monospace' }}>{selectedProjectRef}</code>).</li>
-                  <li>Clique em <strong>"Restore project"</strong> (Restaurar) e aguarde de 2 a 3 minutos até que ele fique ativo.</li>
-                  <li>Quando estiver ativo, clique no botão <strong>"Tentar Novamente"</strong> abaixo.</li>
-                </ol>
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <a
-                    href={`https://supabase.com/dashboard/project/${selectedProjectRef}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="install-btn-search"
-                    style={{ textDecoration: 'none', background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b', padding: '8px 12px', fontSize: '0.78rem' }}
-                  >
-                    Abrir Painel do Projeto
-                  </a>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
+                  <div style={{ background: 'rgba(0,0,0,0.15)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.12)' }}>
+                    <strong style={{ color: '#fff', display: 'block', marginBottom: '4px' }}>Cenário A: O projeto está Pausado por Inatividade</strong>
+                    <span>Projetos gratuitos entram em hibernação após 7 dias de inatividade. Vá ao painel do projeto e clique em <strong>"Restore project" (Restaurar)</strong> se estiver pausado.</span>
+                  </div>
+
+                  <div style={{ background: 'rgba(0,0,0,0.15)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.12)' }}>
+                    <strong style={{ color: '#fff', display: 'block', marginBottom: '4px' }}>Cenário B: O Connection Pooler está Desativado ou em Propagação (Projetos Novos)</strong>
+                    <span style={{ display: 'block', marginBottom: '8px' }}>
+                      Em projetos novos, a Supabase pode levar de <strong>5 a 15 minutos</strong> para ativar a infraestrutura do Pooler na rede regional. Ou o pooler pode estar desabilitado no painel. Siga as instruções abaixo:
+                    </span>
+                    <ol style={{ margin: '0', paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <li>Acesse o menu lateral esquerdo da Supabase e clique em <strong>Project Settings (Ícone de Engrenagem)</strong>.</li>
+                      <li>Clique na aba <strong>"Database"</strong>.</li>
+                      <li>Role a página até a seção <strong>"Connection Pooler"</strong>.</li>
+                      <li>Certifique-se de que o Connection Pooler está <strong>Habilitado (Enabled)</strong>. Se estiver desativado, clique para habilitá-lo.</li>
+                    </ol>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    ID do Projeto: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 5px', borderRadius: '4px', fontFamily: 'monospace' }}>{selectedProjectRef}</code>
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <a
+                      href="https://supabase.com/dashboard/projects"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="install-btn-search"
+                      style={{ textDecoration: 'none', background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-secondary)', padding: '8px 12px', fontSize: '0.78rem' }}
+                    >
+                      Ver Meus Projetos
+                    </a>
+                    <a
+                      href={`https://supabase.com/dashboard/project/${selectedProjectRef}/settings/database`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="install-btn-search"
+                      style={{ textDecoration: 'none', background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b', padding: '8px 12px', fontSize: '0.78rem' }}
+                    >
+                      Configurações do Banco (Database)
+                    </a>
+                  </div>
                 </div>
               </div>
             )}
