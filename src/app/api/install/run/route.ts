@@ -239,6 +239,20 @@ export async function POST(req: Request) {
       }
       if (!applied) throw new Error(schemaErrors.join(" | "));
     } catch (pushError: any) {
+      const errMessage = schemaErrors.join(" | ");
+      const isPaused = (errMessage.includes("tenant/user") && errMessage.includes("not found")) ||
+                       (errMessage.includes("ENOTFOUND") && (errMessage.includes("supabase.co") || errMessage.includes("supabase.com")));
+
+      if (isPaused) {
+        return NextResponse.json({
+          success: false,
+          steps,
+          error: "O projeto do Supabase está PAUSADO ou INATIVO.",
+          details: "Não foi possível conectar ao banco de dados porque o projeto está inativo ou suspenso na plataforma Supabase. Por favor, acesse o painel da Supabase (https://supabase.com/dashboard), certifique-se de que o projeto está ativo (se estiver pausado, clique em 'Restaurar' / 'Restore') e tente rodar a instalação novamente.",
+          supabasePaused: true,
+        }, { status: 503 });
+      }
+
       return NextResponse.json({
         success: false,
         steps,

@@ -35,6 +35,7 @@ export default function InstallWizardPage() {
   const [selectedSupabaseUrl, setSelectedSupabaseUrl] = useState('');
   const [supabaseTokenValidated, setSupabaseTokenValidated] = useState(false);
   const [existingProjectDbPass, setExistingProjectDbPass] = useState('');
+  const [supabasePaused, setSupabasePaused] = useState(false);
 
   // Criar projeto
   const [creatingProject, setCreatingProject] = useState(false);
@@ -203,7 +204,7 @@ export default function InstallWizardPage() {
   const handleBack = () => { if (step > 1) { setStepError(''); setStep((step - 1) as Step); } };
 
   const runInstall = async () => {
-    setRunStatus('running'); setLogs([]); setErrorMsg('');
+    setRunStatus('running'); setLogs([]); setErrorMsg(''); setSupabasePaused(false);
     addLog('Iniciando instalacao...');
     try {
       const dbPass = newProjectName.trim() ? newProjectDbPass : existingProjectDbPass;
@@ -218,6 +219,9 @@ export default function InstallWizardPage() {
       });
       const d = await r.json();
       if (!r.ok || !d.success) {
+        if (d.supabasePaused) {
+          setSupabasePaused(true);
+        }
         addLog(`Erro: ${d.error || 'Falha'}`, 'error');
         if (d.details) addLog(`Detalhes: ${d.details}`, 'error');
         if (d.steps) d.steps.forEach((s: any) => addLog(s.message, s.status === 'ok' ? 'success' : 'error'));
@@ -466,6 +470,45 @@ export default function InstallWizardPage() {
               {logs.map((l, i) => <div key={i} className="install-log-entry"><span className="install-log-time">[{l.time}]</span><span className={`install-log-msg ${l.type}`}>{l.message}</span></div>)}
               {runStatus === 'running' && <div className="install-log-entry"><span className="install-log-time">&nbsp;</span><span className="install-log-msg"><Loader2 size={13} className="install-spinner" style={{ display: 'inline-block', verticalAlign: 'middle' }} /> Aguardando...</span></div>}
             </div>
+
+            {runStatus === 'error' && supabasePaused && (
+              <div style={{
+                background: 'rgba(245, 158, 11, 0.07)',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+                borderRadius: '12px',
+                padding: '18px',
+                marginBottom: '20px',
+                fontSize: '0.85rem',
+                lineHeight: '1.5',
+                color: 'var(--text-secondary)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: '#f59e0b', fontWeight: '600' }}>
+                  <Database size={18} />
+                  <span>Seu Banco Supabase está Inativo ou Pausado</span>
+                </div>
+                <p style={{ margin: '0 0 12px 0' }}>
+                  Projetos do plano gratuito da Supabase entram em hibernação após 7 dias de inatividade. Para corrigir isso e concluir a instalação, siga os passos abaixo:
+                </p>
+                <ol style={{ margin: '0 0 16px 0', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <li>Acesse o <strong><a href="https://supabase.com/dashboard/projects" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-gold)', textDecoration: 'underline' }}>Dashboard da Supabase</a></strong>.</li>
+                  <li>Localize seu projeto (ID: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 5px', borderRadius: '4px', fontFamily: 'monospace' }}>{selectedProjectRef}</code>).</li>
+                  <li>Clique em <strong>"Restore project"</strong> (Restaurar) e aguarde de 2 a 3 minutos até que ele fique ativo.</li>
+                  <li>Quando estiver ativo, clique no botão <strong>"Tentar Novamente"</strong> abaixo.</li>
+                </ol>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <a
+                    href={`https://supabase.com/dashboard/project/${selectedProjectRef}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="install-btn-search"
+                    style={{ textDecoration: 'none', background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b', padding: '8px 12px', fontSize: '0.78rem' }}
+                  >
+                    Abrir Painel do Projeto
+                  </a>
+                </div>
+              </div>
+            )}
+
             {runStatus === 'success' && <button className="install-btn-admin" onClick={() => router.push('/admin')}>Acessar Painel <ArrowRight size={16} /></button>}
             {runStatus === 'error' && <div style={{ display: 'flex', gap: 10 }}><button className="install-btn-retry" onClick={() => { setStep(1); setRunStatus('idle'); setLogs([]); setErrorMsg(''); }}><ArrowLeft size={16} /> Corrigir</button><button className="install-btn-next" onClick={runInstall}>Tentar Novamente</button></div>}
           </div>

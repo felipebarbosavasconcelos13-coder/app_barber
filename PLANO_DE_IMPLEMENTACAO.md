@@ -133,6 +133,11 @@ model Booking {
 - Repositorio: `https://github.com/felipebarbosavasconcelos13-coder/app_barber`
 - Commits estruturados com todas as alteracoes.
 
+### 5. Resiliência contra Banco Supabase Pausado/Inativo [NEW]
+
+- **[UPDATED] `src/app/api/install/run/route.ts`**: Intercepta falhas de rede (`ENOTFOUND`) e erros de pooler (`tenant/user ... not found`) gerados por projetos Supabase inativos, pausados ou deletados, e responde com orientações amigáveis de como restaurar o projeto no painel da Supabase.
+- **[UPDATED] `src/app/install/wizard/page.tsx`**: Melhora a apresentação visual de falhas técnicas do banco, detectando se o erro envolve bancos pausados e orientando o usuário passo a passo com link para o dashboard do Supabase.
+
 ---
 
 ## Plano de Verificacao
@@ -141,6 +146,7 @@ model Booking {
    - Abrir o app localmente e garantir que a rota `/install` seja exibida.
    - Fornecer credenciais de teste, concluir o instalador e verificar se o `.env` e gerado e as tabelas populadas via SQL direto.
    - Acessar `/install` apos conclusao e verificar redirecionamento para `/admin`.
+   - **Caso de Teste - Banco Pausado**: Simular a conexão com um banco pausado e validar se a mensagem didática e os links são renderizados de forma perfeita na tela.
 
 2. **Testes do Sistema de Agendamento**:
    - Cadastrar barbeiro com horarios customizados.

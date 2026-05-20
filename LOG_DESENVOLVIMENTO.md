@@ -28,6 +28,7 @@ gantt
     Fase 11: Instalador 100% Automático (Supabase API) :done, des11, 2026-05-20, 2026-05-20
     Fase 12: Criação Automática de Projeto Supabase :done, des12, 2026-05-20, 2026-05-20
     Fase 13: Correção do Pooler Supabase & Senha do Banco :done, des13, 2026-05-20, 2026-05-20
+    Fase 14: Diagnóstico e Resiliência contra Banco Supabase Pausado :active, des14, 2026-05-20, 2026-05-20
 ```
 
 ---
@@ -131,3 +132,5 @@ gantt
 | **20/05/2026** | `src/app/install/wizard/page.tsx` | UI ocultava o detalhe tecnico retornado pela API, dificultando diagnostico da falha de schema. | Wizard passa a registrar `details` no log da instalacao e exibir esse detalhe como mensagem de erro principal quando disponivel. |
 | **20/05/2026** | `src/app/api/install/run/route.ts` | Erro `self-signed certificate in certificate chain` ao conectar no Pooler Supabase. | Desativado temporariamente o rigor TLS (`NODE_TLS_REJECT_UNAUTHORIZED = "0"`) durante o escopo da requisição do instalador. |
 | **20/05/2026** | Wizard & Supabase Lib | Erro `tenant/user cli_login_postgres... not found` no Pooler Regional da Supabase. | Adicionado campo de senha do banco para projetos existentes no Passo 2 do Wizard e refatorada `resolveSupabaseDbUrl` para usar o usuário mestre `postgres` caso a senha seja provida, contornando o bug de roles temporárias. |
+| **20/05/2026** | Wizard & Run Route | Erro `tenant/user postgres... not found` e `getaddrinfo ENOTFOUND` causado por banco Supabase pausado. | Adicionado tratamento de erro inteligente no backend e no frontend com aviso didático, link direto e orientações claras de como restaurar o projeto no Supabase. |
+
