@@ -138,6 +138,20 @@ export async function getSupabaseProject(accessToken: string, projectRef: string
   };
 }
 
+// ── Resolve Pooler Host from API ──
+
+async function resolvePoolerHost(accessToken: string, projectRef: string): Promise<{ host: string; port: number; user: string } | null> {
+  const res = await supabaseFetch(`/v1/projects/${encodeURIComponent(projectRef)}/config/database/pooler`, accessToken);
+  if (!res.ok || !Array.isArray(res.data) || res.data.length === 0) return null;
+  const primary = res.data.find((p: any) => p.database_type === "PRIMARY") || res.data[0];
+  if (!primary?.db_host) return null;
+  return {
+    host: primary.db_host,
+    port: primary.db_port || 6543,
+    user: primary.db_user || `postgres.${projectRef}`,
+  };
+}
+
 // ── Resolve DB URL ──
 
 export async function resolveSupabaseDbUrl(accessToken: string, projectRef: string, dbPass?: string) {
@@ -150,6 +164,9 @@ export async function resolveSupabaseDbUrl(accessToken: string, projectRef: stri
     return { ok: false, error: "Could not resolve database host from project info." };
   }
 
+  // Busca o host real do pooler via API (evita montar manualmente com aws-0/aws-1/etc.)
+  const poolerInfo = await resolvePoolerHost(accessToken, projectRef);
+
   const dbUrls: Array<{ label: string; url: string; host: string }> = [];
 
   // Se dbPass for fornecido, usamos o usuário mestre 'postgres' e pulamos a criação de role temporária
@@ -158,7 +175,15 @@ export async function resolveSupabaseDbUrl(accessToken: string, projectRef: stri
     const safePassword = encodeURIComponent(password);
     const directUrl = `postgresql://${encodeURIComponent("postgres")}:${safePassword}@${host.trim()}:5432/postgres?sslmode=require`;
     
-    if (typeof region === "string" && region.trim()) {
+    if (poolerInfo) {
+      // Usa o host do pooler retornado pela API da Supabase (ex: aws-1-sa-east-1.pooler.supabase.com)
+      dbUrls.push({
+        label: "pooler",
+        url: `postgresql://${encodeURIComponent(poolerInfo.user)}:${safePassword}@${poolerInfo.host}:${poolerInfo.port}/postgres?sslmode=require`,
+        host: poolerInfo.host,
+      });
+    } else if (typeof region === "string" && region.trim()) {
+      // Fallback: monta com aws-0 se a API do pooler não retornar dados
       const poolerHost = `aws-0-${region.trim()}.pooler.supabase.com`;
       dbUrls.push({
         label: "pooler",
@@ -192,7 +217,13 @@ export async function resolveSupabaseDbUrl(accessToken: string, projectRef: stri
   const directUrl = `postgresql://${safeRole}:${safePassword}@${host.trim()}:5432/postgres?sslmode=require`;
   dbUrls.push({ label: "direct", url: directUrl, host: host.trim() });
 
-  if (typeof region === "string" && region.trim()) {
+  if (poolerInfo) {
+    dbUrls.unshift({
+      label: "pooler",
+      url: `postgresql://${encodeURIComponent(`${role}.${projectRef}`)}:${safePassword}@${poolerInfo.host}:${poolerInfo.port}/postgres?sslmode=require`,
+      host: poolerInfo.host,
+    });
+  } else if (typeof region === "string" && region.trim()) {
     const poolerHost = `aws-0-${region.trim()}.pooler.supabase.com`;
     dbUrls.unshift({
       label: "pooler",

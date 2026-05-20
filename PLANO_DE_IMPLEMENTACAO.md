@@ -143,6 +143,11 @@ model Booking {
 - **[UPDATED] `src/app/api/install/run/route.ts`**: Atualiza a lógica de detecção de erros de pooler. Além do banco pausado, trata explicitamente o caso de projetos ativos mas com **Connection Pooler desativado** ou em **processo de propagação/sincronização regional**.
 - **[UPDATED] `src/app/install/wizard/page.tsx`**: Exibe no card de erro instruções guiadas sobre como acessar as configurações de banco (Database Settings) no painel da Supabase, verificar o estado do Connection Pooler, ativá-lo ou aguardar alguns minutos caso o projeto seja muito recente.
 
+### 7. Resolução Dinâmica do Host do Pooler via API Supabase [NEW] — CAUSA RAIZ
+
+- **[UPDATED] `src/lib/installer/supabase.ts`**: **CAUSA RAIZ ENCONTRADA E CORRIGIDA.** O host do Connection Pooler era montado manualmente como `aws-0-{region}.pooler.supabase.com`, mas o cluster real varia por projeto (ex: `aws-1-sa-east-1.pooler.supabase.com`). Agora o sistema consulta a API `GET /v1/projects/:ref/config/database/pooler` para obter o host exato, a porta e o usuário do pooler dinamicamente. Fallback para `aws-0` apenas se a API não retornar dados.
+- **[NEW] `scripts/diagnose-supabase.mjs`**: Script de diagnóstico que consulta a Supabase Management API para verificar status do projeto, health check, configuração do pooler e testa conectividade TCP nas portas 5432 e 6543.
+
 ---
 
 ## Plano de Verificacao
