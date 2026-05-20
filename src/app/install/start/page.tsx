@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Database, Settings, ArrowRight } from 'lucide-react';
+import { Database, Settings, Cloud, ArrowRight } from 'lucide-react';
 
 /**
  * Tela de boas-vindas do instalador.
@@ -11,6 +11,11 @@ export default function InstallStartPage() {
   const router = useRouter();
 
   const requisitos = [
+    {
+      icon: Cloud,
+      titulo: 'Token da Vercel (Full Account)',
+      descricao: 'Crie um token em vercel.com/account/tokens com escopo Full Account para integracao automatica.',
+    },
     {
       icon: Database,
       titulo: 'Banco de Dados Supabase',

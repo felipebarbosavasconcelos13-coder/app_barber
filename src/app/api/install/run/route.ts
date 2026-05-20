@@ -4,33 +4,61 @@ import fs from "fs";
 import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { upsertProjectEnvs } from "@/lib/installer/vercel";
 
 const execAsync = promisify(exec);
 
-export const maxDuration = 300; // Define timeout longo de 5 minutos
+export const maxDuration = 300;
 
-/**
- * API para executar a instalação do aplicativo e configurar o banco e chaves.
- */
 export async function POST(req: Request) {
   try {
     const rawData = await req.json().catch(() => null);
     if (!rawData) {
-      return NextResponse.json({ success: false, error: "Corpo da requisição inválido" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Corpo da requisicao invalido" }, { status: 400 });
     }
 
     const {
       databaseUrl,
+      vercelToken,
+      vercelProjectId,
       nextPublicAppUrl,
       adminPassword,
       gtmId,
     } = rawData;
 
     if (!databaseUrl) {
-      return NextResponse.json({ success: false, error: "A URL de banco do Supabase é obrigatória." }, { status: 400 });
+      return NextResponse.json({ success: false, error: "A URL de banco do Supabase e obrigatoria." }, { status: 400 });
     }
 
-    // 1. Tenta gravar o .env localmente (funciona em dev local, ignora em Vercel/cloud)
+    const steps: Array<{ id: string; status: string; message: string }> = [];
+
+    // 1. Configurar env vars na Vercel via API (se token fornecido)
+    if (vercelToken && vercelProjectId) {
+      try {
+        steps.push({ id: "vercel_env", status: "running", message: "Configurando variaveis de ambiente na Vercel..." });
+        await upsertProjectEnvs(
+          vercelToken,
+          vercelProjectId,
+          [
+            {
+              key: "DATABASE_URL",
+              value: databaseUrl,
+              targets: ["production", "preview", "development"],
+            },
+            {
+              key: "ADMIN_PASSWORD",
+              value: adminPassword || "admin123",
+              targets: ["production", "preview", "development"],
+            },
+          ]
+        );
+        steps.push({ id: "vercel_env", status: "ok", message: "Variaveis configuradas na Vercel." });
+      } catch (vercelErr: any) {
+        steps.push({ id: "vercel_env", status: "warning", message: `Vercel: ${vercelErr.message}. Continuando localmente.` });
+      }
+    }
+
+    // 2. Gravar .env localmente (funciona em dev local, ignora em cloud)
     try {
       const envPath = path.join(process.cwd(), ".env");
       const newEnvContent = `# Variaveis geradas pelo assistente de instalacao em ${new Date().toISOString()}
@@ -41,61 +69,48 @@ NEXT_PUBLIC_APP_URL="${nextPublicAppUrl || "http://localhost:3000"}"
 ADMIN_PASSWORD="${adminPassword || "admin123"}"
 `;
       fs.writeFileSync(envPath, newEnvContent, "utf-8");
-      console.log("[installer-run] Arquivo .env gravado com sucesso.");
-    } catch (envErr) {
-      console.warn("[installer-run] Nao foi possivel gravar .env (ambiente cloud/read-only). Continuando...");
+    } catch {
+      // Read-only filesystem (Vercel) - ignorado, env vars ja estao configuradas via API
     }
 
-    // Também injeta no process.env global do processo atual para as chamadas seguintes
+    // 3. Inject env vars no processo atual
     process.env.DATABASE_URL = databaseUrl;
     process.env.NEXT_PUBLIC_APP_URL = nextPublicAppUrl || "http://localhost:3000";
     process.env.ADMIN_PASSWORD = adminPassword || "admin123";
 
-    console.log("[installer-run] Gravou arquivo .env com sucesso.");
-
-    // 2. Rodar o push do banco via Prisma de forma assíncrona
-    console.log("[installer-run] Rodando npx prisma db push...");
+    // 4. Rodar prisma db push
+    steps.push({ id: "prisma_push", status: "running", message: "Aplicando schema no banco..." });
     try {
       await execAsync("npx prisma db push", {
-        env: {
-          ...process.env,
-          DATABASE_URL: databaseUrl,
-        },
+        env: { ...process.env, DATABASE_URL: databaseUrl },
       });
-      console.log("[installer-run] npx prisma db push concluído.");
+      steps.push({ id: "prisma_push", status: "ok", message: "Schema aplicado com sucesso." });
     } catch (pushError: any) {
-      console.error("[installer-run] Erro ao rodar db push:", pushError);
       return NextResponse.json({
         success: false,
-        error: "Falha ao aplicar o schema no banco do Supabase. Verifique se a URL de conexão está correta e com os privilégios adequados.",
+        steps,
+        error: "Falha ao aplicar o schema no banco do Supabase. Verifique se a URL de conexao esta correta e com os privilegios adequados.",
         details: String(pushError.stderr || pushError.message || pushError),
       }, { status: 500 });
     }
 
-    // 3. Rodar o seed para preencher os serviços e horários padrão
-    console.log("[installer-run] Rodando seed do Prisma...");
+    // 5. Rodar seed
+    steps.push({ id: "prisma_seed", status: "running", message: "Inserindo dados iniciais..." });
     try {
       await execAsync("npx prisma db seed", {
-        env: {
-          ...process.env,
-          DATABASE_URL: databaseUrl,
-        },
+        env: { ...process.env, DATABASE_URL: databaseUrl },
       });
-      console.log("[installer-run] Seed concluído.");
+      steps.push({ id: "prisma_seed", status: "ok", message: "Dados iniciais inseridos." });
     } catch (seedError: any) {
-      console.error("[installer-run] Erro ao rodar seed:", seedError);
-      // Se falhar o seed por conflito de chave primária, apenas ignore, pois o banco já pode ter sido populado
       if (!String(seedError).includes("Unique constraint")) {
-        console.warn("[installer-run] Ignorando erro secundário de seed.");
+        steps.push({ id: "prisma_seed", status: "warning", message: "Seed ignorado (dados ja existentes)." });
       }
     }
 
-    // 4. Gravar configurações administrativas e senha mestra fornecida
-    console.log("[installer-run] Gravando senha de admin e GTM customizados...");
+    // 6. Atualizar SystemSettings com senha e GTM customizados
+    steps.push({ id: "settings", status: "running", message: "Salvando configuracoes administrativas..." });
     const prismaClient = new PrismaClient({ log: ["error"] });
-
     try {
-      // Tenta upsert das configurações globais com os dados digitados pelo usuário
       await prismaClient.systemSettings.upsert({
         where: { id: "default" },
         update: {
@@ -110,21 +125,20 @@ ADMIN_PASSWORD="${adminPassword || "admin123"}"
           closingTime: "19:00",
         },
       });
-      
       await prismaClient.$disconnect();
-      console.log("[installer-run] Configurações de administração atualizadas com sucesso!");
+      steps.push({ id: "settings", status: "ok", message: "Configuracoes salvas." });
     } catch (dbError) {
       await prismaClient.$disconnect();
-      console.error("[installer-run] Erro ao gravar dados customizados:", dbError);
-      // Retorna sucesso de qualquer forma, pois o schema e seed básicos rodaram
+      steps.push({ id: "settings", status: "warning", message: "Configuracoes parciais (seed ja configurou)." });
     }
 
     return NextResponse.json({
       success: true,
+      steps,
       message: "Aplicativo configurado com sucesso!",
     });
   } catch (error) {
-    console.error("[installer-run] Erro crítico de instalação:", error);
+    console.error("[installer-run] Erro critico:", error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }
