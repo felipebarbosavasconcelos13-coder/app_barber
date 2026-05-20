@@ -12,10 +12,17 @@ Conforme solicitado, **o instalador sera pratico e funcional**, focado em simpli
 
 ### Fluxo de Funcionamento
 1. **Verificacao de Inicializacao**: A aplicacao consulta o banco. Se a tabela `SystemSettings` ja estiver devidamente populada e com senha administrativa configurada, a rota `/install` e imediatamente travada e redireciona para `/admin`.
-2. **Formulario de Instalacao Multi-passos** (3 passos):
-   *   **Passo 1 (Supabase)**: Insercao da URL de banco do Supabase (`DATABASE_URL`).
-   *   **Passo 2 (Administrador)**: Definicao da Senha Mestra administrativa e insercao opcional do ID do Google Tag Manager (GTM).
-   *   **Passo 3 (Execucao)**: O assistente grava o `.env` localmente, valida a conexao, aplica a migracao Prisma (`prisma db push`) e semeia os dados iniciais (`prisma db seed`).
+2. **Redirecionamento Automatico**: As rotas `/` (Home) e `/admin` verificam se o banco esta configurado. Se nao, redirecionam para `/install`.
+3. **Formulario de Instalacao Multi-passos** (3 passos):
+   *   **Passo 1 (Conexao)**: 
+       - Token da Vercel (Full Account) com botao "Buscar" que valida e lista projetos.
+       - Seletor de projeto Vercel (auto-detectado em dominios `.vercel.app`).
+       - URL de banco do Supabase (`DATABASE_URL`).
+   *   **Passo 2 (Administrador)**: Senha Mestra administrativa e ID do Google Tag Manager (GTM, opcional).
+   *   **Passo 3 (Execucao)**: 
+       - Configura env vars na Vercel via API (`upsertProjectEnvs`): `DATABASE_URL`, `ADMIN_PASSWORD`.
+       - Aplica migracao Prisma (`prisma db push`) e semeia dados iniciais (`prisma db seed`).
+       - Feedback visual em tempo real com logs de cada etapa.
 
 ---
 
@@ -85,13 +92,21 @@ model Booking {
 
 ## Alteracoes Propostas
 
-### 1. Novo Modulo: Wizard de Instalacao (3 passos)
+### 1. Novo Modulo: Wizard de Instalacao (3 passos com integracao Vercel)
 
 - **[NEW] `src/app/install/page.tsx`**: Rota de entrada que detecta o estado de inicializacao e redireciona para `/install/start` ou `/admin`.
-- **[NEW] `src/app/install/start/page.tsx`**: Interface de boas-vindas com pre-requisitos (Banco Supabase + Config Admin).
-- **[NEW] `src/app/install/wizard/page.tsx`**: Formulario interativo de 3 passos com feedback visual em tempo real.
+- **[NEW] `src/app/install/start/page.tsx`**: Interface de boas-vindas com pre-requisitos (Token Vercel + Banco Supabase + Config Admin).
+- **[UPDATED] `src/app/install/wizard/page.tsx`**: Formulario interativo de 3 passos com busca de projetos Vercel via API.
+- **[NEW] `src/app/api/install/vercel/projects/route.ts`**: API que valida token Vercel e retorna projetos do usuario.
+- **[UPDATED] `src/app/api/install/run/route.ts`**: Executa instalacao com integracao Vercel API (`upsertProjectEnvs`).
+- **[NEW] `src/lib/installer/vercel.ts`**: Lib com funcoes Vercel API: `upsertProjectEnvs`, `listVercelProjects`, `validateVercelToken`.
 
-### 2. Sistema de Calendario Proprio
+### 2. Redirecionamento Automatico
+
+- **[UPDATED] `src/app/page.tsx`**: Verifica `SystemSettings`; se falhar, `redirect("/install")`.
+- **[UPDATED] `src/app/admin/page.tsx`**: Verifica `SystemSettings`; se falhar, `redirect("/install")`.
+
+### 3. Sistema de Calendario Proprio
 
 - **[UPDATED] `src/lib/schedule.ts`**: Logica de calculo de slots disponiveis baseada nos horarios do barbeiro e agendamentos locais (sem Google Calendar).
 - **[UPDATED] `src/app/api/booking/available-slots/route.ts`**: Usa `getBarberAvailableSlots` com os horarios customizados do barbeiro.
