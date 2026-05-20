@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Barber } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { isAdminAuthenticated } from "@/lib/auth";
 
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Formata o retorno ocultando dados sensíveis e gerando a flag de conexão do Google
-    const formattedBarbers = barbers.map((b) => ({
+    const formattedBarbers = barbers.map((b: Barber) => ({
       id: b.id,
       name: b.name,
       email: b.email,
