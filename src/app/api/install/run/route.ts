@@ -87,9 +87,17 @@ END $$;
 `;
 
 function createPool(databaseUrl: string) {
+  // Remove parametros de query string da URL para evitar conflitos no analisador nativo do pg,
+  // e define explicitamente a configuracao SSL com rejectUnauthorized: false para conexoes Supabase ou seguras.
+  const cleanUrl = databaseUrl.split("?")[0];
+  const hasSsl = databaseUrl.includes("sslmode=require") || 
+                 databaseUrl.includes("ssl=true") || 
+                 databaseUrl.includes("supabase.co") || 
+                 databaseUrl.includes("supabase.com");
+
   return new Pool({
-    connectionString: databaseUrl,
-    ssl: databaseUrl.includes("sslmode=require") ? { rejectUnauthorized: false } : undefined,
+    connectionString: cleanUrl,
+    ssl: hasSsl ? { rejectUnauthorized: false } : undefined,
     max: 1,
     connectionTimeoutMillis: 10000,
   });
@@ -135,7 +143,11 @@ async function seedInitialData(databaseUrl: string, adminPassword: string, gtmId
 }
 
 export async function POST(req: Request) {
+  const originalRejectUnauthorized = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
   try {
+    // Desativa a validação estrita temporariamente para a migração inicial do banco
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
     const rawData = await req.json().catch(() => null);
     if (!rawData) {
       return NextResponse.json({ success: false, error: "Corpo da requisicao invalido" }, { status: 400 });
@@ -277,5 +289,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, steps, message: "Aplicativo configurado com sucesso!" });
   } catch (error) {
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+  } finally {
+    // Restaura o estado original de segurança do Node.js
+    if (originalRejectUnauthorized !== undefined) {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = originalRejectUnauthorized;
+    } else {
+      delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+    }
   }
 }
