@@ -2,10 +2,18 @@ import prisma from "@/lib/prisma";
 import BookingFlow from "@/components/BookingFlow";
 import { Scissors, MapPin, Clock, Phone, Award } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export const revalidate = 0; // Garante que a página sempre busque dados frescos do banco
 
 export default async function HomePage() {
+  // Verifica se o banco esta configurado. Se nao, redireciona para o instalador.
+  try {
+    await prisma.systemSettings.findFirst({ where: { id: "default" } });
+  } catch {
+    redirect("/install");
+  }
+
   // Busca barbeiros e serviços cadastrados no banco
   let barbers: Array<{
     id: string;
