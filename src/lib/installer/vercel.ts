@@ -125,6 +125,22 @@ export async function upsertProjectEnvs(
   }
 }
 
+export async function getProject(token: string, projectId: string, teamId?: string) {
+  try {
+    const project = await vercelFetch<VercelProject>(
+      `/v9/projects/${projectId}`,
+      token,
+      {},
+      teamId
+    );
+    if (!project?.id) return { ok: false, error: "Projeto nao encontrado" };
+    return { ok: true, project };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Projeto nao encontrado";
+    return { ok: false, error: message };
+  }
+}
+
 export async function findProjectByDomain(token: string, domain: string) {
   const lower = domain.toLowerCase();
   try {
