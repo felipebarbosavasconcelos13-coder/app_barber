@@ -27,6 +27,7 @@ Conforme solicitado, **o instalador sera pratico e funcional**, focado em simpli
        - Resolve DATABASE_URL via Supabase API (`/v1/projects/{ref}/cli/login-role`).
        - Configura env vars na Vercel via API (`upsertProjectEnvs`): `DATABASE_URL`, `ADMIN_PASSWORD`, `NEXT_PUBLIC_APP_URL`.
        - Aplica schema e semeia dados iniciais via API usando SQL direto (`pg`), sem depender de Prisma CLI no runtime da Vercel. As variaveis na Vercel sao salvas apenas depois que a conexao do banco e validada.
+       - **Ajuste Robusto de SSL:** Para evitar erros de certificados autoassinados (`self-signed certificate in certificate chain`) em proxies locais ou restrições da cadeia de conexão do pooler regional da Supabase, a rota POST do instalador desativa temporariamente a verificação TLS rígida (`NODE_TLS_REJECT_UNAUTHORIZED = "0"`) e a restaura perfeitamente no bloco `finally`.
        - Feedback visual em tempo real com logs de cada etapa.
 
 ---
