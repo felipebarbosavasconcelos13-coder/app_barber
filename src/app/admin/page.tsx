@@ -1,13 +1,24 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
 import AdminLogin from "@/components/AdminLogin";
 import AdminDashboard from "@/components/AdminDashboard";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
-  // Verifica se o banco esta configurado. Se nao, redireciona para o instalador.
+  // Verifica se o banco esta configurado chamando a API de check
+  // que já lida com .env em disco vs process.env
   try {
-    await prisma.systemSettings.findFirst({ where: { id: "default" } });
+    const hdrs = await headers();
+    const host = hdrs.get("host") || "localhost:3000";
+    const protocol = host.startsWith("localhost") ? "http" : "https";
+    const checkRes = await fetch(`${protocol}://${host}/api/install/check`, {
+      cache: "no-store",
+    });
+    const checkData = await checkRes.json();
+    if (!checkData?.initialized) {
+      redirect("/install");
+    }
   } catch {
     redirect("/install");
   }
@@ -21,3 +32,4 @@ export default async function AdminPage() {
 
   return <AdminDashboard />;
 }
+
