@@ -21,8 +21,6 @@ export async function POST(req: Request) {
 
     const {
       databaseUrl,
-      googleClientId,
-      googleClientSecret,
       nextPublicAppUrl,
       adminPassword,
       gtmId,
@@ -34,15 +32,10 @@ export async function POST(req: Request) {
 
     // 1. Gravar as novas variáveis de ambiente no arquivo .env localmente
     const envPath = path.join(process.cwd(), ".env");
-    const newEnvContent = `# Variáveis geradas pelo assistente de instalação em ${new Date().toISOString()}
+    const newEnvContent = `# Variaveis geradas pelo assistente de instalacao em ${new Date().toISOString()}
 DATABASE_URL="${databaseUrl}"
 
-# Configurações do Google Cloud (OAuth 2.0)
-GOOGLE_CLIENT_ID="${googleClientId || ""}"
-GOOGLE_CLIENT_SECRET="${googleClientSecret || ""}"
-GOOGLE_REDIRECT_URI="${nextPublicAppUrl || "http://localhost:3000"}/api/auth/google/callback"
-
-# Configurações do App
+# Configuracoes do App
 NEXT_PUBLIC_APP_URL="${nextPublicAppUrl || "http://localhost:3000"}"
 ADMIN_PASSWORD="${adminPassword || "admin123"}"
 `;
@@ -51,9 +44,6 @@ ADMIN_PASSWORD="${adminPassword || "admin123"}"
 
     // Também injeta no process.env global do processo atual para as chamadas seguintes
     process.env.DATABASE_URL = databaseUrl;
-    process.env.GOOGLE_CLIENT_ID = googleClientId || "";
-    process.env.GOOGLE_CLIENT_SECRET = googleClientSecret || "";
-    process.env.GOOGLE_REDIRECT_URI = `${nextPublicAppUrl || "http://localhost:3000"}/api/auth/google/callback`;
     process.env.NEXT_PUBLIC_APP_URL = nextPublicAppUrl || "http://localhost:3000";
     process.env.ADMIN_PASSWORD = adminPassword || "admin123";
 

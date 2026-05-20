@@ -21,7 +21,6 @@ export async function GET() {
     // Se a DATABASE_URL for a string placeholder, assume desconfigurado
     if (
       envContent.includes("[SENHA_DO_BANCO]") || 
-      envContent.includes("SEU_GOOGLE_CLIENT_ID") ||
       !process.env.DATABASE_URL
     ) {
       return NextResponse.json({ initialized: false, reason: "Default placeholder placeholders detected" });
