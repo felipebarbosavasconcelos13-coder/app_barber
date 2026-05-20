@@ -1,65 +1,107 @@
-import Image from "next/image";
+import prisma from "@/lib/prisma";
+import BookingFlow from "@/components/BookingFlow";
+import { Scissors, MapPin, Clock, Phone, Award } from "lucide-react";
+import Link from "next/link";
 
-export default function Home() {
+export const revalidate = 0; // Garante que a página sempre busque dados frescos do banco
+
+export default async function HomePage() {
+  // Busca barbeiros e serviços cadastrados no banco
+  let barbers: Array<{
+    id: string;
+    name: string;
+    email: string;
+    isGoogleConnected: boolean;
+  }> = [];
+
+  let services: Array<{
+    id: string;
+    name: string;
+    price: number;
+    duration: number;
+  }> = [];
+
+  try {
+    const rawBarbers = await prisma.barber.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    const rawServices = await prisma.service.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    barbers = rawBarbers.map((b) => ({
+      id: b.id,
+      name: b.name,
+      email: b.email,
+      isGoogleConnected: !!b.googleRefreshToken,
+    }));
+
+    services = rawServices.map((s) => ({
+      id: s.id,
+      name: s.name,
+      price: s.price,
+      duration: s.duration,
+    }));
+  } catch (error) {
+    console.error("Erro ao buscar dados na home page:", error);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="home-container">
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="hero-overlay"></div>
+        <div className="hero-content container animate-fade-in">
+          <div className="hero-badge flex-center">
+            <Award size={14} style={{ marginRight: "6px", color: "var(--accent-gold)" }} />
+            <span>Experiência Tradicional & Moderna</span>
+          </div>
+          <h1 className="title-serif gold-glow">Corte de Cabelo & Barba Premium</h1>
+          <p className="hero-subtitle">
+            Agende seu horário com os melhores barbeiros da cidade em segundos.
+            Conexão em tempo real e sincronização automática.
           </p>
+          <div className="hero-info-grid">
+            <div className="hero-info-item flex-center">
+              <MapPin size={16} className="gold-text" />
+              <span>Av. Paulista, 1000 - São Paulo, SP</span>
+            </div>
+            <div className="hero-info-item flex-center">
+              <Clock size={16} className="gold-text" />
+              <span>Seg a Sáb - 09:00 às 19:00</span>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Booking Form Section */}
+      <section className="booking-section container">
+        <div className="section-title text-center animate-fade-in">
+          <h2 className="title-serif gold-glow">Agendamento Online</h2>
+          <p>Selecione suas preferências e reserve o seu horário</p>
         </div>
-      </main>
+        
+        <div className="booking-wrapper animate-fade-in">
+          <BookingFlow initialBarbers={barbers} initialServices={services} />
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="home-footer">
+        <div className="footer-content container">
+          <div className="footer-logo">
+            <Scissors className="gold-text" size={20} />
+            <h3 className="title-serif gold-text">Barbearia Premium</h3>
+          </div>
+          <p>&copy; {new Date().getFullYear()} Barbearia Premium. Todos os direitos reservados.</p>
+          <div className="footer-links">
+            <Link href="/admin" className="admin-link">
+              Painel do Barbeiro
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

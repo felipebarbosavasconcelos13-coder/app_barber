@@ -1,0 +1,56 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+model SystemSettings {
+  id            String   @id @default("default")
+  gtmId         String?  // ID do Google Tag Manager (ex: GTM-XXXXXX)
+  openingTime   String   @default("09:00") // Horário de abertura (HH:MM)
+  closingTime   String   @default("19:00") // Horário de fechamento (HH:MM)
+  adminPassword String   @default("admin123") // Senha de acesso ao painel admin
+  updatedAt     DateTime @updatedAt
+}
+
+model Barber {
+  id                 String    @id @default(uuid())
+  name               String
+  email              String    @unique
+  googleAccessToken  String?
+  googleRefreshToken String?
+  googleTokenExpiry  DateTime?
+  services           Service[] @relation("BarberServices")
+  bookings           Booking[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String
+  price       Float
+  duration    Int      // Duração em minutos
+  barbers     Barber[] @relation("BarberServices")
+  bookings    Booking[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  clientName    String
+  clientEmail   String
+  clientPhone   String
+  dateTime      DateTime
+  serviceId     String
+  service       Service  @relation(fields: [serviceId], references: [id])
+  barberId      String
+  barber        Barber   @relation(fields: [barberId], references: [id])
+  googleEventId String?  // ID do evento criado no Google Calendar
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
