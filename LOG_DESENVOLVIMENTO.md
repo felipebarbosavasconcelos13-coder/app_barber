@@ -19,8 +19,8 @@ gantt
     Fase 5: Design System Vanilla CSS       :done,    des5, 2026-05-20, 2026-05-20
     section Finalização
     Fase 6: Validação de Build & Guias      :done,    des6, 2026-05-20, 2026-05-20
-    Fase 7: Wizard de Instalação (/install)  :active,  des7, 2026-05-20, 2026-05-20
-    Fase 8: Migração Supabase & GitHub      :active,  des8, 2026-05-20, 2026-05-20
+    Fase 7: Wizard de Instalação (/install)  :done,    des7, 2026-05-20, 2026-05-20
+    Fase 8: Migração Supabase & GitHub      :done,    des8, 2026-05-20, 2026-05-20
 ```
 
 ---
@@ -72,21 +72,23 @@ gantt
 
 ---
 
-## 🚀 Fase Atual: Wizard de Instalação & Envio ao GitHub (Em Progresso)
+## 🚀 Fase Atual: Projeto Concluído e Enviado ao GitHub (20/05/2026)
 
-### **Ações Atuais**
-1. **Wizard de Instalação Web (`/install`)**:
-   - Desenvolver a interface visual de passos de alta fidelidade (Banco Supabase, Google Cloud APIs e Cadastro Administrativo).
-   - Criar rotas de checagem e execução (`/api/install/check` e `/api/install/run`) para gravar o arquivo `.env` localmente, validar conexões de banco e rodar a migração e seed do Prisma de forma automatizada.
-2. **Migração do Banco de Dados para Supabase (PostgreSQL)**:
-   - Modificar o `provider` no `schema.prisma` de `"sqlite"` para `"postgresql"` (Concluído).
-   - Substituir a inicialização do Prisma em `src/lib/prisma.ts` pelo `PrismaClient` nativo de mercado (Concluído).
-3. **Histórico e Planejamento**:
-   - Salvar o `PLANO_DE_IMPLEMENTACAO.md` físico na pasta (Concluído).
-   - Criar e atualizar este arquivo físico de log de desenvolvimento `LOG_DESENVOLVIMENTO.md` (Concluído).
-4. **Versionamento e Envio**:
-   - Preparar commits estruturados de todas as modificações consolidadas.
-   - Configurar o remote local no Git e realizar o push completo para o GitHub do usuário.
+### **Ações Realizadas**
+1. **Wizard de Instalação Web (`/install`)** ✅:
+   - Interface visual de 4 passos de alta fidelidade implementada (Banco Supabase, Google Cloud APIs, Cadastro Administrativo, Execução).
+   - Rotas de checagem (`/api/install/check`) e execução (`/api/install/run`) criadas para gravar `.env`, validar conexões de banco e rodar migração e seed do Prisma.
+2. **Migração do Banco de Dados para Supabase (PostgreSQL)** ✅:
+   - `provider` no `schema.prisma` alterado de `"sqlite"` para `"postgresql"`.
+   - Removido o adapter `@prisma/adapter-libsql` do `prisma/seed.js` (era incompatível com PostgreSQL).
+   - Instalado o adapter oficial `@prisma/adapter-pg` + `pg` para compatibilidade com Prisma v7.
+   - Adicionado `engineType = "library"` ao generator do Prisma Client no schema.
+3. **Validação de Build** ✅:
+   - Executado `npm run build` com sucesso (39.4s compile, 28.1s TypeScript).
+   - Erros de Prisma durante o build são capturados pelo try/catch no layout (DATABASE_URL placeholder).
+4. **Versionamento e Envio ao GitHub** ✅:
+   - Commit estruturado com 39 arquivos, 7392 inserções, 175 exclusões.
+   - Push completo para o repositório GitHub: `https://github.com/felipebarbosavasconcelos13-coder/app_barber`.
 
 ---
 
@@ -96,3 +98,6 @@ gantt
 | :--- | :--- | :--- | :--- |
 | **20/05/2026** | `src/app/page.tsx` | Erro do Turbopack:styled-jsx não pode ser importado de Server Components. | Movidos os estilos estáticos da Home para `src/app/globals.css` e removida a tag `<style jsx>` do componente. |
 | **20/05/2026** | `src/app/page.tsx` | Falha de checagem TypeScript: variáveis `barbers` e `services` com tipo implícito `any[]`. | Inseridas tipagens estritas explícitas nas definições das duas variáveis na renderização da HomePage. |
+| **20/05/2026** | `prisma/seed.js` | `@prisma/adapter-libsql` (SQLite/Turso) causaria falha no seed com PostgreSQL no Supabase. | Removido o adapter LibSQL e substituído por `PrismaClient` nativo com `engineType = "library"`. |
+| **20/05/2026** | `prisma/schema.prisma` | Prisma v7 exige `adapter` ou `accelerateUrl` no construtor do PrismaClient com engine `client` padrão. | Instalado `@prisma/adapter-pg` + `pg` e atualizado `src/lib/prisma.ts` para usar o adapter PostgreSQL. Adicionado `engineType = "library"` ao generator. |
+| **20/05/2026** | `.gitignore` | Padrão `.env*` ignorava o arquivo de template `.env.example` e o `dev.db` (SQLite legado) não era ignorado. | Substituído `.env*` por `.env`, `.env.local`, `.env.*.local` e adicionado `dev.db`. |
