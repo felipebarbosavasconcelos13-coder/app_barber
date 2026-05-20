@@ -4,14 +4,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 const prismaClientSingleton = () => {
   const databaseUrl = process.env.DATABASE_URL;
 
-  if (!databaseUrl) {
-    return new PrismaClient({
-      log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
-    });
-  }
-
   const adapter = new PrismaPg({
-    connectionString: databaseUrl,
+    connectionString: databaseUrl || "postgresql://localhost:5432/postgres",
   });
 
   return new PrismaClient({
