@@ -30,7 +30,8 @@ gantt
     Fase 13: Correção do Pooler Supabase & Senha do Banco :done, des13, 2026-05-20, 2026-05-20
     Fase 14: Diagnóstico e Resiliência contra Banco Supabase Pausado :done, des14, 2026-05-20, 2026-05-20
     Fase 15: Diagnóstico Avançado de Connection Pooler e Projetos Novos :done, des15, 2026-05-20, 2026-05-20
-    Fase 16: Correção de Timeout de 10s da Vercel no Instalador :active, des16, 2026-05-21, 2026-05-21
+    Fase 16: Correção de Timeout de 10s da Vercel no Instalador :done, des16, 2026-05-21, 2026-05-21
+    Fase 17: Proxy do Prisma e Resiliência no `/admin`          :active, des17, 2026-05-21, 2026-05-21
 ```
 
 ---
@@ -82,20 +83,25 @@ gantt
 
 ---
 
-## 🚀 Fase Atual: Correção de Timeout de 10s da Vercel (Hobby) no Instalador (21/05/2026)
+### **Fase 16: Correção de Timeout de 10s da Vercel (Hobby) no Instalador (Concluída em 21/05/2026)**
+- **Otimização Assíncrona no Backend** ✅: Removido o wait síncrono da compilação da Vercel na rota `/api/install/run`, respondendo instantaneamente com `200 OK` e realizando o trigger em background para evitar timeouts de 10s.
+- **Feedback na UI** ✅: Interface do Wizard atualizada com alertas educativos em esmeralda avisando do build assíncrono.
+- **Git Commit e Push** ✅: Efetuado push para a `master` para deploy definitivo da Vercel.
+
+---
+
+## 🚀 Fase Atual: Resolução Definitiva do Loop do Instalador com Proxy de Conexão e Verificação Direta no Banco (21/05/2026)
 
 ### **Ações Realizadas**
-1. **Otimização Assíncrona no Backend** ✅:
-   - Removida a dependência do método síncrono `waitForVercelDeploymentReady` na rota do instalador (`/api/install/run`), o qual aguardava os 1-3 minutos do build da Vercel bloqueando a requisição HTTP.
-   - O backend agora apenas dispara o redeploy automático (`triggerProjectRedeploy`) e responde instantaneamente com `200 OK`, evitando o limite de timeout de 10 segundos da Vercel Hobby.
-2. **Mensagem Premium de Feedback (Background Build)** ✅:
-   - Interface do Wizard atualizada no Passo 3 com um alerta didático e elegante em tom esmeralda.
-   - Explica de forma clara que o aplicativo está compilando em background na Vercel (processo de 1 a 2 minutos) e orienta o usuário a aguardar um instante antes de acessar o painel `/admin`.
-3. **Validação de Build Local Completa** ✅:
-   - Executada compilação de testes local (`npm run build`) validando a ausência de erros em TypeScript e estruturação do Prisma client.
-4. **Git Commit e Push** ✅:
-   - Alterações adicionadas e commitadas com mensagem descritiva de padronização semântica (`fix(installer): remove sync deployment wait to avoid serverless timeout`).
-   - Push efetuado para o ramo remoto `master` (`https://github.com/felipebarbosavasconcelos13-coder/app_barber`), acionando o build automático definitivo da Vercel.
+1. **Desenvolvimento do Proxy do Prisma Client (`src/lib/prisma.ts`)** ✅:
+   - Implementado um **Proxy dinâmico de alta resiliência** que intercepta todas as chamadas ao banco.
+   - O Proxy monitora e lê dinamicamente o arquivo `.env` físico em tempo de execução. Se a string de conexão sofrer alteração (processo pós-instalação), ele automaticamente desconecta a instância obsoleta e reinicializa de forma limpa e transparente o pool do driver `pg` sem a necessidade de reinicializar o servidor Node.js/Next.js.
+   - Adicionada tratativa de fallback para strings de conexão contendo placeholders de templates (como `[SENHA_DO_BANCO]`) retornando um fallback válido para evitar que a inicialização do driver de banco lance erros `ERR_INVALID_URL` que quebravam o build estático.
+2. **Refatoração da Rota de Autenticação/Dashboard Administrativa (`src/app/admin/page.tsx`)** ✅:
+   - Removido o anti-padrão de requisições HTTP `fetch` redundantes e complexas para o próprio domínio (`/api/install/check`), as quais quebravam com facilidade devido a problemas de portas locais, restrições de rede, CORS ou DNS na Vercel/localhost.
+   - Substituída a verificação por uma chamada de consulta direta e resiliente ao banco de dados via Prisma Proxy.
+3. **Validação e Homologação de Build** ✅:
+   - Executada a compilação local de produção com o comando `npm run build` (`prisma generate && next build`), com 100% de sucesso, atestando a ausência de erros de lint, tipo ou quebras na geração estática de rotas.
 
 ---
 
@@ -133,5 +139,7 @@ gantt
 | **20/05/2026** | `src/lib/installer/vercel.ts` + `src/app/api/install/run/route.ts` | O erro "Acessar Painel" -> Wizard persistia na Vercel porque salvar `DATABASE_URL` via API nao atualiza `process.env` do deployment atual; as novas env vars so entram apos novo deployment. | Adicionadas funcoes `triggerProjectRedeploy` e `waitForVercelDeploymentReady`; o instalador agora dispara redeploy de producao, aguarda `READY` e so entao conclui. Se o redeploy falhar, a instalacao retorna erro explicito em vez de liberar o botao do painel. |
 | **21/05/2026** | `src/app/api/install/run/route.ts` + `src/app/install/wizard/page.tsx` | O instalador travava com erro 504 Gateway Timeout na Vercel (Hobby) devido ao tempo do build síncrono. | Removida a espera síncrona pelo build no backend (route.ts). Ajustada a interface do assistente (page.tsx) com aviso informativo de build em segundo plano, sugerindo aguardar 1-2 minutos para o término do deploy na Vercel antes de acessar o painel `/admin`. |
 | **21/05/2026** | Wizard & Vercel API | O erro de redirecionamento para o instalador persistia após a instalação concluída devido ao usuário clicar no painel administrativo antes da Vercel compilar o novo deploy. | Implementado polling em tempo real no frontend que consulta `/api/install/vercel/status` e bloqueia o botão "Acessar Painel" até que a Vercel confirme o status `READY`. Efetuado push remoto. |
+| **21/05/2026** | `src/lib/prisma.ts` | O compilador do Next.js e o runtime mantinham em cache a conexão do banco de dados obsoleta ou placeholders contendo colchetes (ex: `[SENHA_DO_BANCO]`), causando `ERR_INVALID_URL` no build ou loops de instalação por não ler as novas envs ativas do disco. | Implementado um Proxy dinâmico sobre a instância do Prisma Client. O Proxy lê o `.env` físico em runtime caso mude e reinicia o Pool de conexão do `pg` de forma transparente. Adicionados fallbacks de strings sintaticamente corretas para silenciar exceções de build. |
+| **21/05/2026** | `src/app/admin/page.tsx` | O Server Component de `/admin` dependia de um fetch HTTP local instável para `/api/install/check`, gerando erros causados por limitações de rede, portas, CORS ou DNS na Vercel e redirecionando incorretamente para `/install`. | Removida a requisição local desnecessária. Substituída por verificação direta no banco via Prisma Client encapsulado no Proxy dinâmico resiliente. |
 
 

@@ -1,25 +1,24 @@
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminLogin from "@/components/AdminLogin";
 import AdminDashboard from "@/components/AdminDashboard";
+import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  // Verifica se o banco esta configurado chamando a API de check
-  // que já lida com .env em disco vs process.env
+  // Verifica se o banco esta configurado fazendo uma consulta direta ao Prisma.
+  // Graças ao Proxy transparente, ele lerá a DATABASE_URL em runtime do .env se necessário.
   try {
-    const hdrs = await headers();
-    const host = hdrs.get("host") || "localhost:3000";
-    const protocol = host.startsWith("localhost") ? "http" : "https";
-    const checkRes = await fetch(`${protocol}://${host}/api/install/check`, {
-      cache: "no-store",
+    const settings = await prisma.systemSettings.findFirst({
+      where: { id: "default" },
     });
-    const checkData = await checkRes.json();
-    if (!checkData?.initialized) {
+    
+    if (!settings || !settings.adminPassword) {
       redirect("/install");
     }
-  } catch {
+  } catch (error) {
+    console.warn("[admin-page] Conexao com banco indisponivel ou tabelas nao criadas:", error);
     redirect("/install");
   }
 
@@ -32,4 +31,5 @@ export default async function AdminPage() {
 
   return <AdminDashboard />;
 }
+
 
