@@ -539,6 +539,30 @@ export default function InstallWizardPage() {
               </div>
             )}
 
+            {runStatus === 'success' && (
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.07)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                borderRadius: '12px',
+                padding: '18px',
+                marginBottom: '20px',
+                fontSize: '0.85rem',
+                lineHeight: '1.6',
+                color: 'var(--text-secondary)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#10b981', fontWeight: '600', fontSize: '0.92rem' }}>
+                  <CheckCircle2 size={18} />
+                  <span>Configuração e Banco Criados!</span>
+                </div>
+                <p style={{ margin: '0 0 8px 0' }}>
+                  O banco de dados foi estruturado e as variáveis foram enviadas à Vercel com sucesso.
+                </p>
+                <p style={{ margin: 0 }}>
+                  A Vercel está compilando e atualizando seu aplicativo em segundo plano neste exato momento (este processo leva de <strong>1 a 2 minutos</strong>). Ao acessar o Painel Admin, caso encontre um erro de carregamento ou página indisponível, por favor, aguarde mais 1 minuto para o término do build automático na Vercel e recarregue a página.
+                </p>
+              </div>
+            )}
+
             {runStatus === 'success' && <button className="install-btn-admin" onClick={() => router.push('/admin')}>Acessar Painel <ArrowRight size={16} /></button>}
             {runStatus === 'error' && <div style={{ display: 'flex', gap: 10 }}><button className="install-btn-retry" onClick={() => { setStep(1); setRunStatus('idle'); setLogs([]); setErrorMsg(''); }}><ArrowLeft size={16} /> Corrigir</button><button className="install-btn-next" onClick={runInstall}>Tentar Novamente</button></div>}
           </div>

@@ -307,13 +307,8 @@ export async function POST(req: Request) {
         steps.push({ id: "vercel_env", status: "ok", message: "Variaveis configuradas na Vercel." });
 
         steps.push({ id: "vercel_redeploy", status: "running", message: "Iniciando redeploy na Vercel para aplicar as variaveis..." });
-        const redeploy = await triggerProjectRedeploy(vercelToken, vercelProjectId);
-        steps.push({ id: "vercel_redeploy", status: "ok", message: "Redeploy iniciado na Vercel." });
-
-        steps.push({ id: "vercel_wait", status: "running", message: "Aguardando redeploy ficar pronto..." });
-        const wait = await waitForVercelDeploymentReady({ token: vercelToken, deploymentId: redeploy.deploymentId });
-        if (!wait.ok) throw new Error(wait.error);
-        steps.push({ id: "vercel_wait", status: "ok", message: "Redeploy concluido. Painel pronto para acesso." });
+        await triggerProjectRedeploy(vercelToken, vercelProjectId);
+        steps.push({ id: "vercel_redeploy", status: "ok", message: "Redeploy iniciado na Vercel com sucesso em segundo plano." });
       } catch (vercelErr: any) {
         steps.push({ id: "vercel_env", status: "warning", message: `Vercel API/Redeploy: ${vercelErr.message}` });
         return NextResponse.json({
