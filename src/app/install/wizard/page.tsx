@@ -229,6 +229,61 @@ export default function InstallWizardPage() {
         return;
       }
       if (d.steps) d.steps.forEach((s: any) => addLog(s.message, s.status === 'ok' ? 'success' : 'error'));
+
+      // Se houver redeploy da Vercel iniciado, entra no loop de polling de deploy
+      if (d.vercelDeploymentId && vercelToken.trim()) {
+        addLog('Monitorando o deploy de producao na Vercel...', 'info');
+        addLog('Aguardando compilacao (isso leva de 1 a 2 minutos)...', 'info');
+
+        let isReady = false;
+        let lastState = '';
+        const tokenVal = vercelToken.trim();
+        const depId = d.vercelDeploymentId;
+
+        // Loop de polling a cada 4 segundos
+        while (!isReady) {
+          await new Promise(resolve => setTimeout(resolve, 4000));
+          try {
+            const statusRes = await fetch('/api/install/vercel/status', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: tokenVal, deploymentId: depId })
+            });
+
+            if (!statusRes.ok) {
+              throw new Error('Falha ao consultar status na API Vercel.');
+            }
+
+            const statusData = await statusRes.json();
+            if (!statusData.success) {
+              throw new Error(statusData.error || 'Erro na API Vercel.');
+            }
+
+            const state = String(statusData.readyState).toUpperCase();
+
+            if (state !== lastState) {
+              lastState = state;
+              if (state === 'QUEUED') {
+                addLog('Deploy na fila da Vercel (Status: QUEUED)...', 'info');
+              } else if (state === 'BUILDING') {
+                addLog('Compilando e instalando dependencias (Status: BUILDING)...', 'info');
+              } else if (state === 'READY') {
+                addLog('Deploy de producao finalizado com sucesso! (Status: READY)', 'success');
+                isReady = true;
+              } else if (state === 'ERROR' || state === 'CANCELED') {
+                throw new Error(`O deploy falhou na Vercel com o status: ${state}. Verifique os logs no painel da Vercel.`);
+              } else {
+                addLog(`Status do deploy na Vercel: ${state}...`, 'info');
+              }
+            }
+          } catch (pollErr: any) {
+            addLog(`Erro ao monitorar deploy: ${pollErr.message}`, 'error');
+            addLog('Continuando monitoramento em segundo plano...', 'info');
+            // Não interrompemos o loop imediatamente para tolerar falhas temporárias de rede
+          }
+        }
+      }
+
       addLog('Instalacao concluida!', 'success');
       setRunStatus('success');
     } catch (err: any) { addLog(`Erro: ${err.message}`, 'error'); setRunStatus('error'); setErrorMsg(err.message); }

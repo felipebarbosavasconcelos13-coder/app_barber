@@ -236,3 +236,17 @@ export async function findProjectByDomain(token: string, domain: string) {
     return null;
   }
 }
+
+export async function getVercelDeploymentStatus(token: string, deploymentId: string, teamId?: string) {
+  try {
+    const deployment = await vercelFetch<VercelDeployment>(
+      `/v13/deployments/${encodeURIComponent(deploymentId)}`,
+      token,
+      {},
+      teamId
+    );
+    return { ok: true, readyState: deployment.readyState || "UNKNOWN" };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Erro desconhecido ao obter status do deploy" };
+  }
+}

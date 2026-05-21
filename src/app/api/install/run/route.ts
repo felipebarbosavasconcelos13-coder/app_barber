@@ -296,6 +296,7 @@ export async function POST(req: Request) {
     } catch {}
 
     // 4. Configurar env vars na Vercel via API apenas depois de validar a URL final
+    let vercelDeploymentId: string | undefined = undefined;
     if (vercelToken && vercelProjectId) {
       steps.push({ id: "vercel_env", status: "running", message: "Configurando variaveis na Vercel..." });
       try {
@@ -307,7 +308,8 @@ export async function POST(req: Request) {
         steps.push({ id: "vercel_env", status: "ok", message: "Variaveis configuradas na Vercel." });
 
         steps.push({ id: "vercel_redeploy", status: "running", message: "Iniciando redeploy na Vercel para aplicar as variaveis..." });
-        await triggerProjectRedeploy(vercelToken, vercelProjectId);
+        const redeployResult = await triggerProjectRedeploy(vercelToken, vercelProjectId);
+        vercelDeploymentId = redeployResult?.deploymentId;
         steps.push({ id: "vercel_redeploy", status: "ok", message: "Redeploy iniciado na Vercel com sucesso em segundo plano." });
       } catch (vercelErr: any) {
         steps.push({ id: "vercel_env", status: "warning", message: `Vercel API/Redeploy: ${vercelErr.message}` });
@@ -320,7 +322,12 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, steps, message: "Aplicativo configurado com sucesso!" });
+    return NextResponse.json({ 
+      success: true, 
+      steps, 
+      message: "Aplicativo configurado com sucesso!",
+      vercelDeploymentId
+    });
   } catch (error) {
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   } finally {
