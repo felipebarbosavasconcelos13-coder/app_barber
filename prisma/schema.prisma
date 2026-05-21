@@ -8,12 +8,16 @@ generator client {
 }
 
 model SystemSettings {
-  id            String   @id @default("default")
-  gtmId         String?  // ID do Google Tag Manager (ex: GTM-XXXXXX)
-  openingTime   String   @default("09:00") // Horário de abertura (HH:MM)
-  closingTime   String   @default("19:00") // Horário de fechamento (HH:MM)
-  adminPassword String   @default("admin123") // Senha de acesso ao painel admin
-  updatedAt     DateTime @updatedAt
+  id             String   @id @default("default")
+  gtmId          String?  // ID do Google Tag Manager (ex: GTM-XXXXXX)
+  openingTime    String   @default("09:00") // Horário de abertura (HH:MM)
+  closingTime    String   @default("19:00") // Horário de fechamento (HH:MM)
+  adminPassword  String   @default("admin123") // Senha de acesso ao painel admin
+  barberShopName String   @default("Barbearia Premium") // Nome da barbearia
+  logoUrl        String   @default("") // Link do logotipo da barbearia
+  address        String   @default("Av. Paulista, 1000 - Bela Vista, São Paulo - SP") // Endereço físico
+  phone          String   @default("(11) 99999-9999") // Telefone de contato
+  updatedAt      DateTime @updatedAt
 }
 
 model Barber {
@@ -22,6 +26,9 @@ model Barber {
   email           String    @unique
   openingTime     String    @default("09:00")
   closingTime     String    @default("19:00")
+  lunchStart      String    @default("12:00") // Início do almoço (HH:MM)
+  lunchEnd        String    @default("13:00") // Fim do almoço (HH:MM)
+  workDays        String    @default("1,2,3,4,5,6") // Dias de atendimento (0=Dom, 1=Seg, ..., 6=Sáb)
   services        Service[] @relation("BarberServices")
   bookings        Booking[]
   createdAt       DateTime  @default(now())
@@ -46,9 +53,9 @@ model Booking {
   clientPhone   String
   dateTime      DateTime
   serviceId     String
-  service       Service  @relation(fields: [serviceId], references: [id])
+  service       Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   barberId      String
-  barber        Barber   @relation(fields: [barberId], references: [id])
+  barber        Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
   googleEventId String?  // ID do evento criado no Google Calendar
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

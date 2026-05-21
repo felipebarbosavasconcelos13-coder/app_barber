@@ -22,6 +22,10 @@ export async function GET(request: NextRequest) {
       gtmId: settings.gtmId || "",
       openingTime: settings.openingTime,
       closingTime: settings.closingTime,
+      barberShopName: settings.barberShopName,
+      logoUrl: settings.logoUrl || "",
+      address: settings.address,
+      phone: settings.phone,
     });
   } catch (error) {
     console.error("Erro ao buscar configurações:", error);
@@ -37,13 +41,26 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { gtmId, openingTime, closingTime, newPassword } = body;
+    const { 
+      gtmId, 
+      openingTime, 
+      closingTime, 
+      barberShopName, 
+      logoUrl, 
+      address, 
+      phone, 
+      newPassword 
+    } = body;
 
-    const updateData: any = {
-      gtmId: gtmId || "",
-      openingTime: openingTime || "09:00",
-      closingTime: closingTime || "19:00",
-    };
+    const updateData: any = {};
+
+    if (gtmId !== undefined) updateData.gtmId = gtmId || "";
+    if (openingTime !== undefined) updateData.openingTime = openingTime || "09:00";
+    if (closingTime !== undefined) updateData.closingTime = closingTime || "19:00";
+    if (barberShopName !== undefined) updateData.barberShopName = barberShopName || "Barbearia Premium";
+    if (logoUrl !== undefined) updateData.logoUrl = logoUrl || "";
+    if (address !== undefined) updateData.address = address || "";
+    if (phone !== undefined) updateData.phone = phone || "";
 
     // Atualiza a senha administrativa apenas se fornecida
     if (newPassword && newPassword.trim() !== "") {
@@ -61,6 +78,10 @@ export async function PUT(request: NextRequest) {
         gtmId: updated.gtmId || "",
         openingTime: updated.openingTime,
         closingTime: updated.closingTime,
+        barberShopName: updated.barberShopName,
+        logoUrl: updated.logoUrl || "",
+        address: updated.address,
+        phone: updated.phone,
       },
     });
   } catch (error) {

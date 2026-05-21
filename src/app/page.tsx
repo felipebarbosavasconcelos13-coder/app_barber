@@ -14,6 +14,34 @@ export default async function HomePage() {
     redirect("/install");
   }
 
+  // Busca as configurações gerais do banco de dados
+  let settings = {
+    barberShopName: "Barbearia Premium",
+    logoUrl: "",
+    address: "Av. Paulista, 1000 - São Paulo, SP",
+    phone: "(11) 99999-9999",
+    openingTime: "09:00",
+    closingTime: "19:00",
+  };
+
+  try {
+    const rawSettings = await prisma.systemSettings.findFirst({
+      where: { id: "default" },
+    });
+    if (rawSettings) {
+      settings = {
+        barberShopName: rawSettings.barberShopName || "Barbearia Premium",
+        logoUrl: rawSettings.logoUrl || "",
+        address: rawSettings.address || "Av. Paulista, 1000 - São Paulo, SP",
+        phone: rawSettings.phone || "(11) 99999-9999",
+        openingTime: rawSettings.openingTime || "09:00",
+        closingTime: rawSettings.closingTime || "19:00",
+      };
+    }
+  } catch (error) {
+    console.error("Erro ao buscar configurações na home page:", error);
+  }
+
   // Busca barbeiros e serviços cadastrados no banco
   let barbers: Array<{
     id: string;
@@ -21,6 +49,9 @@ export default async function HomePage() {
     email: string;
     openingTime: string;
     closingTime: string;
+    lunchStart?: string;
+    lunchEnd?: string;
+    workDays?: string;
   }> = [];
 
   let services: Array<{
@@ -45,6 +76,9 @@ export default async function HomePage() {
       email: b.email,
       openingTime: b.openingTime,
       closingTime: b.closingTime,
+      lunchStart: b.lunchStart || "12:00",
+      lunchEnd: b.lunchEnd || "13:00",
+      workDays: b.workDays || "1,2,3,4,5,6",
     }));
 
     services = rawServices.map((s) => ({
@@ -63,11 +97,22 @@ export default async function HomePage() {
       <section className="hero-section">
         <div className="hero-overlay"></div>
         <div className="hero-content container animate-fade-in">
+          <div className="hero-logo-wrapper flex-center" style={{ marginBottom: "20px" }}>
+            {settings.logoUrl ? (
+              <img 
+                src={settings.logoUrl} 
+                alt={settings.barberShopName} 
+                style={{ maxHeight: "80px", maxWidth: "240px", objectFit: "contain", filter: "drop-shadow(0 0 10px rgba(197, 168, 128, 0.3))" }} 
+              />
+            ) : (
+              <Scissors className="gold-text gold-glow" size={48} />
+            )}
+          </div>
           <div className="hero-badge flex-center">
             <Award size={14} style={{ marginRight: "6px", color: "var(--accent-gold)" }} />
             <span>Experiência Tradicional & Moderna</span>
           </div>
-          <h1 className="title-serif gold-glow">Corte de Cabelo & Barba Premium</h1>
+          <h1 className="title-serif gold-glow">{settings.barberShopName}</h1>
           <p className="hero-subtitle">
             Agende seu horário com os melhores barbeiros da cidade em segundos.
             Conexão em tempo real e sincronização automática.
@@ -75,11 +120,15 @@ export default async function HomePage() {
           <div className="hero-info-grid">
             <div className="hero-info-item flex-center">
               <MapPin size={16} className="gold-text" />
-              <span>Av. Paulista, 1000 - São Paulo, SP</span>
+              <span>{settings.address}</span>
             </div>
             <div className="hero-info-item flex-center">
               <Clock size={16} className="gold-text" />
-              <span>Seg a Sáb - 09:00 às 19:00</span>
+              <span>Seg a Sáb - {settings.openingTime} às {settings.closingTime}</span>
+            </div>
+            <div className="hero-info-item flex-center">
+              <Phone size={16} className="gold-text" />
+              <span>{settings.phone}</span>
             </div>
           </div>
         </div>
@@ -101,10 +150,19 @@ export default async function HomePage() {
       <footer className="home-footer">
         <div className="footer-content container">
           <div className="footer-logo">
-            <Scissors className="gold-text" size={20} />
-            <h3 className="title-serif gold-text">Barbearia Premium</h3>
+            {settings.logoUrl ? (
+              <img 
+                src={settings.logoUrl} 
+                alt={settings.barberShopName} 
+                style={{ maxHeight: "30px", maxWidth: "120px", objectFit: "contain", marginRight: "10px" }} 
+              />
+            ) : (
+              <Scissors className="gold-text" size={20} style={{ marginRight: "10px" }} />
+            )}
+            <h3 className="title-serif gold-text">{settings.barberShopName}</h3>
           </div>
-          <p>&copy; {new Date().getFullYear()} Barbearia Premium. Todos os direitos reservados.</p>
+          <p style={{ margin: "10px 0" }}>{settings.address} | Telefone: {settings.phone}</p>
+          <p>&copy; {new Date().getFullYear()} {settings.barberShopName}. Todos os direitos reservados.</p>
           <div className="footer-links">
             <Link href="/admin" className="admin-link">
               Painel do Barbeiro

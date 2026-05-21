@@ -16,7 +16,8 @@ import {
   DollarSign,
   Tag,
   Loader2,
-  Lock
+  Lock,
+  Edit
 } from "lucide-react";
 
 interface Barber {
@@ -25,6 +26,9 @@ interface Barber {
   email: string;
   openingTime: string;
   closingTime: string;
+  lunchStart?: string;
+  lunchEnd?: string;
+  workDays?: string;
 }
 
 interface Service {
@@ -59,10 +63,23 @@ export default function AdminDashboard() {
     gtmId: "",
     openingTime: "09:00",
     closingTime: "19:00",
+    barberShopName: "Barbearia Premium",
+    logoUrl: "",
+    address: "",
+    phone: "",
   });
 
   // States de Formulários
-  const [newBarber, setNewBarber] = useState({ name: "", email: "", openingTime: "09:00", closingTime: "19:00" });
+  const [newBarber, setNewBarber] = useState({ 
+    name: "", 
+    email: "", 
+    openingTime: "09:00", 
+    closingTime: "19:00",
+    lunchStart: "12:00",
+    lunchEnd: "13:00",
+    workDays: "1,2,3,4,5,6"
+  });
+  const [editingBarberId, setEditingBarberId] = useState<string | null>(null);
   const [newService, setNewService] = useState({ name: "", price: "", duration: "30" });
   const [changePassword, setChangePassword] = useState({ current: "", new: "", confirm: "" });
   const [actionLoading, setActionLoading] = useState(false);
@@ -116,6 +133,27 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteBooking = async (id: string) => {
+    if (!confirm("Tem certeza que deseja cancelar este agendamento? Esta ação é irreversível.")) return;
+    setError("");
+    setSuccess("");
+    setActionLoading(true);
+
+    try {
+      const res = await fetch(`/api/admin/bookings?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Erro ao cancelar agendamento.");
+
+      setBookings(bookings.filter((b) => b.id !== id));
+      setSuccess("Agendamento cancelado com sucesso!");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Funções de Gerenciamento de Barbeiros
   const handleAddBarber = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,18 +162,38 @@ export default function AdminDashboard() {
     setActionLoading(true);
 
     try {
-      const res = await fetch("/api/admin/barbers", {
-        method: "POST",
+      const isEditing = editingBarberId !== null;
+      const url = "/api/admin/barbers";
+      const method = isEditing ? "PUT" : "POST";
+      const payload = isEditing ? { ...newBarber, id: editingBarberId } : newBarber;
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newBarber),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Erro ao adicionar barbeiro.");
+      if (!res.ok) throw new Error(data.error || `Erro ao ${isEditing ? "editar" : "adicionar"} barbeiro.`);
 
-      setBarbers([data.barber, ...barbers]);
-      setNewBarber({ name: "", email: "", openingTime: "09:00", closingTime: "19:00" });
-      setSuccess("Barbeiro cadastrado com sucesso!");
+      if (isEditing) {
+        setBarbers(barbers.map((b) => (b.id === editingBarberId ? data.barber : b)));
+        setSuccess("Barbeiro atualizado com sucesso!");
+      } else {
+        setBarbers([data.barber, ...barbers]);
+        setSuccess("Barbeiro cadastrado com sucesso!");
+      }
+
+      setNewBarber({
+        name: "",
+        email: "",
+        openingTime: "09:00",
+        closingTime: "19:00",
+        lunchStart: "12:00",
+        lunchEnd: "13:00",
+        workDays: "1,2,3,4,5,6",
+      });
+      setEditingBarberId(null);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -143,8 +201,38 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleEditBarberClick = (barber: Barber) => {
+    setNewBarber({
+      name: barber.name,
+      email: barber.email,
+      openingTime: barber.openingTime || "09:00",
+      closingTime: barber.closingTime || "19:00",
+      lunchStart: barber.lunchStart || "12:00",
+      lunchEnd: barber.lunchEnd || "13:00",
+      workDays: barber.workDays || "1,2,3,4,5,6",
+    });
+    setEditingBarberId(barber.id);
+    setError("");
+    setSuccess("");
+  };
+
+  const handleCancelEditBarber = () => {
+    setNewBarber({
+      name: "",
+      email: "",
+      openingTime: "09:00",
+      closingTime: "19:00",
+      lunchStart: "12:00",
+      lunchEnd: "13:00",
+      workDays: "1,2,3,4,5,6",
+    });
+    setEditingBarberId(null);
+    setError("");
+    setSuccess("");
+  };
+
   const handleDeleteBarber = async (id: string) => {
-    if (!confirm("Tem certeza que deseja remover este barbeiro? Esta ação é irreversível.")) return;
+    if (!confirm("Tem certeza que deseja remover este barbeiro? Esta ação é irreversível e removerá todos os agendamentos dele.")) return;
     setError("");
     setSuccess("");
 
@@ -156,6 +244,11 @@ export default function AdminDashboard() {
 
       setBarbers(barbers.filter((b) => b.id !== id));
       setSuccess("Barbeiro removido com sucesso.");
+      
+      // Atualiza lista de agendamentos localmente caso tenham sido deletados em cascata
+      const bookingsRes = await fetch("/api/admin/bookings");
+      const bookingsData = await bookingsRes.json();
+      setBookings(bookingsData.error ? [] : bookingsData);
     } catch (err: any) {
       setError(err.message);
     }
@@ -189,7 +282,7 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteService = async (id: string) => {
-    if (!confirm("Tem certeza que deseja remover este serviço?")) return;
+    if (!confirm("Tem certeza que deseja remover este serviço? Esta ação removerá todos os agendamentos dele.")) return;
     setError("");
     setSuccess("");
 
@@ -201,6 +294,11 @@ export default function AdminDashboard() {
 
       setServices(services.filter((s) => s.id !== id));
       setSuccess("Serviço removido com sucesso.");
+
+      // Atualiza lista de agendamentos localmente caso tenham sido deletados em cascata
+      const bookingsRes = await fetch("/api/admin/bookings");
+      const bookingsData = await bookingsRes.json();
+      setBookings(bookingsData.error ? [] : bookingsData);
     } catch (err: any) {
       setError(err.message);
     }
@@ -221,6 +319,10 @@ export default function AdminDashboard() {
           gtmId: settings.gtmId,
           openingTime: settings.openingTime,
           closingTime: settings.closingTime,
+          barberShopName: settings.barberShopName,
+          logoUrl: settings.logoUrl,
+          address: settings.address,
+          phone: settings.phone,
         }),
       });
       const data = await res.json();
@@ -277,6 +379,34 @@ export default function AdminDashboard() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const daysOfWeek = [
+    { value: 0, label: "D" },
+    { value: 1, label: "S" },
+    { value: 2, label: "T" },
+    { value: 3, label: "Q" },
+    { value: 4, label: "Q" },
+    { value: 5, label: "S" },
+    { value: 6, label: "S" }
+  ];
+
+  const getWorkDaysNames = (daysStr?: string) => {
+    if (!daysStr) return "Seg a Sáb";
+    const days = daysStr.split(",").filter(Boolean).map(Number);
+    const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    return days.map(d => dayNames[d]).join(", ");
+  };
+
+  const toggleDay = (dayVal: number) => {
+    const days = newBarber.workDays ? newBarber.workDays.split(",").filter(Boolean).map(Number) : [];
+    let newDays;
+    if (days.includes(dayVal)) {
+      newDays = days.filter(d => d !== dayVal);
+    } else {
+      newDays = [...days, dayVal].sort((a, b) => a - b);
+    }
+    setNewBarber({ ...newBarber, workDays: newDays.join(",") });
   };
 
   return (
@@ -367,6 +497,7 @@ export default function AdminDashboard() {
                             <th>Barbeiro</th>
                             <th>Serviço</th>
                             <th>Preço</th>
+                            <th style={{ textAlign: "center" }}>Ações</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -391,6 +522,15 @@ export default function AdminDashboard() {
                               <td className="gold-text font-weight-600">
                                 R$ {(booking.service?.price || 0).toFixed(2)}
                               </td>
+                              <td style={{ textAlign: "center" }}>
+                                <button
+                                  onClick={() => handleDeleteBooking(booking.id)}
+                                  className="btn-delete"
+                                  title="Cancelar Agendamento"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -408,7 +548,7 @@ export default function AdminDashboard() {
                     <div className="pane-list">
                       <div className="pane-header">
                         <h3 className="title-serif">Profissionais Cadastrados</h3>
-                        <p>Cada barbeiro define seus proprios horarios de atendimento.</p>
+                        <p>Cada barbeiro define seus próprios horários e dias de atendimento.</p>
                       </div>
 
                       <div className="barbers-list">
@@ -421,16 +561,47 @@ export default function AdminDashboard() {
                         ) : (
                           barbers.map((barber) => (
                             <div key={barber.id} className="glass-card barber-card animate-fade-in">
-                              <div className="barber-card-info">
-                                <h4>{barber.name}</h4>
-                                <p>{barber.email}</p>
-                                <div className="sync-status">
-                                  <span className="status-indicator success">
-                                    <Clock size={14} /> {barber.openingTime} as {barber.closingTime}
-                                  </span>
+                              <div className="barber-card-info" style={{ flex: 1 }}>
+                                <h4 className="gold-text" style={{ fontSize: "1.2rem", fontWeight: 600 }}>{barber.name}</h4>
+                                <p style={{ margin: "2px 0 8px 0" }}>{barber.email}</p>
+                                <div className="barber-meta-details" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                  <div className="status-indicator success" style={{ fontSize: "0.8rem" }}>
+                                    <Clock size={14} style={{ color: "var(--accent-gold)" }} /> 
+                                    <span><strong>Expediente:</strong> {barber.openingTime} às {barber.closingTime}</span>
+                                  </div>
+                                  {barber.lunchStart && barber.lunchEnd && (
+                                    <div className="status-indicator success" style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                                      <Clock size={14} style={{ opacity: 0.7 }} /> 
+                                      <span><strong>Almoço:</strong> {barber.lunchStart} às {barber.lunchEnd}</span>
+                                    </div>
+                                  )}
+                                  <div className="status-indicator success" style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                                    <Calendar size={14} style={{ opacity: 0.7 }} /> 
+                                    <span><strong>Dias de trabalho:</strong> {getWorkDaysNames(barber.workDays)}</span>
+                                  </div>
                                 </div>
                               </div>
-                              <div className="barber-card-actions">
+                              <div className="barber-card-actions" style={{ display: "flex", gap: "8px", marginLeft: "16px" }}>
+                                <button
+                                  onClick={() => handleEditBarberClick(barber)}
+                                  className="btn-edit-action"
+                                  title="Editar Barbeiro"
+                                  style={{
+                                    background: "rgba(197, 168, 128, 0.05)",
+                                    border: "1px solid rgba(197, 168, 128, 0.15)",
+                                    color: "var(--accent-gold)",
+                                    width: "36px",
+                                    height: "36px",
+                                    borderRadius: "8px",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    transition: "all 0.2s ease"
+                                  }}
+                                >
+                                  <Edit size={16} />
+                                </button>
                                 <button
                                   onClick={() => handleDeleteBarber(barber.id)}
                                   className="btn-delete"
@@ -445,12 +616,17 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    {/* Cadastrar Barbeiro */}
+                    {/* Cadastrar/Editar Barbeiro */}
                     <div className="pane-form">
                       <div className="glass-card form-card">
-                        <h3 className="title-serif gold-glow">Cadastrar Novo Barbeiro</h3>
-                        <p style={{ marginBottom: "20px", fontSize: "0.9rem" }}>
-                          Adicione um profissional e defina seus horarios de atendimento.
+                        <h3 className="title-serif gold-glow">
+                          {editingBarberId ? "Editar Barbeiro" : "Cadastrar Novo Barbeiro"}
+                        </h3>
+                        <p style={{ marginBottom: "20px", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                          {editingBarberId 
+                            ? "Atualize as informações do profissional selecionado." 
+                            : "Adicione um profissional e defina seus horários de atendimento e folgas."
+                          }
                         </p>
 
                         <form onSubmit={handleAddBarber}>
@@ -459,7 +635,7 @@ export default function AdminDashboard() {
                             <input
                               type="text"
                               className="form-input"
-                              placeholder="Ex: Joao Silva"
+                              placeholder="Ex: João Silva"
                               value={newBarber.name}
                               onChange={(e) => setNewBarber({ ...newBarber, name: e.target.value })}
                               required
@@ -480,7 +656,7 @@ export default function AdminDashboard() {
 
                           <div className="form-group-row">
                             <div className="form-group">
-                              <label className="form-label">Horario de Entrada</label>
+                              <label className="form-label">Horário de Entrada</label>
                               <input
                                 type="time"
                                 className="form-input"
@@ -490,7 +666,7 @@ export default function AdminDashboard() {
                               />
                             </div>
                             <div className="form-group">
-                              <label className="form-label">Horario de Saida</label>
+                              <label className="form-label">Horário de Saída</label>
                               <input
                                 type="time"
                                 className="form-input"
@@ -501,9 +677,96 @@ export default function AdminDashboard() {
                             </div>
                           </div>
 
-                          <button type="submit" className="btn-gold" style={{ width: "100%", marginTop: "10px" }} disabled={actionLoading}>
-                            {actionLoading ? "Processando..." : "Cadastrar Barbeiro"}
-                          </button>
+                          <div className="form-group-row" style={{ marginTop: "8px" }}>
+                            <div className="form-group">
+                              <label className="form-label">Início do Almoço</label>
+                              <input
+                                type="time"
+                                className="form-input"
+                                value={newBarber.lunchStart}
+                                onChange={(e) => setNewBarber({ ...newBarber, lunchStart: e.target.value })}
+                                required
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label className="form-label">Fim do Almoço</label>
+                              <input
+                                type="time"
+                                className="form-input"
+                                value={newBarber.lunchEnd}
+                                onChange={(e) => setNewBarber({ ...newBarber, lunchEnd: e.target.value })}
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-group" style={{ marginTop: "12px", marginBottom: "16px" }}>
+                            <label className="form-label" style={{ display: "block", marginBottom: "6px" }}>
+                              Dias de Trabalho
+                            </label>
+                            <div className="days-selector" style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                              {daysOfWeek.map((day) => {
+                                const isActive = newBarber.workDays 
+                                  ? newBarber.workDays.split(",").filter(Boolean).map(Number).includes(day.value) 
+                                  : false;
+                                return (
+                                  <button
+                                    key={day.value}
+                                    type="button"
+                                    onClick={() => toggleDay(day.value)}
+                                    className={`day-btn ${isActive ? "active" : ""}`}
+                                    style={{
+                                      width: "34px",
+                                      height: "34px",
+                                      borderRadius: "50%",
+                                      border: isActive ? "1px solid var(--accent-gold)" : "1px solid rgba(255,255,255,0.1)",
+                                      background: isActive ? "linear-gradient(135deg, rgba(197, 168, 128, 0.25) 0%, rgba(197, 168, 128, 0.05) 100%)" : "rgba(255,255,255,0.02)",
+                                      color: isActive ? "var(--accent-gold)" : "var(--text-secondary)",
+                                      cursor: "pointer",
+                                      fontWeight: 600,
+                                      fontSize: "0.85rem",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      transition: "all 0.2s ease"
+                                    }}
+                                  >
+                                    {day.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <small style={{ display: "block", marginTop: "6px", color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                              Selecione os dias da semana em que este profissional atende.
+                            </small>
+                          </div>
+
+                          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
+                            <button type="submit" className="btn-gold" style={{ width: "100%" }} disabled={actionLoading}>
+                              {actionLoading ? "Processando..." : (editingBarberId ? "Salvar Alterações" : "Cadastrar Barbeiro")}
+                            </button>
+                            {editingBarberId && (
+                              <button
+                                type="button"
+                                onClick={handleCancelEditBarber}
+                                className="btn-secondary"
+                                style={{
+                                  width: "100%",
+                                  background: "rgba(255,255,255,0.05)",
+                                  border: "1px solid rgba(255,255,255,0.1)",
+                                  color: "var(--text-secondary)",
+                                  padding: "12px",
+                                  borderRadius: "8px",
+                                  cursor: "pointer",
+                                  fontWeight: 500,
+                                  fontSize: "0.95rem",
+                                  transition: "all 0.2s ease"
+                                }}
+                              >
+                                Cancelar Edição
+                              </button>
+                            )}
+                          </div>
                         </form>
                       </div>
                     </div>
@@ -620,30 +883,87 @@ export default function AdminDashboard() {
               {/* ABA CONFIGURAÇÕES */}
               {activeTab === "settings" && (
                 <div className="tab-pane">
-                  <div className="pane-grid">
-                    {/* Parâmetros do Sistema */}
-                    <div className="pane-list">
-                      <div className="glass-card form-card">
-                        <h3 className="title-serif gold-glow">Configurações de Funcionamento</h3>
-                        <p style={{ marginBottom: "20px", fontSize: "0.9rem" }}>
-                          Configure o código de rastreamento do GTM e as janelas de funcionamento da barbearia.
+                  <div className="pane-header">
+                    <h3 className="title-serif">Configurações Gerais</h3>
+                    <p>Gerencie a identidade visual, horários, rastreamento e segurança da barbearia.</p>
+                  </div>
+
+                  <div className="settings-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "24px", marginTop: "8px" }}>
+                    {/* Card 1: Identidade Visual & Contato */}
+                    <div className="glass-card form-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div>
+                        <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600, marginBottom: "8px" }}>Identidade & Contato</h4>
+                        <p style={{ marginBottom: "20px", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                          Nome institucional, logotipo e dados de contato público exibidos ao cliente.
                         </p>
 
                         <form onSubmit={handleSaveSettings}>
                           <div className="form-group">
-                            <label className="form-label">Google Tag Manager ID (GTM)</label>
+                            <label className="form-label">Nome da Barbearia</label>
                             <input
                               type="text"
                               className="form-input"
-                              placeholder="Ex: GTM-XXXXXX"
-                              value={settings.gtmId}
-                              onChange={(e) => setSettings({ ...settings, gtmId: e.target.value })}
+                              placeholder="Ex: Barbearia Premium"
+                              value={settings.barberShopName || ""}
+                              onChange={(e) => setSettings({ ...settings, barberShopName: e.target.value })}
+                              required
                             />
-                            <small style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
-                              Insira apenas o ID. O script correspondente será injetado e otimizado automaticamente do lado do cliente.
+                          </div>
+
+                          <div className="form-group">
+                            <label className="form-label">URL da Logo (Logotipo)</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="Ex: https://dominio.com/logo.png"
+                              value={settings.logoUrl || ""}
+                              onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
+                            />
+                            <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", display: "block", marginTop: "4px" }}>
+                              URL para imagem PNG/JPEG ou SVG transparente da sua logo.
                             </small>
                           </div>
 
+                          <div className="form-group">
+                            <label className="form-label">Endereço Físico</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="Rua, Número, Bairro - Cidade/UF"
+                              value={settings.address || ""}
+                              onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                              required
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label className="form-label">Telefone de Contato</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="Ex: (11) 99999-9999"
+                              value={settings.phone || ""}
+                              onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                              required
+                            />
+                          </div>
+
+                          <button type="submit" className="btn-gold" style={{ width: "100%", marginTop: "15px" }} disabled={actionLoading}>
+                            {actionLoading ? "Salvando..." : "Salvar Identidade"}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+
+                    {/* Card 2: Horário Geral de Funcionamento */}
+                    <div className="glass-card form-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div>
+                        <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600, marginBottom: "8px" }}>Horário Geral</h4>
+                        <p style={{ marginBottom: "20px", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                          Defina a janela de funcionamento geral (abertura e fechamento) da barbearia.
+                        </p>
+
+                        <form onSubmit={handleSaveSettings}>
                           <div className="form-group-row">
                             <div className="form-group">
                               <label className="form-label">Horário de Abertura</label>
@@ -668,17 +988,47 @@ export default function AdminDashboard() {
                           </div>
 
                           <button type="submit" className="btn-gold" style={{ width: "100%", marginTop: "15px" }} disabled={actionLoading}>
-                            {actionLoading ? "Salvando..." : "Salvar Configurações"}
+                            {actionLoading ? "Salvando..." : "Salvar Horários"}
                           </button>
                         </form>
                       </div>
                     </div>
 
-                    {/* Alterar Senha Admin */}
-                    <div className="pane-form">
-                      <div className="glass-card form-card">
-                        <h3 className="title-serif gold-glow">Alterar Senha do Painel</h3>
-                        <p style={{ marginBottom: "20px", fontSize: "0.9rem" }}>
+                    {/* Card 3: Google Tag Manager */}
+                    <div className="glass-card form-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div>
+                        <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600, marginBottom: "8px" }}>Google Tag Manager (GTM)</h4>
+                        <p style={{ marginBottom: "20px", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                          Configure o ID do GTM para monitorar as conversões e métricas na página do cliente.
+                        </p>
+
+                        <form onSubmit={handleSaveSettings}>
+                          <div className="form-group">
+                            <label className="form-label">Google Tag Manager ID</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="Ex: GTM-XXXXXX"
+                              value={settings.gtmId}
+                              onChange={(e) => setSettings({ ...settings, gtmId: e.target.value })}
+                            />
+                            <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", display: "block", marginTop: "6px" }}>
+                              Insira apenas o ID. O script correspondente será injetado automaticamente.
+                            </small>
+                          </div>
+
+                          <button type="submit" className="btn-gold" style={{ width: "100%", marginTop: "15px" }} disabled={actionLoading}>
+                            {actionLoading ? "Salvando..." : "Salvar Rastreamento"}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+
+                    {/* Card 4: Segurança (Senha Mestra) */}
+                    <div className="glass-card form-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div>
+                        <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600, marginBottom: "8px" }}>Segurança Administrativa</h4>
+                        <p style={{ marginBottom: "20px", fontSize: "0.85rem", color: "var(--text-muted)" }}>
                           Modifique a senha mestra de acesso a este painel administrativo por segurança.
                         </p>
 
@@ -707,7 +1057,7 @@ export default function AdminDashboard() {
                             />
                           </div>
 
-                          <button type="submit" className="btn-gold" style={{ width: "100%", marginTop: "10px" }} disabled={actionLoading}>
+                          <button type="submit" className="btn-gold" style={{ width: "100%", marginTop: "15px" }} disabled={actionLoading}>
                             {actionLoading ? "Atualizando..." : "Alterar Senha"}
                           </button>
                         </form>

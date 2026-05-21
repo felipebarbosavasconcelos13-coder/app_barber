@@ -21,6 +21,13 @@ export async function getBarberAvailableSlots(
 
   if (!barber) return [];
 
+  // Verifica se o barbeiro trabalha no dia da semana selecionado
+  const workDays = barber.workDays ? barber.workDays.split(",").map(Number) : [1, 2, 3, 4, 5, 6];
+  const currentDayOfWeek = selectedDate.getDay();
+  if (!workDays.includes(currentDayOfWeek)) {
+    return [];
+  }
+
   const openingTime = barber.openingTime || "09:00";
   const closingTime = barber.closingTime || "19:00";
 
@@ -61,6 +68,15 @@ export async function getBarberAvailableSlots(
     const end = new Date(start.getTime() + (booking.service?.duration || 30) * 60000);
     return { start, end };
   });
+
+  // Adiciona o horário de almoço do barbeiro como um intervalo ocupado
+  if (barber.lunchStart && barber.lunchEnd) {
+    const [lStartHour, lStartMin] = barber.lunchStart.split(":").map(Number);
+    const [lEndHour, lEndMin] = barber.lunchEnd.split(":").map(Number);
+    const startLunch = new Date(year, month, day, lStartHour, lStartMin, 0);
+    const endLunch = new Date(year, month, day, lEndHour, lEndMin, 0);
+    busyIntervals.push({ start: startLunch, end: endLunch });
+  }
 
   const slots: TimeSlot[] = [];
   const slotStepMinutes = 15;

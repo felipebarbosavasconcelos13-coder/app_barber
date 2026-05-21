@@ -22,6 +22,21 @@ interface InitialBarber {
   email: string;
   openingTime: string;
   closingTime: string;
+  lunchStart?: string;
+  lunchEnd?: string;
+  workDays?: string;
+}
+
+function formatWorkDays(workDays?: string) {
+  if (!workDays) return "Segunda a Sábado";
+  const days = workDays.split(",").map(Number);
+  const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  
+  if (days.length === 7) return "Todos os dias";
+  if (days.length === 6 && !days.includes(0)) return "Segunda a Sábado";
+  if (days.length === 5 && !days.includes(0) && !days.includes(6)) return "Segunda a Sexta";
+  
+  return days.map(d => dayNames[d]).join(", ");
 }
 
 interface InitialService {
@@ -54,17 +69,22 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
   const [bookingResult, setBookingResult] = useState<any>(null);
   const [error, setError] = useState("");
 
-  // Gera os próximos 14 dias disponíveis para agendamento
+  // Gera os próximos 14 dias disponíveis para agendamento baseado no barbeiro selecionado
   useEffect(() => {
     const dates = [];
     const today = new Date();
+    
+    // Filtra dias com base nas configurações do barbeiro. Padrão: Segunda a Sábado (1,2,3,4,5,6)
+    const allowedDays = selectedBarber?.workDays
+      ? selectedBarber.workDays.split(",").map(Number)
+      : [1, 2, 3, 4, 5, 6];
     
     for (let i = 0; i < 14; i++) {
       const d = new Date();
       d.setDate(today.getDate() + i);
       
-      // Ignora domingos por padrão na barbearia
-      if (d.getDay() === 0) continue;
+      // Ignora dias não trabalhados pelo barbeiro selecionado
+      if (!allowedDays.includes(d.getDay())) continue;
 
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -78,10 +98,18 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
     }
 
     setAvailableDates(dates);
+    
+    // Se a data selecionada anteriormente não estiver na lista de novas datas disponíveis,
+    // ou se não houver data selecionada, seleciona a primeira data disponível.
     if (dates.length > 0) {
-      setSelectedDate(dates[0].dateStr);
+      const isStillAvailable = dates.some(d => d.dateStr === selectedDate);
+      if (!isStillAvailable) {
+        setSelectedDate(dates[0].dateStr);
+      }
+    } else {
+      setSelectedDate("");
     }
-  }, []);
+  }, [selectedBarber]);
 
   // Busca horários livres quando altera data, barbeiro ou serviço
   useEffect(() => {
@@ -232,9 +260,15 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
                       <span className="title-serif">{barber.name.charAt(0).toUpperCase()}</span>
                     </div>
                     <h3>{barber.name}</h3>
-                    <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                      {barber.openingTime} as {barber.closingTime}
-                    </p>
+                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "6px", textAlign: "center", lineHeight: "1.4" }}>
+                      <span style={{ display: "block" }}>⏰ Expediente: {barber.openingTime} às {barber.closingTime}</span>
+                      {barber.lunchStart && barber.lunchEnd && (
+                        <span style={{ display: "block" }}>🍽️ Almoço: {barber.lunchStart} às {barber.lunchEnd}</span>
+                      )}
+                      <span style={{ display: "block", fontSize: "0.75rem", marginTop: "2px", fontStyle: "italic", color: "var(--accent-gold)" }}>
+                        🗓️ {formatWorkDays(barber.workDays)}
+                      </span>
+                    </div>
                   </div>
                 ))
               )}

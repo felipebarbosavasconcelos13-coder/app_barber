@@ -30,8 +30,9 @@ gantt
     Fase 13: Correção do Pooler Supabase & Senha do Banco :done, des13, 2026-05-20, 2026-05-20
     Fase 14: Diagnóstico e Resiliência contra Banco Supabase Pausado :done, des14, 2026-05-20, 2026-05-20
     Fase 15: Diagnóstico Avançado de Connection Pooler e Projetos Novos :done, des15, 2026-05-20, 2026-05-20
-    Fase 16: Correção de Timeout de 10s da Vercel no Instalador :done, des16, 2026-05-21, 2026-05-21
-    Fase 17: Proxy do Prisma e Resiliência no `/admin`          :active, des17, 2026-05-21, 2026-05-21
+    Fase 16: Correção de Timeout de 10s da Vercel no Instalador :done,    des16, 2026-05-21, 2026-05-21
+    Fase 17: Proxy do Prisma e Resiliência no `/admin`          :done,    des17, 2026-05-21, 2026-05-21
+    Fase 18: Refinamento de Painel e Regras por Barbeiro         :active,  des18, 2026-05-21, 2026-05-21
 ```
 
 ---
@@ -141,5 +142,26 @@ gantt
 | **21/05/2026** | Wizard & Vercel API | O erro de redirecionamento para o instalador persistia após a instalação concluída devido ao usuário clicar no painel administrativo antes da Vercel compilar o novo deploy. | Implementado polling em tempo real no frontend que consulta `/api/install/vercel/status` e bloqueia o botão "Acessar Painel" até que a Vercel confirme o status `READY`. Efetuado push remoto. |
 | **21/05/2026** | `src/lib/prisma.ts` | O compilador do Next.js e o runtime mantinham em cache a conexão do banco de dados obsoleta ou placeholders contendo colchetes (ex: `[SENHA_DO_BANCO]`), causando `ERR_INVALID_URL` no build ou loops de instalação por não ler as novas envs ativas do disco. | Implementado um Proxy dinâmico sobre a instância do Prisma Client. O Proxy lê o `.env` físico em runtime caso mude e reinicia o Pool de conexão do `pg` de forma transparente. Adicionados fallbacks de strings sintaticamente corretas para silenciar exceções de build. |
 | **21/05/2026** | `src/app/admin/page.tsx` | O Server Component de `/admin` dependia de um fetch HTTP local instável para `/api/install/check`, gerando erros causados por limitações de rede, portas, CORS ou DNS na Vercel e redirecionando incorretamente para `/install`. | Removida a requisição local desnecessária. Substituída por verificação direta no banco via Prisma Client encapsulado no Proxy dinâmico resiliente. |
+| **21/05/2026** | `src/components/BookingFlow.tsx` | O carrossel de datas e os horários eram fixos para domingos e não escutavam as regras individuais de almoço e dias de trabalho do barbeiro selecionado. | Estendida a interface `InitialBarber`, refatorado o `useEffect` de geração de datas para reagir dinamicamente a `selectedBarber` com base no vetor `workDays`, e implementada a exibição premium com expediente, almoço e dias formatados no Passo 1. |
+
+---
+
+## 🛠️ Detalhes das Fases Concluídas (Continuação)
+
+### **Fase 18: Refinamento do Painel do Barbeiro e Regras de Horários Personalizados (Concluída em 21/05/2026)**
+- **Integração e Sincronização do Banco de Dados** ✅:
+  - Estendido o modelo `SystemSettings` com os campos dinâmicos `barberShopName`, `logoUrl`, `address` e `phone` para representação dinâmica de branding e contato.
+  - Estendido o modelo `Barber` com os campos `lunchStart`, `lunchEnd` e `workDays` permitindo controle granular do expediente profissional de cada barbeiro de forma independente.
+- **Aprimoramento do Painel de Administração (`/admin`)** ✅:
+  - **Aba de Configurações**: Reestruturada em **4 Cards Isolados** em Vanilla CSS Premium (Branding, Funcionamento Geral, Google Tag Manager de forma isolada, e Segurança).
+  - **Aba de Barbeiros**: Adicionado suporte para cadastro e edição dinâmica de início/fim do almoço e seleção premium de dias de trabalho via seletor de badges interativas.
+  - **Aba de Agendamentos**: Adicionado botão de exclusão de reserva com popup de confirmação e integração com a rota `DELETE /api/admin/bookings`.
+- **Refinamento do Fluxo do Cliente (`BookingFlow.tsx`)** ✅:
+  - O carrossel de 14 dias reage dinamicamente a `selectedBarber`, analisando seu campo `workDays` e ocultando os dias de folga (ex: domingos ou segundas) sem pular fixamente apenas domingos.
+  - A exibição do Passo 1 foi estilizada de forma elegante com badges douradas mostrando os horários e dias específicos que o barbeiro trabalha, além de seu horário de almoço individual.
+  - A API `/api/booking/available-slots` analisa o almoço do barbeiro e remove os slots conflitantes automaticamente.
+- **Validação e Build de Produção** ✅:
+  - Compilação realizada com sucesso absoluto através de `npm run build`, sem erros de TypeScript ou Next.js.
+
 
 
