@@ -29,7 +29,8 @@ gantt
     Fase 12: Criação Automática de Projeto Supabase :done, des12, 2026-05-20, 2026-05-20
     Fase 13: Correção do Pooler Supabase & Senha do Banco :done, des13, 2026-05-20, 2026-05-20
     Fase 14: Diagnóstico e Resiliência contra Banco Supabase Pausado :done, des14, 2026-05-20, 2026-05-20
-    Fase 15: Diagnóstico Avançado de Connection Pooler e Projetos Novos :active, des15, 2026-05-20, 2026-05-20
+    Fase 15: Diagnóstico Avançado de Connection Pooler e Projetos Novos :done, des15, 2026-05-20, 2026-05-20
+    Fase 16: Correção de Timeout de 10s da Vercel no Instalador :active, des16, 2026-05-21, 2026-05-21
 ```
 
 ---
@@ -81,30 +82,20 @@ gantt
 
 ---
 
-## 🚀 Fase Atual: Diagnóstico Avançado de Connection Pooler do Supabase (20/05/2026)
+## 🚀 Fase Atual: Correção de Timeout de 10s da Vercel (Hobby) no Instalador (21/05/2026)
 
 ### **Ações Realizadas**
-1. **Instalador Cria Projeto Supabase Sozinho** ✅:
-   - Usuário fornece **Vercel Token** + **Supabase PAT**.
-   - Sistema lista organizações e projetos existentes.
-   - Opção de selecionar projeto existente OU criar novo (nome, senha do banco, região).
-   - DATABASE_URL resolvida automaticamente via Supabase Management API.
-   - Env vars configuradas na Vercel via API.
-   - Schema e seed aplicados via SQL direto usando `pg`.
-2. **APIs Supabase** ✅:
-   - `/api/install/supabase/organizations`: lista orgs + projetos por org.
-   - `/api/install/supabase/create-project`: cria projeto via `POST /v1/projects`.
-   - `/api/install/supabase/projects`: lista projetos diretos (fallback).
-   - Lib `supabase.ts`: `listSupabaseOrganizations`, `listOrgProjects`, `createSupabaseProject`.
-3. **Wizard 3 Passos** ✅:
-   - Passo 1: Tokens (Vercel + Supabase com validação).
-   - Passo 2: Setup (org → selecionar/criar projeto → Vercel project → Admin).
-   - Passo 3: Executar.
-4. **Resiliência contra Banco Supabase Pausado ou Pooler Inativo** ✅:
-   - Backend intercepta falhas de rede (`ENOTFOUND`) e erros de pooler (`tenant/user postgres... not found`) gerados por projetos Supabase inativos, pausados ou criados hoje (onde o pooler leva de 5 a 15 minutos para propagar/ativar).
-   - Frontend exibe caixa didática elegante em tom de laranja/dourado detalhando os dois cenários potenciais e oferecendo links diretos de autoatendimento para visualizar os projetos ou acessar diretamente a página de configurações de banco correspondente (`Settings -> Database`).
-5. **Compatibilidade** ✅:
-   - Build de produção validado com 100% de sucesso.
+1. **Otimização Assíncrona no Backend** ✅:
+   - Removida a dependência do método síncrono `waitForVercelDeploymentReady` na rota do instalador (`/api/install/run`), o qual aguardava os 1-3 minutos do build da Vercel bloqueando a requisição HTTP.
+   - O backend agora apenas dispara o redeploy automático (`triggerProjectRedeploy`) e responde instantaneamente com `200 OK`, evitando o limite de timeout de 10 segundos da Vercel Hobby.
+2. **Mensagem Premium de Feedback (Background Build)** ✅:
+   - Interface do Wizard atualizada no Passo 3 com um alerta didático e elegante em tom esmeralda.
+   - Explica de forma clara que o aplicativo está compilando em background na Vercel (processo de 1 a 2 minutos) e orienta o usuário a aguardar um instante antes de acessar o painel `/admin`.
+3. **Validação de Build Local Completa** ✅:
+   - Executada compilação de testes local (`npm run build`) validando a ausência de erros em TypeScript e estruturação do Prisma client.
+4. **Git Commit e Push** ✅:
+   - Alterações adicionadas e commitadas com mensagem descritiva de padronização semântica (`fix(installer): remove sync deployment wait to avoid serverless timeout`).
+   - Push efetuado para o ramo remoto `master` (`https://github.com/felipebarbosavasconcelos13-coder/app_barber`), acionando o build automático definitivo da Vercel.
 
 ---
 
@@ -140,3 +131,5 @@ gantt
 | **20/05/2026** | `src/lib/installer/supabase.ts` | **CAUSA RAIZ ENCONTRADA:** Host do pooler era montado manualmente como `aws-0-{region}.pooler.supabase.com`, mas o cluster real do projeto era `aws-1-sa-east-1.pooler.supabase.com`. O prefixo `aws-0` vs `aws-1` varia por projeto e não pode ser deduzido da região. | Refatorado `resolveSupabaseDbUrl` para consultar a API `/v1/projects/:ref/config/database/pooler` e obter o host exato do pooler dinamicamente (`aws-1-...`). Fallback para `aws-0` apenas se a API não retornar dados. Script de diagnóstico `scripts/diagnose-supabase.mjs` criado para validação. |
 | **20/05/2026** | `src/app/api/install/check/route.ts` + `src/app/admin/page.tsx` | Após instalação bem-sucedida, clicar em "Acessar Painel" voltava à etapa 1 do Wizard. O `/api/install/check` usava `PrismaClient()` sem adapter `PrismaPg` (Prisma v7) e o `process.env.DATABASE_URL` ainda continha o placeholder antigo, pois o dev server não recarregou o `.env` após a escrita. | Reescrito `/api/install/check` para usar `PrismaPg` adapter e ler o `.env` do disco caso `process.env` esteja desatualizado. Admin page agora chama `/api/install/check` via fetch em vez de usar o singleton Prisma global cacheado. |
 | **20/05/2026** | `src/lib/installer/vercel.ts` + `src/app/api/install/run/route.ts` | O erro "Acessar Painel" -> Wizard persistia na Vercel porque salvar `DATABASE_URL` via API nao atualiza `process.env` do deployment atual; as novas env vars so entram apos novo deployment. | Adicionadas funcoes `triggerProjectRedeploy` e `waitForVercelDeploymentReady`; o instalador agora dispara redeploy de producao, aguarda `READY` e so entao conclui. Se o redeploy falhar, a instalacao retorna erro explicito em vez de liberar o botao do painel. |
+| **21/05/2026** | `src/app/api/install/run/route.ts` + `src/app/install/wizard/page.tsx` | O instalador travava com erro 504 Gateway Timeout na Vercel (Hobby) devido ao tempo do build síncrono. | Removida a espera síncrona pelo build no backend (route.ts). Ajustada a interface do assistente (page.tsx) com aviso informativo de build em segundo plano, sugerindo aguardar 1-2 minutos para o término do deploy na Vercel antes de acessar o painel `/admin`. |
+
