@@ -32,7 +32,8 @@ gantt
     Fase 15: Diagnóstico Avançado de Connection Pooler e Projetos Novos :done, des15, 2026-05-20, 2026-05-20
     Fase 16: Correção de Timeout de 10s da Vercel no Instalador :done,    des16, 2026-05-21, 2026-05-21
     Fase 17: Proxy do Prisma e Resiliência no `/admin`          :done,    des17, 2026-05-21, 2026-05-21
-    Fase 18: Refinamento de Painel e Regras por Barbeiro         :active,  des18, 2026-05-21, 2026-05-21
+    Fase 18: Refinamento de Painel e Regras por Barbeiro         :done,    des18, 2026-05-21, 2026-05-21
+    Fase 19: Correção de Assinaturas PrismaPg e Fim do Loop      :active,  des19, 2026-05-22, 2026-05-22
 ```
 
 ---
@@ -163,5 +164,14 @@ gantt
 - **Validação e Build de Produção** ✅:
   - Compilação realizada com sucesso absoluto através de `npm run build`, sem erros de TypeScript ou Next.js.
 
-
-
+### **Fase 19: Correção de Assinaturas PrismaPg e Resolução Definitiva do Loop de Instalação (Concluída em 22/05/2026)**
+- **Substituição por Proxy na Rota de Check (`src/app/api/install/check/route.ts`)** ✅:
+  - Removida a inicialização local instável do `PrismaPg` que passava a connection string bruta (comportamento incompatível com o Prisma v7, gerando falhas de conexão silenciosas e jogando o instalador em loop infinito de redirecionamentos).
+  - Substituída a verificação pelo consumo direto da instância global do Prisma em `src/lib/prisma.ts`. Graças ao proxy dinâmico que construímos na Fase 17, a rota agora consome conexões resilientes via `pg.Pool`, sincroniza de forma limpa quando as credenciais mudam em runtime no disco `.env` e é 100% livre de vazamentos de conexão ou quebras sintáticas.
+- **Corrigido o Script de Seed Oficial do Prisma (`prisma/seed.js`)** ✅:
+  - Identificada a mesma inconsistência de assinatura do `PrismaPg` na inicialização do seed.
+  - Atualizado o script para instanciar corretamente a classe `Pool` do driver `pg`, tratando conexões SSL do Supabase de forma integrada e injetando a instância da pool no adaptador. Isso garante que comandos manuais e rotas automatizadas de seed se completem com total integridade e sem falhas em qualquer ambiente.
+- **Auditoria de Outros Instaladores no Workspace** ✅:
+  - Realizada busca profunda no workspace por outros adaptadores e arquivos de instalação em subdiretórios. Nenhuma outra ocorrência do bug de `PrismaPg` foi identificada, isolando a correção no aplicativo principal.
+- **Validação e Homologação de Build** ✅:
+  - Executada a compilação completa do Next.js via `npm run build` confirmando sucesso na geração das rotas estáticas e na integridade de tipos.

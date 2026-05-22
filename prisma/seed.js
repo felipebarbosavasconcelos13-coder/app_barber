@@ -1,12 +1,25 @@
 const { PrismaClient } = require("@prisma/client");
 const { PrismaPg } = require("@prisma/adapter-pg");
+const { Pool } = require("pg");
 
 require("dotenv").config();
 
 console.log("DATABASE_URL no seed:", process.env.DATABASE_URL);
 
 const databaseUrl = process.env.DATABASE_URL || "postgresql://localhost:5432/postgres";
-const adapter = new PrismaPg({ connectionString: databaseUrl });
+
+const cleanUrl = databaseUrl.split("?")[0];
+const hasSsl = databaseUrl.includes("sslmode=require") || 
+               databaseUrl.includes("ssl=true") || 
+               databaseUrl.includes("supabase.co") || 
+               databaseUrl.includes("supabase.com");
+
+const pool = new Pool({
+  connectionString: cleanUrl,
+  ssl: hasSsl ? { rejectUnauthorized: false } : undefined,
+});
+
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({
   adapter,
   log: ["warn", "error"],
