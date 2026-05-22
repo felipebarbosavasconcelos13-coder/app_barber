@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   "logoUrl" TEXT NOT NULL DEFAULT '',
   "address" TEXT NOT NULL DEFAULT 'Av. Paulista, 1000 - Bela Vista, São Paulo - SP',
   "phone" TEXT NOT NULL DEFAULT '(11) 99999-9999',
+  "evolutionUrl" TEXT,
+  "evolutionApiKey" TEXT,
+  "evolutionInstance" TEXT,
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "SystemSettings_pkey" PRIMARY KEY ("id")
 );
@@ -116,6 +119,9 @@ ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "barberShopName" TEXT NOT 
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "logoUrl" TEXT NOT NULL DEFAULT '';
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "address" TEXT NOT NULL DEFAULT 'Av. Paulista, 1000 - Bela Vista, São Paulo - SP';
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "phone" TEXT NOT NULL DEFAULT '(11) 99999-9999';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "evolutionUrl" TEXT DEFAULT '';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "evolutionApiKey" TEXT DEFAULT '';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "evolutionInstance" TEXT DEFAULT '';
 
 ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "lunchStart" TEXT NOT NULL DEFAULT '12:00';
 ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "lunchEnd" TEXT NOT NULL DEFAULT '13:00';

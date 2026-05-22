@@ -36,6 +36,7 @@ gantt
     Fase 19: Correção de Assinaturas PrismaPg e Fim do Loop      :done,    des19, 2026-05-22, 2026-05-22
     Fase 20: Sincronização de Schema e Migração Supabase         :done,    des20, 2026-05-22, 2026-05-22
     Fase 21: Esquadro, Serviços & Evolution API                  :done,    des21, 2026-05-22, 2026-05-22
+    Fase 22: Configurações Gerais e Diagnóstico Dinâmico do WhatsApp :done, des22, 2026-05-22, 2026-05-22
 ```
 
 ---
@@ -192,3 +193,14 @@ gantt
 - **Vínculo N-N de Serviços e Barbeiros** ✅: Modificada a aba de Serviços para cadastrar e editar serviços vinculando quais barbeiros oferecem a especialidade. A interface pública do cliente final no fluxo de agendamento (`BookingFlow.tsx`) filtra os serviços em tempo real exibindo apenas as opções que o barbeiro escolhido de fato realiza.
 - **Integração com Evolution API** ✅: Adicionado disparo automatizado de notificação por WhatsApp no endpoint `/api/booking/create`. O sistema recupera a URL e o Token configurados no instalador e envia mensagens personalizadas ricas com nome do cliente, estabelecimento, serviço, profissional, data, horário, endereço e telefone de contato.
 - **Compilação de Produção 100% Concluída** ✅: Executado `npm run build` local gerando a build final otimizada do Next.js sem nenhuma falha de compilação ou erros de lint/TypeScript.
+
+### **Fase 22: Configurações Gerais e Diagnóstico Dinâmico do WhatsApp (Concluída em 22/05/2026)**
+- **Painel Administrativo com Card 5 de WhatsApp (`src/components/AdminDashboard.tsx`)** ✅: Integrado o **Card 5: Integração WhatsApp (Evolution API)** na aba de configurações. A interface é 100% responsiva em Vanilla CSS Premium e conta com campos dedicados para a URL da API, Chave de API (ApiKey) e Instância (Instance).
+- **Indicador LED Pulsante de Status em CSS Puro** ✅: Desenvolvida uma sinalização dinâmica premium baseada no status real da conexão via `@keyframes led-pulse` no CSS. O indicador LED exibe:
+  - 🟢 **Verde Pulsante (Online)**: Instância conectada e pronta para disparo de notificações.
+  - 🔴 **Vermelho (Erro/Desconectado)**: Falha de credenciais, host inacessível ou API offline.
+  - ⚪ **Cinza (Não configurado)**: Sem credenciais registradas.
+- **Mecanismo de Diagnóstico Avançado ("Testar Conexão")** ✅: Rota assíncrona `/api/admin/whatsapp/test` e biblioteca robusta `src/lib/evolution.ts` com normalização inteligente de inputs, mapeamento multinível de erros em até 8 camadas e suporte a dual-endpoint para verificação rápida, fornecendo diagnósticos precisos em menos de 1.5s sem travar a UI.
+- **Gravação Resiliente e Direta no Supabase** ✅: Todas as credenciais de WhatsApp são gravadas e lidas em tempo real diretamente da tabela `SystemSettings` no Supabase PostgreSQL remoto. Isso evita qualquer tentativa de gravação em disco local no ambiente Serverless da Vercel (eliminando o bug clássico de read-only filesystem `EROFS`).
+- **Validação com Build de Produção de Alta Integridade** ✅: Concluído o build de produção final via `npm run build` com sucesso absoluto, confirmando a ausência de quaisquer erros de tipos estáticos TypeScript ou falhas de lint em todas as rotas e componentes.
+

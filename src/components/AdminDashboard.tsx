@@ -79,7 +79,15 @@ export default function AdminDashboard() {
     logoUrl: "",
     address: "",
     phone: "",
+    evolutionUrl: "",
+    evolutionApiKey: "",
+    evolutionInstance: "",
   });
+
+  // States para testes e status do WhatsApp (Evolution API)
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [whatsappStatus, setWhatsappStatus] = useState<"CONECTADO" | "DESCONECTADO" | "ERRO_CONEXAO" | "DESCONHECIDO" | null>(null);
+  const [whatsappDetails, setWhatsappDetails] = useState<string | null>(null);
 
   // States de Formulários
   const [newBarber, setNewBarber] = useState({ 
@@ -187,7 +195,25 @@ export default function AdminDashboard() {
       setBarbers(loadedBarbers);
       setServices(servicesData.error ? [] : servicesData);
       setBarberBlocks(blocksData.error ? [] : blocksData);
-      setSettings(settingsData.error ? { gtmId: "", openingTime: "09:00", closingTime: "19:00" } : settingsData);
+      const defaultSettings = {
+        gtmId: "",
+        openingTime: "09:00",
+        closingTime: "19:00",
+        barberShopName: "Barbearia Premium",
+        logoUrl: "",
+        address: "",
+        phone: "",
+        evolutionUrl: "",
+        evolutionApiKey: "",
+        evolutionInstance: "",
+      };
+      const resolvedSettings = settingsData.error ? defaultSettings : { ...defaultSettings, ...settingsData };
+      setSettings(resolvedSettings);
+      
+      // Executa verificação silenciosa se as credenciais básicas do WhatsApp existirem
+      if (resolvedSettings.evolutionUrl && resolvedSettings.evolutionInstance) {
+        checkInitialWhatsAppStatus(resolvedSettings.evolutionUrl, resolvedSettings.evolutionApiKey, resolvedSettings.evolutionInstance);
+      }
       
       // Inicializa estados da timeline
       if (loadedBarbers.length > 0) {
@@ -501,6 +527,9 @@ export default function AdminDashboard() {
           logoUrl: settings.logoUrl,
           address: settings.address,
           phone: settings.phone,
+          evolutionUrl: settings.evolutionUrl,
+          evolutionApiKey: settings.evolutionApiKey,
+          evolutionInstance: settings.evolutionInstance,
         }),
       });
       const data = await res.json();
@@ -544,6 +573,67 @@ export default function AdminDashboard() {
       setError(err.message);
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const checkInitialWhatsAppStatus = async (url?: string, key?: string, inst?: string) => {
+    const checkUrl = url || settings.evolutionUrl;
+    const checkKey = key || settings.evolutionApiKey;
+    const checkInst = inst || settings.evolutionInstance;
+
+    if (!checkUrl || !checkInst) return;
+
+    try {
+      const res = await fetch("/api/admin/whatsapp/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: checkUrl, apiKey: checkKey, instance: checkInst }),
+      });
+      const data = await res.json();
+      if (data.status) {
+        setWhatsappStatus(data.status);
+        setWhatsappDetails(data.details);
+      }
+    } catch (e) {
+      console.error("Erro na verificação inicial de status do WhatsApp:", e);
+      setWhatsappStatus("ERRO_CONEXAO");
+      setWhatsappDetails("Não foi possível conectar à Evolution API.");
+    }
+  };
+
+  const handleTestWhatsAppConnection = async () => {
+    setTestingConnection(true);
+    setWhatsappStatus(null);
+    setWhatsappDetails(null);
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await fetch("/api/admin/whatsapp/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: settings.evolutionUrl,
+          apiKey: settings.evolutionApiKey,
+          instance: settings.evolutionInstance,
+        }),
+      });
+      const data = await res.json();
+
+      setWhatsappStatus(data.status);
+      setWhatsappDetails(data.details);
+
+      if (data.success) {
+        setSuccess("Conexão com o WhatsApp testada e estabelecida com sucesso!");
+      } else {
+        setError(data.details || "Falha na verificação de conexão com o WhatsApp.");
+      }
+    } catch (err: any) {
+      setWhatsappStatus("ERRO_CONEXAO");
+      setWhatsappDetails(`Falha na requisição: ${err.message || err}`);
+      setError("Erro interno de rede ao se conectar com o validador.");
+    } finally {
+      setTestingConnection(false);
     }
   };
 
@@ -1701,6 +1791,118 @@ export default function AdminDashboard() {
                         </form>
                       </div>
                     </div>
+
+                    {/* Card 5: Integração WhatsApp (Evolution API) */}
+                    <div className="glass-card form-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                          <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600 }}>Integração WhatsApp</h4>
+                          
+                          {/* LED de Status Pulsante */}
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <span className={`led-indicator ${
+                              whatsappStatus === "CONECTADO" ? "led-green" : 
+                              whatsappStatus === "DESCONECTADO" || whatsappStatus === "ERRO_CONEXAO" ? "led-red" : 
+                              "led-gray"
+                            }`} />
+                            <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--text-secondary)" }}>
+                              {whatsappStatus === "CONECTADO" ? "Online" : 
+                               whatsappStatus === "DESCONECTADO" ? "Desconectado" : 
+                               whatsappStatus === "ERRO_CONEXAO" ? "Erro" : "Sem Configuração"}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <p style={{ marginBottom: "20px", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                          Conecte o sistema à Evolution API para disparar notificações automáticas de agendamento via WhatsApp.
+                        </p>
+
+                        <form onSubmit={handleSaveSettings}>
+                          <div className="form-group">
+                            <label className="form-label">URL da Evolution API</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="Ex: https://api.seuservidor.com"
+                              value={settings.evolutionUrl || ""}
+                              onChange={(e) => setSettings({ ...settings, evolutionUrl: e.target.value })}
+                            />
+                            <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", display: "block", marginTop: "4px" }}>
+                              URL de instalação da Evolution (sem barra / no final).
+                            </small>
+                          </div>
+
+                          <div className="form-group">
+                            <label className="form-label">Chave de API (apikey)</label>
+                            <input
+                              type="password"
+                              className="form-input"
+                              placeholder="Digite a chave da API"
+                              value={settings.evolutionApiKey || ""}
+                              onChange={(e) => setSettings({ ...settings, evolutionApiKey: e.target.value })}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label className="form-label">Nome da Instância</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="Ex: Barberia_Premium"
+                              value={settings.evolutionInstance || ""}
+                              onChange={(e) => setSettings({ ...settings, evolutionInstance: e.target.value })}
+                            />
+                          </div>
+
+                          {/* Mensagem de Diagnóstico Detalhada */}
+                          {whatsappDetails && (
+                            <div style={{
+                              padding: "10px 12px",
+                              borderRadius: "8px",
+                              fontSize: "0.75rem",
+                              lineHeight: "1.3",
+                              marginBottom: "15px",
+                              background: whatsappStatus === "CONECTADO" ? "rgba(16, 185, 129, 0.05)" : "rgba(239, 68, 68, 0.05)",
+                              border: `1px solid ${whatsappStatus === "CONECTADO" ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)"}`,
+                              color: whatsappStatus === "CONECTADO" ? "#10b981" : "#ef4444",
+                            }}>
+                              <strong>Diagnóstico:</strong> {whatsappDetails}
+                            </div>
+                          )}
+
+                          <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
+                            <button 
+                              type="button" 
+                              onClick={handleTestWhatsAppConnection}
+                              className="btn-gold" 
+                              style={{ 
+                                flex: 1, 
+                                background: "transparent", 
+                                border: "1px solid var(--accent-gold)", 
+                                color: "var(--accent-gold)" 
+                              }} 
+                              disabled={testingConnection || actionLoading}
+                            >
+                              {testingConnection ? (
+                                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                                  <Loader2 size={14} className="spinner" /> Testando...
+                                </span>
+                              ) : "Testar Conexão"}
+                            </button>
+
+                            <button 
+                              type="submit" 
+                              className="btn-gold" 
+                              style={{ flex: 1.2 }} 
+                              disabled={actionLoading || testingConnection}
+                            >
+                              {actionLoading ? "Salvando..." : "Salvar Integração"}
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
               )}
@@ -2158,6 +2360,40 @@ export default function AdminDashboard() {
           }
           .premium-table th, .premium-table td {
             padding: 10px 8px;
+          }
+        }
+
+        /* Estilos do LED do WhatsApp */
+        .led-indicator {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          display: inline-block;
+        }
+        .led-green {
+          background-color: #10b981;
+          box-shadow: 0 0 8px #10b981;
+          animation: led-pulse 2s infinite;
+        }
+        .led-red {
+          background-color: #ef4444;
+          box-shadow: 0 0 6px #ef4444;
+        }
+        .led-gray {
+          background-color: #6b7280;
+        }
+        @keyframes led-pulse {
+          0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+          }
+          70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+          }
+          100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
           }
         }
       `}</style>

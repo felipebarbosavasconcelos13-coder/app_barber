@@ -17,6 +17,9 @@ model SystemSettings {
   logoUrl        String   @default("") // Link do logotipo da barbearia
   address        String   @default("Av. Paulista, 1000 - Bela Vista, São Paulo - SP") // Endereço físico
   phone          String   @default("(11) 99999-9999") // Telefone de contato
+  evolutionUrl   String?  @default("") // URL base da Evolution API
+  evolutionApiKey String? @default("") // Chave de acesso apikey da Evolution
+  evolutionInstance String? @default("") // Nome da instância do WhatsApp no servidor
   updatedAt      DateTime @updatedAt
 }
 

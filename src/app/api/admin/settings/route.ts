@@ -26,6 +26,9 @@ export async function GET(request: NextRequest) {
       logoUrl: settings.logoUrl || "",
       address: settings.address,
       phone: settings.phone,
+      evolutionUrl: settings.evolutionUrl || "",
+      evolutionApiKey: settings.evolutionApiKey || "",
+      evolutionInstance: settings.evolutionInstance || "",
     });
   } catch (error) {
     console.error("Erro ao buscar configurações:", error);
@@ -49,6 +52,9 @@ export async function PUT(request: NextRequest) {
       logoUrl, 
       address, 
       phone, 
+      evolutionUrl,
+      evolutionApiKey,
+      evolutionInstance,
       newPassword 
     } = body;
 
@@ -61,6 +67,9 @@ export async function PUT(request: NextRequest) {
     if (logoUrl !== undefined) updateData.logoUrl = logoUrl || "";
     if (address !== undefined) updateData.address = address || "";
     if (phone !== undefined) updateData.phone = phone || "";
+    if (evolutionUrl !== undefined) updateData.evolutionUrl = evolutionUrl || "";
+    if (evolutionApiKey !== undefined) updateData.evolutionApiKey = evolutionApiKey || "";
+    if (evolutionInstance !== undefined) updateData.evolutionInstance = evolutionInstance || "";
 
     // Atualiza a senha administrativa apenas se fornecida
     if (newPassword && newPassword.trim() !== "") {
@@ -82,6 +91,9 @@ export async function PUT(request: NextRequest) {
         logoUrl: updated.logoUrl || "",
         address: updated.address,
         phone: updated.phone,
+        evolutionUrl: updated.evolutionUrl || "",
+        evolutionApiKey: updated.evolutionApiKey || "",
+        evolutionInstance: updated.evolutionInstance || "",
       },
     });
   } catch (error) {
