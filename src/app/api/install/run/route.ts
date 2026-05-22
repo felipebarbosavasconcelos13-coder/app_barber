@@ -63,6 +63,18 @@ CREATE TABLE IF NOT EXISTS "Booking" (
   CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")
 );
 
+CREATE TABLE IF NOT EXISTS "BarberBlock" (
+  "id" TEXT NOT NULL,
+  "barberId" TEXT NOT NULL,
+  "date" TIMESTAMP(3) NOT NULL,
+  "startTime" TEXT NOT NULL,
+  "endTime" TEXT NOT NULL,
+  "reason" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "BarberBlock_pkey" PRIMARY KEY ("id")
+);
+
 CREATE TABLE IF NOT EXISTS "_BarberServices" (
   "A" TEXT NOT NULL,
   "B" TEXT NOT NULL,
@@ -79,6 +91,11 @@ END $$;
 
 DO $$ BEGIN
   ALTER TABLE "Booking" ADD CONSTRAINT "Booking_barberId_fkey" FOREIGN KEY ("barberId") REFERENCES "Barber"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "BarberBlock" ADD CONSTRAINT "BarberBlock_barberId_fkey" FOREIGN KEY ("barberId") REFERENCES "Barber"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 

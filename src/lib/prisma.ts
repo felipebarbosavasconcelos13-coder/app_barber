@@ -73,6 +73,11 @@ const getPrismaInstance = (): PrismaClient => {
       idleTimeoutMillis: 30000,
     });
 
+    // Auto-migração para garantir que a tabela BarberBlock existe no banco
+    ensureBarberBlockTableExists(pool).catch((err) => {
+      console.error("[prisma-client] Erro na auto-migração de BarberBlock:", err);
+    });
+
     const adapter = new PrismaPg(pool);
     globalThis.prismaGlobal = new PrismaClient({
       adapter,
@@ -83,6 +88,38 @@ const getPrismaInstance = (): PrismaClient => {
 
   return globalThis.prismaGlobal;
 };
+
+// Função auxiliar assíncrona de auto-migração do banco em runtime
+async function ensureBarberBlockTableExists(pool: Pool) {
+  const ddl = `
+    CREATE TABLE IF NOT EXISTS "BarberBlock" (
+      "id" TEXT NOT NULL,
+      "barberId" TEXT NOT NULL,
+      "date" TIMESTAMP(3) NOT NULL,
+      "startTime" TEXT NOT NULL,
+      "endTime" TEXT NOT NULL,
+      "reason" TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "BarberBlock_pkey" PRIMARY KEY ("id")
+    );
+
+    DO $$ BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'BarberBlock_barberId_fkey'
+      ) THEN
+        ALTER TABLE "BarberBlock" ADD CONSTRAINT "BarberBlock_barberId_fkey" FOREIGN KEY ("barberId") REFERENCES "Barber"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+      END IF;
+    END $$;
+  `;
+  try {
+    await pool.query(ddl);
+    console.log("[prisma-client] Auto-migração executada: Tabela BarberBlock garantida!");
+  } catch (err) {
+    console.error("[prisma-client] Falha ao rodar auto-migração BarberBlock:", err);
+  }
+}
+
 
 // Exportamos um Proxy dinâmico para o PrismaClient.
 // Isso garante que todas as referências de importação direta continuem funcionando,

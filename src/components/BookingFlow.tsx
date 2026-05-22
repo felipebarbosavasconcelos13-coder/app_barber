@@ -44,6 +44,7 @@ interface InitialService {
   name: string;
   price: number;
   duration: number;
+  barbers?: Array<{ id: string }>;
 }
 
 interface BookingFlowProps {
@@ -294,14 +295,35 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
             </div>
 
             <div className="services-list-container">
-              {initialServices.length === 0 ? (
-                <div className="glass-card empty-state">
-                  <Scissors size={36} className="empty-icon" />
-                  <h4>Nenhum serviço disponível</h4>
-                  <p>Catálogo de serviços está sendo atualizado. Tente em breve.</p>
-                </div>
-              ) : (
-                initialServices.map((service) => (
+              {(() => {
+                const filteredServices = initialServices.filter((service) => {
+                  if (!selectedBarber) return true;
+                  // Se o serviço não tem nenhum barbeiro explicitamente listado, mostramos para todos para manter retrocompatibilidade
+                  if (!service.barbers || service.barbers.length === 0) return true;
+                  return service.barbers.some((b) => b.id === selectedBarber.id);
+                });
+
+                if (filteredServices.length === 0) {
+                  return (
+                    <div className="glass-card empty-state flex-direction-column flex-center" style={{ padding: "40px" }}>
+                      <Scissors size={48} className="empty-icon" style={{ color: "var(--accent-gold)", opacity: 0.8 }} />
+                      <h4 style={{ marginTop: "16px", color: "#ffffff", fontSize: "1.2rem" }}>Nenhum serviço deste profissional</h4>
+                      <p style={{ color: "var(--text-muted)", maxWidth: "360px", marginTop: "8px" }}>
+                        O barbeiro <strong>{selectedBarber?.name}</strong> não oferece serviços cadastrados no momento. Por favor, escolha outro profissional.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handlePrevStep}
+                        className="btn-outline"
+                        style={{ marginTop: "20px", display: "inline-flex", gap: "8px", alignItems: "center" }}
+                      >
+                        <ChevronLeft size={16} /> Alterar Barbeiro
+                      </button>
+                    </div>
+                  );
+                }
+
+                return filteredServices.map((service) => (
                   <div
                     key={service.id}
                     onClick={() => setSelectedService(service)}
@@ -311,15 +333,15 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
                       <h3>{service.name}</h3>
                       <div className="service-duration flex-center">
                         <Clock size={14} style={{ marginRight: "6px", color: "var(--text-muted)" }} />
-                        <span>{service.duration} minutos</span>
+                        <span>{service.duration} minutes</span>
                       </div>
                     </div>
                     <div className="service-price">
                       <span className="price-tag">R$ {service.price.toFixed(2)}</span>
                     </div>
                   </div>
-                ))
-              )}
+                ));
+              })()}
             </div>
 
             <div className="navigation-actions flex-center" style={{ gap: "20px", marginTop: "30px" }}>

@@ -67,6 +67,9 @@ export default async function HomePage() {
     });
 
     const rawServices = await prisma.service.findMany({
+      include: {
+        barbers: true,
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -86,6 +89,7 @@ export default async function HomePage() {
       name: s.name,
       price: s.price,
       duration: s.duration,
+      barbers: s.barbers.map((b) => ({ id: b.id })),
     }));
   } catch (error) {
     console.error("Erro ao buscar dados na home page:", error);

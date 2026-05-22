@@ -78,6 +78,26 @@ export async function getBarberAvailableSlots(
     busyIntervals.push({ start: startLunch, end: endLunch });
   }
 
+  // Busca bloqueios de agenda do barbeiro na data selecionada
+  const blocks = await prisma.barberBlock.findMany({
+    where: {
+      barberId: barberId,
+      date: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
+    },
+  });
+
+  // Adiciona os bloqueios como intervalos ocupados
+  for (const block of blocks) {
+    const [bStartHour, bStartMin] = block.startTime.split(":").map(Number);
+    const [bEndHour, bEndMin] = block.endTime.split(":").map(Number);
+    const startBlock = new Date(year, month, day, bStartHour, bStartMin, 0);
+    const endBlock = new Date(year, month, day, bEndHour, bEndMin, 0);
+    busyIntervals.push({ start: startBlock, end: endBlock });
+  }
+
   const slots: TimeSlot[] = [];
   const slotStepMinutes = 15;
 

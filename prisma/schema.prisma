@@ -31,6 +31,7 @@ model Barber {
   workDays        String    @default("1,2,3,4,5,6") // Dias de atendimento (0=Dom, 1=Seg, ..., 6=Sáb)
   services        Service[] @relation("BarberServices")
   bookings        Booking[]
+  blocks          BarberBlock[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
@@ -60,3 +61,16 @@ model Booking {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+model BarberBlock {
+  id        String   @id @default(uuid())
+  barberId  String
+  barber    Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  date      DateTime // Data do bloqueio (armazena o dia sem componente de hora)
+  startTime String   // "HH:MM" de início do bloqueio (ex: "14:00")
+  endTime   String   // "HH:MM" de fim do bloqueio (ex: "15:00")
+  reason    String?  // Motivo opcional (ex: "Consulta médica")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

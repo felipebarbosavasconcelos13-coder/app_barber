@@ -9,6 +9,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const services = await prisma.service.findMany({
+      include: {
+        barbers: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(services);
@@ -25,7 +33,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, price, duration } = body;
+    const { name, price, duration, barberIds } = body;
 
     if (!name || price === undefined || duration === undefined) {
       return NextResponse.json(
@@ -45,17 +53,80 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Duração em minutos inválida." }, { status: 400 });
     }
 
+    const barbersConnect = Array.isArray(barberIds)
+      ? barberIds.map((id: string) => ({ id }))
+      : [];
+
     const newService = await prisma.service.create({
       data: {
         name,
         price: priceNum,
         duration: durationNum,
+        barbers: {
+          connect: barbersConnect,
+        },
+      },
+      include: {
+        barbers: true,
       },
     });
 
     return NextResponse.json({ success: true, service: newService });
   } catch (error) {
     console.error("Erro ao criar serviço:", error);
+    return NextResponse.json({ error: "Erro interno no servidor." }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  if (!isAdminAuthenticated(request)) {
+    return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const { id, name, price, duration, barberIds } = body;
+
+    if (!id || !name || price === undefined || duration === undefined) {
+      return NextResponse.json(
+        { error: "ID, nome, preço e duração são obrigatórios." },
+        { status: 400 }
+      );
+    }
+
+    const priceNum = parseFloat(price);
+    const durationNum = parseInt(duration);
+
+    if (isNaN(priceNum) || priceNum < 0) {
+      return NextResponse.json({ error: "Preço inválido." }, { status: 400 });
+    }
+
+    if (isNaN(durationNum) || durationNum <= 0) {
+      return NextResponse.json({ error: "Duração em minutos inválida." }, { status: 400 });
+    }
+
+    const barbersConnect = Array.isArray(barberIds)
+      ? barberIds.map((id: string) => ({ id }))
+      : [];
+
+    const updatedService = await prisma.service.update({
+      where: { id },
+      data: {
+        name,
+        price: priceNum,
+        duration: durationNum,
+        barbers: {
+          set: barbersConnect,
+        },
+      },
+      include: {
+        barbers: true,
+      },
+    });
+
+    return NextResponse.json({ success: true, service: updatedService });
+  } catch (error) {
+    console.error("Erro ao atualizar serviço:", error);
     return NextResponse.json({ error: "Erro interno no servidor." }, { status: 500 });
   }
 }

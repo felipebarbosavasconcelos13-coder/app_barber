@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { sendWhatsappNotification } from "@/lib/evolution";
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,6 +57,37 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // Dispara notificação de WhatsApp em segundo plano de forma não-bloqueante
+    try {
+      const formattedDate = bookingDate.toLocaleDateString("pt-BR");
+      const formattedTime = bookingDate.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "America/Sao_Paulo", // Garante o fuso correto brasileiro
+      });
+      const formattedPrice = booking.service.price.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+
+      const message = `Olá, *${clientName}*! Seu agendamento na barbearia foi confirmado com sucesso! 🎉\n\n` +
+        `📅 *Data:* ${formattedDate}\n` +
+        `⏰ *Horário:* ${formattedTime}\n` +
+        `💈 *Barbeiro:* ${booking.barber.name}\n` +
+        `✂️ *Serviço:* ${booking.service.name}\n` +
+        `💰 *Valor:* ${formattedPrice}\n\n` +
+        `Agradecemos a preferência e te aguardamos no horário agendado!`;
+
+      sendWhatsappNotification({
+        phone: clientPhone,
+        message,
+      }).catch((err) => {
+        console.error("[route-booking-create] Erro no envio assíncrono do WhatsApp:", err);
+      });
+    } catch (msgErr) {
+      console.error("[route-booking-create] Falha ao formatar mensagem de WhatsApp:", msgErr);
+    }
 
     return NextResponse.json({
       success: true,

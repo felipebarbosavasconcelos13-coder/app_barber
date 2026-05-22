@@ -34,7 +34,8 @@ gantt
     Fase 17: Proxy do Prisma e Resiliência no `/admin`          :done,    des17, 2026-05-21, 2026-05-21
     Fase 18: Refinamento de Painel e Regras por Barbeiro         :done,    des18, 2026-05-21, 2026-05-21
     Fase 19: Correção de Assinaturas PrismaPg e Fim do Loop      :done,    des19, 2026-05-22, 2026-05-22
-    Fase 20: Sincronização de Schema e Migração Supabase         :active,  des20, 2026-05-22, 2026-05-22
+    Fase 20: Sincronização de Schema e Migração Supabase         :done,    des20, 2026-05-22, 2026-05-22
+    Fase 21: Esquadro, Serviços & Evolution API                  :done,    des21, 2026-05-22, 2026-05-22
 ```
 
 ---
@@ -179,14 +180,15 @@ gantt
 
 ---
 
-## 🚀 Fase Atual: Fase 20 - Sincronização do Schema do Instalador com Campos Personalizados e Migração Retrocompatível (Concluída em 22/05/2026)
+### **Fase 20: Sincronização do Schema do Instalador com Campos Personalizados e Migração Retrocompatível (Concluída em 22/05/2026)**
+- **Identificação e Correção de Causa Raiz** ✅: Corrigida a quebra da rota de inicialização `/api/install/check` gerada pela ausência física das colunas customizadas adicionadas na Fase 18 (`barberShopName`, `lunchStart`, `workDays`, etc.) no Supabase remoto do usuário.
+- **Atualização do DDL no Instalador** ✅: Inseridos os novos campos dinâmicos aos blocos `CREATE TABLE IF NOT EXISTS` do `SystemSettings` e do `Barber` no arquivo `src/app/api/install/run/route.ts`.
+- **Criação de Patches de Migração** ✅: Adicionados comandos `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS ...` e `ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS ...` de execução automática no final do script `schemaSql` para atualizar retrocompativelmente bancos de dados já criados, sem qualquer risco de perda de dados.
+- **Validação de Build** ✅: Compilação de produção realizada com sucesso atestando a integridade das migrações e rotas.
 
-### **Ações Realizadas**
-1. **Identificação da Causa Raiz** ✅:
-   - Identificamos que a API de produção `/api/install/check` estava quebrando devido à ausência das colunas adicionadas na **Fase 18** (`barberShopName`, `lunchStart`, `workDays`, etc.) no banco Supabase remoto do usuário. Como o Prisma exige essas colunas, as consultas falhavam e a aplicação redirecionava em loop para `/install/wizard`.
-2. **Atualização do DDL no Instalador (`src/app/api/install/run/route.ts`)** ✅:
-   - Adicionadas as novas colunas aos blocos `CREATE TABLE IF NOT EXISTS` do `SystemSettings` e do `Barber` na constante `schemaSql`.
-3. **Criação de Patches de Migração (`src/app/api/install/run/route.ts`)** ✅:
-   - Adicionados comandos `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS ...` e `ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS ...` no final do script `schemaSql` para atualizar bancos de dados já criados, de forma totalmente transparente e sem perda de dados, ao executar o Wizard.
-4. **Validação de Compilação do Next.js** ✅:
-   - Executada a compilação completa de produção local via `npm run build` com sucesso absoluto, confirmando que o código TypeScript e a infraestrutura do Prisma estão perfeitamente íntegros.
+### **Fase 21: Esquadro do Dia, Associação de Serviços e Evolution API (Concluída em 22/05/2026)**
+- **Esquadro do Dia (Timeline)** ✅: Implementada a aba do Esquadro do Dia no `/admin` com régua vertical interativa de 30 em 30 minutos com base nos horários de cada barbeiro. Destaque visual premium para Slots Livres (com botão de bloqueio rápido), Slots de Almoço (desabilitados e com estilo tracejado), Slots Bloqueados (tarja vermelha com cadeado) e Slots Agendados (card dourado premium com informações completas do cliente, serviço, duração, valor, botão para remoção e atalho direto para iniciar chat de suporte no WhatsApp).
+- **Gerenciamento de Bloqueios e Ausências** ✅: Criado formulário de ausências para barbeiros definirem indisponibilidades (ex: consultas médicas), gerando cards interativos cronológicos e atualizando dinamicamente a grade de horários disponível no agendamento público do cliente final.
+- **Vínculo N-N de Serviços e Barbeiros** ✅: Modificada a aba de Serviços para cadastrar e editar serviços vinculando quais barbeiros oferecem a especialidade. A interface pública do cliente final no fluxo de agendamento (`BookingFlow.tsx`) filtra os serviços em tempo real exibindo apenas as opções que o barbeiro escolhido de fato realiza.
+- **Integração com Evolution API** ✅: Adicionado disparo automatizado de notificação por WhatsApp no endpoint `/api/booking/create`. O sistema recupera a URL e o Token configurados no instalador e envia mensagens personalizadas ricas com nome do cliente, estabelecimento, serviço, profissional, data, horário, endereço e telefone de contato.
+- **Compilação de Produção 100% Concluída** ✅: Executado `npm run build` local gerando a build final otimizada do Next.js sem nenhuma falha de compilação ou erros de lint/TypeScript.
