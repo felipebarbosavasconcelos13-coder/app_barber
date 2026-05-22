@@ -33,7 +33,8 @@ gantt
     Fase 16: Correção de Timeout de 10s da Vercel no Instalador :done,    des16, 2026-05-21, 2026-05-21
     Fase 17: Proxy do Prisma e Resiliência no `/admin`          :done,    des17, 2026-05-21, 2026-05-21
     Fase 18: Refinamento de Painel e Regras por Barbeiro         :done,    des18, 2026-05-21, 2026-05-21
-    Fase 19: Correção de Assinaturas PrismaPg e Fim do Loop      :active,  des19, 2026-05-22, 2026-05-22
+    Fase 19: Correção de Assinaturas PrismaPg e Fim do Loop      :done,    des19, 2026-05-22, 2026-05-22
+    Fase 20: Sincronização de Schema e Migração Supabase         :active,  des20, 2026-05-22, 2026-05-22
 ```
 
 ---
@@ -175,3 +176,17 @@ gantt
   - Realizada busca profunda no workspace por outros adaptadores e arquivos de instalação em subdiretórios. Nenhuma outra ocorrência do bug de `PrismaPg` foi identificada, isolando a correção no aplicativo principal.
 - **Validação e Homologação de Build** ✅:
   - Executada a compilação completa do Next.js via `npm run build` confirmando sucesso na geração das rotas estáticas e na integridade de tipos.
+
+---
+
+## 🚀 Fase Atual: Fase 20 - Sincronização do Schema do Instalador com Campos Personalizados e Migração Retrocompatível (Concluída em 22/05/2026)
+
+### **Ações Realizadas**
+1. **Identificação da Causa Raiz** ✅:
+   - Identificamos que a API de produção `/api/install/check` estava quebrando devido à ausência das colunas adicionadas na **Fase 18** (`barberShopName`, `lunchStart`, `workDays`, etc.) no banco Supabase remoto do usuário. Como o Prisma exige essas colunas, as consultas falhavam e a aplicação redirecionava em loop para `/install/wizard`.
+2. **Atualização do DDL no Instalador (`src/app/api/install/run/route.ts`)** ✅:
+   - Adicionadas as novas colunas aos blocos `CREATE TABLE IF NOT EXISTS` do `SystemSettings` e do `Barber` na constante `schemaSql`.
+3. **Criação de Patches de Migração (`src/app/api/install/run/route.ts`)** ✅:
+   - Adicionados comandos `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS ...` e `ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS ...` no final do script `schemaSql` para atualizar bancos de dados já criados, de forma totalmente transparente e sem perda de dados, ao executar o Wizard.
+4. **Validação de Compilação do Next.js** ✅:
+   - Executada a compilação completa de produção local via `npm run build` com sucesso absoluto, confirmando que o código TypeScript e a infraestrutura do Prisma estão perfeitamente íntegros.

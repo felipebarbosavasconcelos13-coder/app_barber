@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   "openingTime" TEXT NOT NULL DEFAULT '09:00',
   "closingTime" TEXT NOT NULL DEFAULT '19:00',
   "adminPassword" TEXT NOT NULL DEFAULT 'admin123',
+  "barberShopName" TEXT NOT NULL DEFAULT 'Barbearia Premium',
+  "logoUrl" TEXT NOT NULL DEFAULT '',
+  "address" TEXT NOT NULL DEFAULT 'Av. Paulista, 1000 - Bela Vista, São Paulo - SP',
+  "phone" TEXT NOT NULL DEFAULT '(11) 99999-9999',
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "SystemSettings_pkey" PRIMARY KEY ("id")
 );
@@ -27,6 +31,9 @@ CREATE TABLE IF NOT EXISTS "Barber" (
   "email" TEXT NOT NULL,
   "openingTime" TEXT NOT NULL DEFAULT '09:00',
   "closingTime" TEXT NOT NULL DEFAULT '19:00',
+  "lunchStart" TEXT NOT NULL DEFAULT '12:00',
+  "lunchEnd" TEXT NOT NULL DEFAULT '13:00',
+  "workDays" TEXT NOT NULL DEFAULT '1,2,3,4,5,6',
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "Barber_pkey" PRIMARY KEY ("id")
@@ -84,6 +91,18 @@ DO $$ BEGIN
   ALTER TABLE "_BarberServices" ADD CONSTRAINT "_BarberServices_B_fkey" FOREIGN KEY ("B") REFERENCES "Service"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
+
+-- ==========================================================
+-- PATCHES DE MIGRAÇÃO - Adiciona as colunas novas caso já existam as tabelas antigas
+-- ==========================================================
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "barberShopName" TEXT NOT NULL DEFAULT 'Barbearia Premium';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "logoUrl" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "address" TEXT NOT NULL DEFAULT 'Av. Paulista, 1000 - Bela Vista, São Paulo - SP';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "phone" TEXT NOT NULL DEFAULT '(11) 99999-9999';
+
+ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "lunchStart" TEXT NOT NULL DEFAULT '12:00';
+ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "lunchEnd" TEXT NOT NULL DEFAULT '13:00';
+ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "workDays" TEXT NOT NULL DEFAULT '1,2,3,4,5,6';
 `;
 
 function createPool(databaseUrl: string) {
