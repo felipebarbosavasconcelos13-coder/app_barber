@@ -336,4 +336,51 @@ Para resolver definitivamente a instabilidade em que atualizações pós-push fo
 
 **Toda a Fase 27 foi concluída com sucesso e homologada em produção!**
 
+---
+
+## 📅 Fase 28: Painel de Cores Customizável, Avaliações do Google no Hero, Correção de Contraste e Modo Foco no Agendamento (PENDENTE DE APROVAÇÃO)
+
+### **Resumo dos Recursos Propostos**
+
+Esta fase reúne melhorias de branding, clareza visual de usabilidade (contraste de acessibilidade de horários), marketing de reputação dinâmico no Hero e foco de conversão no agendamento do cliente móvel:
+
+1. **Reputação Google Maps no Hero Principal**:
+   - **Campos no Banco**: Adicionar `googleRating` (Decimal, ex: 5.0) e `googleReviewsCount` (Int, ex: 154) no modelo `SystemSettings`.
+   - **Exibição na Landing Page**: Renderizar um badge flutuante dourado e elegante logo abaixo do nome da barbearia no Hero. Exemplo: `★ 5.0 (154 avaliações no Google Meu Negócio)`.
+   - **Visibilidade Inteligente**: Caso o campo de URL de mapa do Google ou avaliações esteja inativo, a seção não será exibida, mantendo o design limpo.
+
+2. **Diagnóstico e Correção de Depoimentos Reais do Google Maps**:
+   - **Causa Técnica**: O iframe de embed do Google Maps padrão (`<iframe>`) serve exclusivamente para renderização visual geográfica e, devido a restrições de segurança de domínio e CORS do próprio Google, **não exporta nem permite ler depoimentos em formato de texto** dinâmico para estilização customizada na Landing Page.
+   - **Soluções Propostas**:
+     - *Opção A (Widget de Terceiros)*: O barbeiro colará o código de script e container fornecido por widgets gratuitos de reputação (como *Elfsight* ou *Trustpilot*) no campo `googleReviewsWidget` já existente. Adicionaremos no painel administrativo instruções extremamente claras e ilustradas de como gerar esse widget gratuito e copiar o código correto.
+     - *Opção B (Curadoria Manual)*: O barbeiro copia os depoimentos reais de maior destaque da sua ficha do Google Meu Negócio e cadastra na tabela de depoimentos curados do painel administrativo. Eles serão renderizados instantaneamente na página principal com design de luxo, avatares e selo verificado do Google.
+
+3. **Correção de Contraste e Visibilidade dos Horários (Acessibilidade WCAG)**:
+   - **Problema Identificado**: Os horários disponíveis no seletor de agendamento (`.slot-btn`) estão exibindo texto cinza escuro sobre fundo escuro, impossibilitando a leitura confortável (baixo contraste).
+   - **Melhoria Proposta**: Modificar o CSS de `.slot-btn` no arquivo `BookingFlow.tsx` para forçar cores de altíssima legibilidade em conformidade com as diretrizes da WCAG:
+     - Texto em off-white claro (`#ffffff` ou `var(--text-primary)`) por padrão.
+     - Ícone do relógio Lucide com cor gold ativa (`var(--accent-gold)`) para brilho estético.
+     - Fundo do botão não selecionado em cinza translúcido suave (`rgba(255, 255, 255, 0.04)`), garantindo contraste absoluto sobre o container escuro.
+
+4. **Painel de Branding & Paleta de Cores Dinâmica pelo Barbeiro**:
+   - **Modelagem de Banco (schema.prisma)**: Adicionar as colunas de cores ao modelo `SystemSettings`:
+     - `colorAccentGold` (String, padrão `#c5a880` - Destaque dourado)
+     - `colorBgPrimary` (String, padrão `#0a0a0c` - Fundo Principal Dark)
+     - `colorBgSecondary` (String, padrão `#121216` - Fundo Secundário)
+     - `colorBgTertiary` (String, padrão `#1b1b22` - Fundo Terciário)
+   - **Painel Administrativo (`/admin` - Branding)**: Implementar seletor interativo de paleta de cores com inputs do tipo nativo color (`type="color"`), permitindo que o administrador defina a paleta exata da sua marca (azul, vermelho, verde, preto profundo, etc.).
+   - **Injeção Dinâmica na UI**: Injetar as variáveis CSS modificadas no `:root` no layout do servidor Next.js em tempo real. O aplicativo herdará automaticamente as cores personalizadas do barbeiro em toda a Landing Page e Painel Administrativo de forma instantânea!
+
+5. **Modo Foco em Agendamento (Ergonomia e Conversão)**:
+   - **Comportamento Proposto**: Assim que o cliente final interagir e selecionar o barbeiro (Passo 1), o componente `BookingFlow.tsx` ativará o estado de foco (`isFocused`).
+   - **Lógica na UI**: Quando focado, a página pública ocultará de forma suave (transições fade) as seções externas de distração (como o Hero gigante no topo, seções de depoimentos longos e mapa do rodapé) ou aplicará um container focado de altura cheia. Isso impede o deslocamento involuntário de tela (rolagens acidentais para cima ou para baixo), centralizando 100% da atenção do usuário no fluxo rápido de passos do agendamento, maximizando as conversões.
+
+---
+
+### **Status da Fase 28: PENDENTE DE APROVAÇÃO**
+- Nenhuma alteração foi realizada no código-fonte até a aprovação expressa do usuário, conforme as regras operacionais.
+
+---
+
+
 
