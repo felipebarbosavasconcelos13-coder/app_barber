@@ -106,6 +106,7 @@ export default function AdminDashboard() {
   });
   const [editingTestimonialId, setEditingTestimonialId] = useState<string | null>(null);
   const [testimonialLoading, setTestimonialLoading] = useState(false);
+  const [importingGoogleWidget, setImportingGoogleWidget] = useState(false);
 
   // Novos States de Gestão de Clientes (CRM)
   const [clients, setClients] = useState<any[]>([]);
@@ -876,6 +877,37 @@ export default function AdminDashboard() {
       setError(err.message);
     } finally {
       setTestimonialLoading(false);
+    }
+  };
+
+  const handleImportGoogleWidget = async () => {
+    setError("");
+    setSuccess("");
+    setImportingGoogleWidget(true);
+
+    try {
+      const res = await fetch("/api/admin/google-reviews/import-widget", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: settings.googleReviewsWidget }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao importar avaliações do widget.");
+
+      setSettings({
+        ...settings,
+        googleRating: data.rating || settings.googleRating,
+        googleReviewsCount: data.reviewsCount || settings.googleReviewsCount,
+      });
+
+      const testimonialsRes = await fetch("/api/admin/testimonials");
+      const testimonialsData = await testimonialsRes.json();
+      setTestimonials(testimonialsData.error ? [] : testimonialsData);
+      setSuccess(`Avaliações importadas sem API do Google. Total processado: ${data.importedCount}.`);
+    } catch (err: any) {
+      setError(err.message || "Falha ao importar avaliações do widget.");
+    } finally {
+      setImportingGoogleWidget(false);
     }
   };
 
@@ -2208,7 +2240,7 @@ export default function AdminDashboard() {
                       <div>
                         <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600, marginBottom: "8px" }}>Google & Localização</h4>
                         <p style={{ marginBottom: "20px", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                          Integre seu negócio com o Google Maps e exiba depoimentos ou widgets de avaliações sem chaves de API pagas.
+                          Integre Google Maps e avaliações sem chave de API usando embed do Maps ou HTML/URL pública de widget de avaliações.
                         </p>
 
                         <form onSubmit={handleSaveSettings}>
@@ -2221,7 +2253,6 @@ export default function AdminDashboard() {
                                 min="0"
                                 max="5"
                                 step="0.1"
-                                placeholder="Ex: 4.9"
                                 value={settings.googleRating || 0}
                                 onChange={(e) => setSettings({ ...settings, googleRating: Number(e.target.value) })}
                               />
@@ -2233,7 +2264,6 @@ export default function AdminDashboard() {
                                 className="form-input"
                                 min="0"
                                 step="1"
-                                placeholder="Ex: 154"
                                 value={settings.googleReviewsCount || 0}
                                 onChange={(e) => setSettings({ ...settings, googleReviewsCount: Number(e.target.value) })}
                               />
@@ -2241,7 +2271,7 @@ export default function AdminDashboard() {
                           </div>
 
                           <div className="form-group">
-                            <label className="form-label">URL do Google Maps Embed (src do Iframe)</label>
+                            <label className="form-label">URL do Google Maps Embed ou Link do Maps</label>
                             <input
                               type="text"
                               className="form-input"
@@ -2250,242 +2280,100 @@ export default function AdminDashboard() {
                               onChange={(e) => setSettings({ ...settings, googleMapsEmbedUrl: e.target.value })}
                             />
                             <div style={{ marginTop: "6px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", padding: "10px", borderRadius: "8px", fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                              <strong style={{ color: "var(--accent-gold)", display: "block", marginBottom: "4px" }}>Passo a passo gratuito:</strong>
-                              <ol style={{ paddingLeft: "14px", margin: 0, display: "flex", flexDirection: "column", gap: "3px" }}>
-                                <li>Acesse o <a href="https://maps.google.com" target="_blank" rel="noreferrer" style={{ color: "var(--accent-gold)", textDecoration: "underline" }}>Google Maps</a> e pesquise sua barbearia.</li>
-                                <li>Clique em <strong>Compartilhar</strong> e selecione a aba <strong>Incorporar um mapa</strong>.</li>
-                                <li>Copie apenas a URL que está dentro do <code>src="..."</code> do iframe e cole neste campo.</li>
-                              </ol>
+                              <strong style={{ color: "var(--accent-gold)", display: "block", marginBottom: "4px" }}>Sem chave de API:</strong>
+                              O iframe do Google Maps mostra o mapa/ficha visualmente, mas não libera os textos das avaliações para cards customizados. Para importar avaliações sem API, use abaixo o HTML/URL de um widget público, como no exemplo WordPress `wp-gr rpi wpac`.
                             </div>
                           </div>
 
                           <div className="form-group" style={{ marginTop: "12px" }}>
-                            <label className="form-label">Código do Widget de Depoimentos (Opcional - Elfsight, etc.)</label>
+                            <label className="form-label">HTML ou URL do Widget de Avaliações Sem Chave</label>
                             <textarea
                               className="form-input"
-                              rows={3}
+                              rows={4}
                               style={{ height: "auto", fontFamily: "monospace", fontSize: "0.8rem" }}
-                              placeholder="Cole o código do widget (ex: Elfsight, Trustpilot) caso queira usar um widget de terceiros automático."
+                              placeholder="Cole aqui o HTML do widget (ex: wp-gr rpi wpac) ou uma URL pública que contenha esse widget."
                               value={settings.googleReviewsWidget || ""}
                               onChange={(e) => setSettings({ ...settings, googleReviewsWidget: e.target.value })}
                             />
                             <small style={{ color: "var(--text-muted)", fontSize: "0.72rem", display: "block", marginTop: "4px" }}>
-                              Se deixado em branco, o sistema usará automaticamente a seção de Depoimentos Curados cadastrados no painel abaixo, exibindo-os com o visual elegante e selo verificado do Google!
+                              O importador lê widgets públicos já renderizados e salva as avaliações encontradas no banco. Não usa chave de API do Google.
                             </small>
                           </div>
 
-                          <button type="submit" className="btn-gold" style={{ width: "100%", marginTop: "15px" }} disabled={actionLoading}>
-                            {actionLoading ? "Salvando..." : "Salvar Integração Google"}
-                          </button>
+                          <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
+                            <button type="submit" className="btn-gold" style={{ flex: 1 }} disabled={actionLoading || importingGoogleWidget}>
+                              {actionLoading ? "Salvando..." : "Salvar Google"}
+                            </button>
+                            <button type="button" className="btn-gold" style={{ flex: 1.2, background: "transparent", border: "1px solid var(--accent-gold)", color: "var(--accent-gold)" }} onClick={handleImportGoogleWidget} disabled={importingGoogleWidget || actionLoading}>
+                              {importingGoogleWidget ? "Importando..." : "Importar Avaliações"}
+                            </button>
+                          </div>
                         </form>
                       </div>
                     </div>
 
                   </div>
 
-                  {/* Seção: Depoimentos Curados (Google Reviews / Reputação) */}
+                  {/* Seção: Avaliações exibidas na Landing Page */}
                   <div className="glass-card" style={{ marginTop: "24px", padding: "28px", borderRadius: "14px" }}>
                     <div style={{ marginBottom: "20px" }}>
-                      <h3 className="title-serif gold-text" style={{ fontSize: "1.4rem", fontWeight: 600 }}>Depoimentos & Avaliações Curadas (Google Business)</h3>
+                      <h3 className="title-serif gold-text" style={{ fontSize: "1.4rem", fontWeight: 600 }}>Avaliações Exibidas na Landing Page</h3>
                       <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                        Copie e cole aqui as melhores avaliações da sua ficha do Google Meu Negócio. Elas serão exibidas com destaque na página principal, com selo de verificação de autenticidade do Google e estrelas douradas!
+                        Avaliações importadas de widget público sem chave de API do Google, ou registros já existentes no banco interno.
                       </p>
                     </div>
 
-                    <div className="pane-grid" style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "24px", alignItems: "start" }}>
-                      
-                      {/* Lista de Depoimentos */}
-                      <div className="testimonials-list-section">
-                        {testimonials.length === 0 ? (
-                          <div style={{ textAlign: "center", padding: "40px", border: "1px dashed rgba(255, 255, 255, 0.08)", borderRadius: "10px", color: "var(--text-muted)" }}>
-                            <Award size={36} className="empty-icon" style={{ marginBottom: "12px", opacity: 0.5 }} />
-                            <h4 style={{ color: "#fff", marginBottom: "6px" }}>Nenhum depoimento cadastrado</h4>
-                            <p style={{ fontSize: "0.85rem" }}>Os depoimentos copiados da sua ficha do Google aparecerão listados aqui.</p>
-                          </div>
-                        ) : (
-                          <div className="table-wrapper" style={{ padding: 0, border: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                            <table className="premium-table">
-                              <thead>
-                                <tr>
-                                  <th>Autor</th>
-                                  <th>Nota</th>
-                                  <th>Depoimento</th>
-                                  <th>Origem</th>
-                                  <th style={{ textAlign: "center" }}>Ações</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {testimonials.map((t) => (
-                                  <tr key={t.id} className="animate-fade-in">
-                                    <td data-label="Autor">
-                                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                        {t.avatarUrl ? (
-                                          <img src={t.avatarUrl} alt={t.authorName} style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", border: "1px solid rgba(197, 168, 128, 0.2)" }} />
-                                        ) : (
-                                          <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(197, 168, 128, 0.1)", color: "var(--accent-gold)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: "0.85rem" }}>
-                                            {t.authorName.charAt(0).toUpperCase()}
-                                          </div>
-                                        )}
-                                        <span className="client-name">{t.authorName}</span>
-                                      </div>
-                                    </td>
-                                    <td data-label="Nota">
-                                      <span className="gold-text" style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
-                                        {t.rating} ★
-                                      </span>
-                                    </td>
-                                    <td data-label="Depoimento" style={{ maxWidth: "250px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={t.content}>
-                                      {t.content}
-                                    </td>
-                                    <td data-label="Origem">
-                                      <span className="badge" style={{ background: t.source === "Google" ? "rgba(66, 133, 244, 0.1)" : "rgba(197, 168, 128, 0.08)", border: t.source === "Google" ? "1px solid rgba(66, 133, 244, 0.2)" : "1px solid rgba(197, 168, 128, 0.15)", color: t.source === "Google" ? "#4285f4" : "var(--accent-gold)", fontSize: "0.75rem", padding: "4px 8px", borderRadius: "6px" }}>
-                                        {t.source || "Google"}
-                                      </span>
-                                    </td>
-                                    <td style={{ textAlign: "center" }} data-label="Ações">
-                                      <div style={{ display: "inline-flex", gap: "8px" }}>
-                                        <button
-                                          onClick={() => handleEditTestimonialClick(t)}
-                                          className="btn-delete"
-                                          title="Editar Depoimento"
-                                          style={{
-                                            background: "rgba(197, 168, 128, 0.05)",
-                                            border: "1px solid rgba(197, 168, 128, 0.15)",
-                                            color: "var(--accent-gold)",
-                                            width: "28px",
-                                            height: "28px",
-                                            borderRadius: "6px",
-                                            cursor: "pointer",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center"
-                                          }}
-                                        >
-                                          <Edit size={12} />
-                                        </button>
-                                        <button
-                                          onClick={() => handleDeleteTestimonial(t.id)}
-                                          className="btn-delete"
-                                          title="Excluir Depoimento"
-                                          style={{ width: "28px", height: "28px" }}
-                                          disabled={testimonialLoading}
-                                        >
-                                          <Trash2 size={12} />
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
+                    {testimonials.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "40px", border: "1px dashed rgba(255, 255, 255, 0.08)", borderRadius: "10px", color: "var(--text-muted)" }}>
+                        <Award size={36} className="empty-icon" style={{ marginBottom: "12px", opacity: 0.5 }} />
+                        <h4 style={{ color: "#fff", marginBottom: "6px" }}>Nenhuma avaliação interna cadastrada</h4>
+                        <p style={{ fontSize: "0.85rem" }}>Cole o HTML ou URL de um widget público no card Google & Localização e clique em importar.</p>
                       </div>
-
-                      {/* Formulário de Cadastro/Edição de Depoimento */}
-                      <div className="testimonial-form-box">
-                        <div className="glass-card" style={{ padding: "20px", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                          <h4 className="title-serif gold-text" style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "4px" }}>
-                            {editingTestimonialId ? "Editar Depoimento" : "Adicionar Depoimento"}
-                          </h4>
-                          <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "16px" }}>
-                            {editingTestimonialId ? "Atualize os dados da avaliação selecionada." : "Cadastre uma nova avaliação recebida no Google."}
-                          </p>
-
-                          <form onSubmit={handleSaveTestimonial}>
-                            <div className="form-group">
-                              <label className="form-label" style={{ fontSize: "0.8rem" }}>Nome do Autor</label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                style={{ fontSize: "0.85rem", padding: "10px 12px" }}
-                                placeholder="Ex: Felipe Vasconcelos"
-                                value={newTestimonial.authorName}
-                                onChange={(e) => setNewTestimonial({ ...newTestimonial, authorName: e.target.value })}
-                                required
-                              />
-                            </div>
-
-                            <div className="form-group-row">
-                              <div className="form-group">
-                                <label className="form-label" style={{ fontSize: "0.8rem" }}>Estrelas (Avaliação)</label>
-                                <select
-                                  className="form-input"
-                                  style={{ fontSize: "0.85rem", padding: "10px 12px" }}
-                                  value={newTestimonial.rating}
-                                  onChange={(e) => setNewTestimonial({ ...newTestimonial, rating: e.target.value })}
-                                  required
-                                >
-                                  <option value="5">5 ★★★★★ (Excelente)</option>
-                                  <option value="4">4 ★★★★☆ (Ótimo)</option>
-                                  <option value="3">3 ★★★☆☆ (Regular)</option>
-                                </select>
-                              </div>
-                              <div className="form-group">
-                                <label className="form-label" style={{ fontSize: "0.8rem" }}>Origem</label>
-                                <select
-                                  className="form-input"
-                                  style={{ fontSize: "0.85rem", padding: "10px 12px" }}
-                                  value={newTestimonial.source}
-                                  onChange={(e) => setNewTestimonial({ ...newTestimonial, source: e.target.value })}
-                                  required
-                                >
-                                  <option value="Google">Google Meu Negócio</option>
-                                  <option value="Local">Direto do App</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            <div className="form-group">
-                              <label className="form-label" style={{ fontSize: "0.8rem" }}>URL da Foto de Perfil (Opcional)</label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                style={{ fontSize: "0.85rem", padding: "10px 12px" }}
-                                placeholder="Link da imagem do perfil"
-                                value={newTestimonial.avatarUrl}
-                                onChange={(e) => setNewTestimonial({ ...newTestimonial, avatarUrl: e.target.value })}
-                              />
-                            </div>
-
-                            <div className="form-group">
-                              <label className="form-label" style={{ fontSize: "0.8rem" }}>Conteúdo da Avaliação</label>
-                              <textarea
-                                className="form-input"
-                                rows={4}
-                                style={{ fontSize: "0.85rem", height: "auto", resize: "vertical" }}
-                                placeholder="Escreva a avaliação exata recebida..."
-                                value={newTestimonial.content}
-                                onChange={(e) => setNewTestimonial({ ...newTestimonial, content: e.target.value })}
-                                required
-                              />
-                            </div>
-
-                            <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
-                              {editingTestimonialId && (
-                                <button
-                                  type="button"
-                                  onClick={handleCancelEditTestimonial}
-                                  className="btn-gold"
-                                  style={{ flex: 1, background: "transparent", border: "1px solid var(--accent-gold)", color: "var(--accent-gold)", padding: "8px 12px", fontSize: "0.8rem" }}
-                                >
-                                  Cancelar
-                                </button>
-                              )}
-                              <button
-                                type="submit"
-                                className="btn-gold"
-                                style={{ flex: editingTestimonialId ? 1.5 : 1, padding: "8px 12px", fontSize: "0.8rem" }}
-                                disabled={testimonialLoading}
-                              >
-                                {testimonialLoading ? "Salvando..." : editingTestimonialId ? "Salvar Alterações" : "Adicionar"}
-                              </button>
-                            </div>
-                          </form>
-                        </div>
+                    ) : (
+                      <div className="table-wrapper" style={{ padding: 0, border: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                        <table className="premium-table">
+                          <thead>
+                            <tr>
+                              <th>Autor</th>
+                              <th>Nota</th>
+                              <th>Avaliação</th>
+                              <th>Origem</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {testimonials.map((t) => (
+                              <tr key={t.id} className="animate-fade-in">
+                                <td data-label="Autor">
+                                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    {t.avatarUrl ? (
+                                      <img src={t.avatarUrl} alt={t.authorName} style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", border: "1px solid rgba(197, 168, 128, 0.2)" }} />
+                                    ) : (
+                                      <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(197, 168, 128, 0.1)", color: "var(--accent-gold)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: "0.85rem" }}>
+                                        {t.authorName.charAt(0).toUpperCase()}
+                                      </div>
+                                    )}
+                                    <span className="client-name">{t.authorName}</span>
+                                  </div>
+                                </td>
+                                <td data-label="Nota">
+                                  <span className="gold-text" style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
+                                    {t.rating} ★
+                                  </span>
+                                </td>
+                                <td data-label="Avaliação" style={{ maxWidth: "520px", whiteSpace: "normal", lineHeight: 1.5 }}>
+                                  {t.content}
+                                </td>
+                                <td data-label="Origem">
+                                  <span className="badge" style={{ background: "rgba(66, 133, 244, 0.1)", border: "1px solid rgba(66, 133, 244, 0.2)", color: "#4285f4", fontSize: "0.75rem", padding: "4px 8px", borderRadius: "6px" }}>
+                                    {t.source || "Google Maps"}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-
-                    </div>
+                    )}
                   </div>
 
                 </div>

@@ -379,15 +379,16 @@ Esta fase reúne melhorias de branding, clareza visual de usabilidade (contraste
 
 ### **Status e Conclusão da Fase 28**
 - **Reputação Google no Hero** ✅: Adicionados os campos `googleRating` e `googleReviewsCount` em `SystemSettings`, persistidos pela API administrativa e exibidos em badge premium no Hero quando há dados de reputação ou Maps configurados.
-- **Correção dos Depoimentos Reais do Google** ✅: Mantida a abordagem segura da Fase 25: o sistema não tenta ler conteúdo textual do iframe do Google Maps por restrições de CORS/domínio. O painel continua oferecendo widget externo (`googleReviewsWidget`) e curadoria manual de depoimentos com instruções claras.
+- **Avaliações Reais do Google Maps Sem Chave** ✅: Verificado que o iframe/link do Google Maps não permite extrair automaticamente textos de avaliações para cards customizados sem chave/API. A alternativa sem chave mantida é incorporar mapa/ficha visual via embed e aceitar HTML de widget externo (`googleReviewsWidget`) quando o administrador quiser avaliações dinâmicas sem configurar API própria do Google.
 - **Contraste dos Horários** ✅: Botões `.slot-btn` do `BookingFlow.tsx` receberam texto branco, fundo translúcido e ícone dourado, elevando a legibilidade no tema escuro.
 - **Paleta de Cores Dinâmica** ✅: Adicionados os campos `colorAccentGold`, `colorBgPrimary`, `colorBgSecondary` e `colorBgTertiary`, com auto-migrações no runtime e no instalador. O layout injeta as variáveis CSS globais a partir do banco.
 - **Painel Administrativo de Branding** ✅: Criado card "Paleta da Marca" com inputs `type="color"` e campos hexadecimais para customização direta pelo barbeiro.
 - **Modo Foco do Agendamento** ✅: Após a seleção do barbeiro, `BookingFlow.tsx` adiciona a classe `booking-focused` e o CSS global oculta Hero, depoimentos, mapa e rodapé, centralizando o fluxo de reserva.
 - **Build Geral de Homologação** ✅: Executado `npm run build` com sucesso. Os logs locais de `ECONNREFUSED` ocorreram apenas pela ausência de PostgreSQL local durante prerender, sem falha de build.
 - **Correção de Exibição de Depoimentos** ✅: Removidos os fallbacks fictícios da Landing Page, da API pública `/api/testimonials` e do seed do instalador. A seção "O Que Nossos Clientes Dizem" agora só aparece se houver widget externo configurado ou depoimentos reais cadastrados no painel administrativo.
+- **Revisão Sem Google API Key** ✅: Removida a abordagem com Google Places API por exigir chave. O painel agora documenta a limitação do iframe do Maps e oferece o caminho sem chave: embed/link do Google Maps, nota/quantidade e widget externo opcional de avaliações.
+- **Importação de Widget Público Sem API** ✅: Implementado endpoint `POST /api/admin/google-reviews/import-widget` para importar avaliações a partir de HTML ou URL pública de widgets renderizados, como o exemplo WordPress `wp-gr rpi wpac`. O painel agora permite colar esse HTML/URL e importar os depoimentos para `Testimonial` sem chave Google.
 
 **Toda a Fase 28 foi concluída com sucesso e homologada em build local!**
 
 ---
-
