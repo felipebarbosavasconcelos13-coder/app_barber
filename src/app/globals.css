@@ -32,6 +32,13 @@
   --status-warning: #f59e0b;
 }
 
+body {
+  --accent-gold-hover: color-mix(in srgb, var(--accent-gold) 80%, #000000 20%);
+  --accent-gold-glow: color-mix(in srgb, var(--accent-gold) 18%, transparent);
+  --glass-bg: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
+  --glass-border: color-mix(in srgb, var(--accent-gold) 12%, transparent);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -46,6 +53,40 @@ html, body {
   font-family: var(--font-sans);
   min-height: 100vh;
   scroll-behavior: smooth;
+}
+
+.hero-google-rating {
+  display: inline-flex;
+  gap: 8px;
+  margin: 10px auto 18px;
+  padding: 9px 15px;
+  border: 1px solid color-mix(in srgb, var(--accent-gold) 35%, transparent);
+  border-radius: 999px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-gold) 18%, transparent), rgba(255, 255, 255, 0.03));
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--accent-gold) 14%, transparent);
+}
+
+.hero-google-rating .rating-stars {
+  color: var(--accent-gold);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--accent-gold) 60%, transparent);
+}
+
+.home-container:has(.booking-focused) .hero-section,
+.home-container:has(.booking-focused) .testimonials-section,
+.home-container:has(.booking-focused) .location-section,
+.home-container:has(.booking-focused) .home-footer {
+  display: none;
+}
+
+.home-container:has(.booking-focused) .booking-section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 32px;
+  padding-bottom: 32px;
 }
 
 /* Scrollbar Customizada */
@@ -544,4 +585,3 @@ p {
     border-radius: 12px !important;
   }
 }
-

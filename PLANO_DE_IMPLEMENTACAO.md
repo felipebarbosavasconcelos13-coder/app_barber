@@ -338,7 +338,7 @@ Para resolver definitivamente a instabilidade em que atualizações pós-push fo
 
 ---
 
-## 📅 Fase 28: Painel de Cores Customizável, Avaliações do Google no Hero, Correção de Contraste e Modo Foco no Agendamento (PENDENTE DE APROVAÇÃO)
+## 📅 Fase 28: Painel de Cores Customizável, Avaliações do Google no Hero, Correção de Contraste e Modo Foco no Agendamento (Concluída em 23/05/2026)
 
 ### **Resumo dos Recursos Propostos**
 
@@ -377,10 +377,17 @@ Esta fase reúne melhorias de branding, clareza visual de usabilidade (contraste
 
 ---
 
-### **Status da Fase 28: PENDENTE DE APROVAÇÃO**
-- Nenhuma alteração foi realizada no código-fonte até a aprovação expressa do usuário, conforme as regras operacionais.
+### **Status e Conclusão da Fase 28**
+- **Reputação Google no Hero** ✅: Adicionados os campos `googleRating` e `googleReviewsCount` em `SystemSettings`, persistidos pela API administrativa e exibidos em badge premium no Hero quando há dados de reputação ou Maps configurados.
+- **Correção dos Depoimentos Reais do Google** ✅: Mantida a abordagem segura da Fase 25: o sistema não tenta ler conteúdo textual do iframe do Google Maps por restrições de CORS/domínio. O painel continua oferecendo widget externo (`googleReviewsWidget`) e curadoria manual de depoimentos com instruções claras.
+- **Contraste dos Horários** ✅: Botões `.slot-btn` do `BookingFlow.tsx` receberam texto branco, fundo translúcido e ícone dourado, elevando a legibilidade no tema escuro.
+- **Paleta de Cores Dinâmica** ✅: Adicionados os campos `colorAccentGold`, `colorBgPrimary`, `colorBgSecondary` e `colorBgTertiary`, com auto-migrações no runtime e no instalador. O layout injeta as variáveis CSS globais a partir do banco.
+- **Painel Administrativo de Branding** ✅: Criado card "Paleta da Marca" com inputs `type="color"` e campos hexadecimais para customização direta pelo barbeiro.
+- **Modo Foco do Agendamento** ✅: Após a seleção do barbeiro, `BookingFlow.tsx` adiciona a classe `booking-focused` e o CSS global oculta Hero, depoimentos, mapa e rodapé, centralizando o fluxo de reserva.
+- **Build Geral de Homologação** ✅: Executado `npm run build` com sucesso. Os logs locais de `ECONNREFUSED` ocorreram apenas pela ausência de PostgreSQL local durante prerender, sem falha de build.
+
+**Toda a Fase 28 foi concluída com sucesso e homologada em build local!**
 
 ---
-
 
 

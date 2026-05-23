@@ -31,6 +31,12 @@ export async function GET(request: NextRequest) {
       evolutionInstance: settings.evolutionInstance || "",
       googleMapsEmbedUrl: settings.googleMapsEmbedUrl || "",
       googleReviewsWidget: settings.googleReviewsWidget || "",
+      googleRating: settings.googleRating || 0,
+      googleReviewsCount: settings.googleReviewsCount || 0,
+      colorAccentGold: settings.colorAccentGold || "#c5a880",
+      colorBgPrimary: settings.colorBgPrimary || "#0a0a0c",
+      colorBgSecondary: settings.colorBgSecondary || "#121216",
+      colorBgTertiary: settings.colorBgTertiary || "#1b1b22",
     });
   } catch (error) {
     console.error("Erro ao buscar configurações:", error);
@@ -59,6 +65,12 @@ export async function PUT(request: NextRequest) {
       evolutionInstance,
       googleMapsEmbedUrl,
       googleReviewsWidget,
+      googleRating,
+      googleReviewsCount,
+      colorAccentGold,
+      colorBgPrimary,
+      colorBgSecondary,
+      colorBgTertiary,
       newPassword 
     } = body;
 
@@ -76,6 +88,12 @@ export async function PUT(request: NextRequest) {
     if (evolutionInstance !== undefined) updateData.evolutionInstance = evolutionInstance || "";
     if (googleMapsEmbedUrl !== undefined) updateData.googleMapsEmbedUrl = googleMapsEmbedUrl || "";
     if (googleReviewsWidget !== undefined) updateData.googleReviewsWidget = googleReviewsWidget || "";
+    if (googleRating !== undefined) updateData.googleRating = Number(googleRating) || 0;
+    if (googleReviewsCount !== undefined) updateData.googleReviewsCount = Number(googleReviewsCount) || 0;
+    if (colorAccentGold !== undefined) updateData.colorAccentGold = colorAccentGold || "#c5a880";
+    if (colorBgPrimary !== undefined) updateData.colorBgPrimary = colorBgPrimary || "#0a0a0c";
+    if (colorBgSecondary !== undefined) updateData.colorBgSecondary = colorBgSecondary || "#121216";
+    if (colorBgTertiary !== undefined) updateData.colorBgTertiary = colorBgTertiary || "#1b1b22";
 
     // Atualiza a senha administrativa apenas se fornecida
     if (newPassword && newPassword.trim() !== "") {
@@ -102,6 +120,12 @@ export async function PUT(request: NextRequest) {
         evolutionInstance: updated.evolutionInstance || "",
         googleMapsEmbedUrl: updated.googleMapsEmbedUrl || "",
         googleReviewsWidget: updated.googleReviewsWidget || "",
+        googleRating: updated.googleRating || 0,
+        googleReviewsCount: updated.googleReviewsCount || 0,
+        colorAccentGold: updated.colorAccentGold || "#c5a880",
+        colorBgPrimary: updated.colorBgPrimary || "#0a0a0c",
+        colorBgSecondary: updated.colorBgSecondary || "#121216",
+        colorBgTertiary: updated.colorBgTertiary || "#1b1b22",
       },
     });
   } catch (error) {

@@ -127,6 +127,8 @@ export default async function HomePage() {
     closingTime: "19:00",
     googleMapsEmbedUrl: "",
     googleReviewsWidget: "",
+    googleRating: 0,
+    googleReviewsCount: 0,
   };
 
   try {
@@ -143,6 +145,8 @@ export default async function HomePage() {
         closingTime: rawSettings.closingTime || "19:00",
         googleMapsEmbedUrl: rawSettings.googleMapsEmbedUrl || "",
         googleReviewsWidget: rawSettings.googleReviewsWidget || "",
+        googleRating: rawSettings.googleRating || 0,
+        googleReviewsCount: rawSettings.googleReviewsCount || 0,
       };
     }
   } catch (error) {
@@ -242,6 +246,13 @@ export default async function HomePage() {
             <span>Experiência Tradicional & Moderna</span>
           </div>
           <h1 className="title-serif gold-glow">{settings.barberShopName}</h1>
+          {(settings.googleMapsEmbedUrl || settings.googleRating > 0 || settings.googleReviewsCount > 0) && (
+            <div className="hero-google-rating flex-center">
+              <span className="rating-stars">★</span>
+              <strong>{settings.googleRating > 0 ? settings.googleRating.toFixed(1) : "5.0"}</strong>
+              <span>({settings.googleReviewsCount > 0 ? settings.googleReviewsCount : "+100"} avaliações no Google Meu Negócio)</span>
+            </div>
+          )}
           <p className="hero-subtitle">
             Agende seu horário com os melhores barbeiros da cidade em segundos.
             Conexão em tempo real e sincronização automática.

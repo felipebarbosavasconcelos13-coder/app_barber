@@ -27,6 +27,12 @@ model SystemSettings {
   whatsappReengagementTemplate String   @default("Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}") // Template de reengajamento
   googleMapsEmbedUrl           String?  @default("") // URL de incorporação do Google Maps
   googleReviewsWidget          String?  @default("") // Código do widget de reviews de terceiros
+  googleRating                 Float?   @default(0) // Nota média pública do Google Meu Negócio
+  googleReviewsCount           Int      @default(0) // Quantidade pública de avaliações no Google
+  colorAccentGold              String   @default("#c5a880") // Cor principal de destaque da marca
+  colorBgPrimary               String   @default("#0a0a0c") // Fundo principal do tema
+  colorBgSecondary             String   @default("#121216") // Fundo secundário do tema
+  colorBgTertiary              String   @default("#1b1b22") // Fundo terciário do tema
   updatedAt      DateTime @updatedAt
 }
 
@@ -95,4 +101,3 @@ model Testimonial {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
-

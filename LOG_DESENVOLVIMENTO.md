@@ -42,6 +42,7 @@ gantt
     Fase 25: Integração Google Meu Negócio & Localização         :done,    des25, 2026-05-23, 2026-05-23
     Fase 26: Otimização Mobile Premium & Validação Visual        :done,    des26, 2026-05-23, 2026-05-23
     Fase 27: Resiliência de Deploy & Updates Silenciosos         :done,    des27, 2026-05-23, 2026-05-23
+    Fase 28: Branding Dinâmico, Reviews Hero & Modo Foco          :done,    des28, 2026-05-23, 2026-05-23
 ```
 
 ---
@@ -289,4 +290,19 @@ gantt
 - **Validação de Build** ✅:
   - Executado `npm run build` com sucesso absoluto, atestando conformidade estrutural do Next.js Turbopack e 100% de sucesso nas checagens estáticas e compilação de tipos TypeScript.
 
+### **Fase 28: Branding Dinâmico, Avaliações Google no Hero e Modo Foco de Agendamento (Concluída em 23/05/2026)**
+- **Campos de Reputação e Paleta no Banco** ✅:
+  - Estendido o modelo `SystemSettings` com `googleRating`, `googleReviewsCount`, `colorAccentGold`, `colorBgPrimary`, `colorBgSecondary` e `colorBgTertiary`.
+  - Atualizados os DDLs retrocompatíveis em `src/lib/prisma.ts` e no instalador `src/app/api/install/run/route.ts` para novas instalações e bancos já existentes.
+- **Painel Administrativo de Branding** ✅:
+  - Adicionado card de Paleta da Marca em `/admin`, com inputs nativos `type="color"` e campo hexadecimal para customizar o tema global sem editar código.
+  - Estendido o card Google & Localização para registrar a nota média e o total de avaliações do Google Meu Negócio.
+- **Landing Page Dinâmica** ✅:
+  - O layout injeta variáveis CSS globais a partir do banco, permitindo troca de cores em tempo real na Landing Page e no Painel Administrativo.
+  - Adicionado badge de reputação Google no Hero exibindo nota e quantidade de avaliações quando houver dados de Maps/reputação configurados.
+- **Acessibilidade e Conversão** ✅:
+  - Corrigido o contraste dos botões de horário (`.slot-btn`) no fluxo de agendamento, garantindo texto branco legível, fundo translúcido e ícone dourado.
+  - Implementado modo foco no agendamento: após selecionar um barbeiro, seções externas da página são ocultadas via CSS `:has(.booking-focused)`, mantendo o cliente concentrado no fluxo de reserva.
+- **Validação de Build** ✅:
+  - Executado `npm run build` com sucesso. Durante a geração estática local apareceram logs esperados de `ECONNREFUSED` por ausência de PostgreSQL local ativo, mas a compilação terminou sem erros de TypeScript ou Next.js.
 

@@ -87,6 +87,12 @@ export default function AdminDashboard() {
     evolutionInstance: "",
     googleMapsEmbedUrl: "",
     googleReviewsWidget: "",
+    googleRating: 0,
+    googleReviewsCount: 0,
+    colorAccentGold: "#c5a880",
+    colorBgPrimary: "#0a0a0c",
+    colorBgSecondary: "#121216",
+    colorBgTertiary: "#1b1b22",
   });
 
   // Novos States de Depoimentos Curados (Google / Local)
@@ -262,6 +268,12 @@ export default function AdminDashboard() {
         evolutionInstance: "",
         googleMapsEmbedUrl: "",
         googleReviewsWidget: "",
+        googleRating: 0,
+        googleReviewsCount: 0,
+        colorAccentGold: "#c5a880",
+        colorBgPrimary: "#0a0a0c",
+        colorBgSecondary: "#121216",
+        colorBgTertiary: "#1b1b22",
       };
       const resolvedSettings = settingsData.error ? defaultSettings : { ...defaultSettings, ...settingsData };
       setSettings(resolvedSettings);
@@ -588,6 +600,12 @@ export default function AdminDashboard() {
           evolutionInstance: settings.evolutionInstance,
           googleMapsEmbedUrl: settings.googleMapsEmbedUrl,
           googleReviewsWidget: settings.googleReviewsWidget,
+          googleRating: settings.googleRating,
+          googleReviewsCount: settings.googleReviewsCount,
+          colorAccentGold: settings.colorAccentGold,
+          colorBgPrimary: settings.colorBgPrimary,
+          colorBgSecondary: settings.colorBgSecondary,
+          colorBgTertiary: settings.colorBgTertiary,
         }),
       });
       const data = await res.json();
@@ -1921,6 +1939,50 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
+                    {/* Card 1.1: Paleta de Cores da Marca */}
+                    <div className="glass-card form-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div>
+                        <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600, marginBottom: "8px" }}>Paleta da Marca</h4>
+                        <p style={{ marginBottom: "20px", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                          Personalize as cores globais do site e do painel sem editar código.
+                        </p>
+
+                        <form onSubmit={handleSaveSettings}>
+                          {[
+                            ["colorAccentGold", "Cor de Destaque"],
+                            ["colorBgPrimary", "Fundo Principal"],
+                            ["colorBgSecondary", "Fundo Secundário"],
+                            ["colorBgTertiary", "Fundo Terciário"],
+                          ].map(([key, label]) => (
+                            <div className="form-group-row" key={key} style={{ alignItems: "center", marginBottom: "12px" }}>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">{label}</label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  value={(settings as any)[key]}
+                                  onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
+                                  placeholder="#c5a880"
+                                  pattern="^#[0-9A-Fa-f]{6}$"
+                                />
+                              </div>
+                              <input
+                                type="color"
+                                aria-label={label}
+                                value={(settings as any)[key]}
+                                onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
+                                style={{ width: "54px", height: "44px", borderRadius: "10px", border: "1px solid var(--border-color)", background: "transparent", cursor: "pointer" }}
+                              />
+                            </div>
+                          ))}
+
+                          <button type="submit" className="btn-gold" style={{ width: "100%", marginTop: "15px" }} disabled={actionLoading}>
+                            {actionLoading ? "Salvando..." : "Salvar Paleta"}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+
                     {/* Card 2: Horário Geral de Funcionamento */}
                     <div className="glass-card form-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                       <div>
@@ -2150,6 +2212,34 @@ export default function AdminDashboard() {
                         </p>
 
                         <form onSubmit={handleSaveSettings}>
+                          <div className="form-group-row">
+                            <div className="form-group">
+                              <label className="form-label">Nota Google</label>
+                              <input
+                                type="number"
+                                className="form-input"
+                                min="0"
+                                max="5"
+                                step="0.1"
+                                placeholder="Ex: 4.9"
+                                value={settings.googleRating || 0}
+                                onChange={(e) => setSettings({ ...settings, googleRating: Number(e.target.value) })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label className="form-label">Qtd. Avaliações</label>
+                              <input
+                                type="number"
+                                className="form-input"
+                                min="0"
+                                step="1"
+                                placeholder="Ex: 154"
+                                value={settings.googleReviewsCount || 0}
+                                onChange={(e) => setSettings({ ...settings, googleReviewsCount: Number(e.target.value) })}
+                              />
+                            </div>
+                          </div>
+
                           <div className="form-group">
                             <label className="form-label">URL do Google Maps Embed (src do Iframe)</label>
                             <input

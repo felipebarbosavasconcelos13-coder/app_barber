@@ -206,7 +206,7 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
   };
 
   return (
-    <div className="flow-container">
+    <div className={`flow-container ${selectedBarber && step < 5 ? "booking-focused" : ""}`}>
       {/* Etapa Guiada */}
       {step < 5 && (
         <div className="steps-indicator glass-card">
@@ -404,7 +404,7 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
                       onClick={() => setSelectedSlot({ start: slot.start, dateTime: slot.dateTime })}
                       className={`glass-card slot-btn ${selectedSlot?.dateTime === slot.dateTime ? "selected" : ""}`}
                     >
-                      <Clock size={14} style={{ color: "var(--text-muted)" }} />
+                      <Clock size={14} className="slot-clock-icon" />
                       <span>{slot.start}</span>
                     </button>
                   ))}
@@ -848,6 +848,19 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
           display: flex;
           align-items: center;
           justify-content: center;
+          color: var(--text-primary);
+          background: rgba(255, 255, 255, 0.04);
+          border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .slot-btn span {
+          color: #ffffff;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+        }
+
+        .slot-clock-icon {
+          color: var(--accent-gold);
         }
 
         .slot-btn:hover {
@@ -859,6 +872,10 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
           border-color: var(--accent-gold);
           color: #ffffff;
           background: linear-gradient(135deg, rgba(197, 168, 128, 0.2) 0%, rgba(197, 168, 128, 0.05) 100%);
+        }
+
+        .slot-btn.selected .slot-clock-icon {
+          color: #ffffff;
         }
 
         /* Resumo */

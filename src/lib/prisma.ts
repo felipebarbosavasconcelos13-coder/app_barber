@@ -164,6 +164,12 @@ async function ensureBarberBlockTableExists(pool: Pool) {
     );
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleMapsEmbedUrl" TEXT DEFAULT '';
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleReviewsWidget" TEXT DEFAULT '';
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleRating" DOUBLE PRECISION DEFAULT 0;
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleReviewsCount" INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "colorAccentGold" TEXT NOT NULL DEFAULT '#c5a880';
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "colorBgPrimary" TEXT NOT NULL DEFAULT '#0a0a0c';
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "colorBgSecondary" TEXT NOT NULL DEFAULT '#121216';
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "colorBgTertiary" TEXT NOT NULL DEFAULT '#1b1b22';
   `;
   try {
     await pool.query(ddl);
@@ -189,4 +195,3 @@ const prisma = new Proxy({} as PrismaClient, {
 });
 
 export default prisma;
-
