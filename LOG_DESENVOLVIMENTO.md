@@ -265,6 +265,7 @@ gantt
 | **23/05/2026** | `src/app/page.tsx` + `src/app/api/testimonials/route.ts` + `src/app/api/install/run/route.ts` | A seção pública "O Que Nossos Clientes Dizem" exibia depoimentos fictícios hardcoded quando não havia depoimentos reais cadastrados, dando a impressão de que não puxava os dados corretos do painel/admin ou do widget configurado. | Removido o fallback hardcoded da Landing Page e do endpoint público. A seção agora só renderiza quando existe `googleReviewsWidget` configurado ou depoimentos reais na tabela `Testimonial`. Novas instalações também deixam de semear avaliações fictícias no banco. |
 | **23/05/2026** | `src/components/AdminDashboard.tsx` | A alternativa via Google Places API exigia chave do Google, contrariando o requisito de não usar chave de API. Também foi confirmado que o iframe/link do Google Maps não expõe textos de avaliações para leitura automática pelo app. | Removida a abordagem com chave Places API. O painel voltou para um fluxo sem chave: link/embed do Maps para mapa/ficha visual, campos de nota/quantidade e widget HTML externo opcional (`googleReviewsWidget`) para exibição dinâmica sem API própria do Google. |
 | **23/05/2026** | `src/app/api/admin/google-reviews/import-widget/route.ts` + `src/components/AdminDashboard.tsx` | O usuário apresentou um exemplo real de site WordPress que exibe avaliações sem chave de API usando um widget HTML já renderizado (`wp-gr rpi wpac`). | Implementado importador sem Google API Key para HTML/URL pública de widgets de avaliações. O endpoint parseia nota, quantidade, autores, estrelas, avatar e texto dos reviews renderizados, salva na tabela `Testimonial` e atualiza o painel/Landing Page. |
+| **23/05/2026** | `src/app/api/admin/google-reviews/sync/route.ts` + `src/components/AdminDashboard.tsx` | Após manter a alternativa sem API, foi solicitada também a opção de usar API Key para quem quiser integração oficial. | Adicionada sincronização opcional via Google Places API Key, convivendo com o importador sem API. O painel agora oferece os botões "Importar Avaliações" (widget público) e "Usar API Key" (Google Places). |
 
 ---
 
@@ -318,3 +319,6 @@ gantt
 - **Importação Sem API a partir de Widget Público** ✅:
   - Criado `POST /api/admin/google-reviews/import-widget`, capaz de ler HTML ou URL pública de widgets já renderizados, como o padrão WordPress `wp-gr rpi wpac`.
   - O painel ganhou o botão "Importar Avaliações" para processar esse widget, persistir os reviews em `Testimonial` e atualizar `googleRating`/`googleReviewsCount` quando encontrados no cabeçalho do widget.
+- **Opção Oficial com API Key** ✅:
+  - Adicionada rota `POST /api/admin/google-reviews/sync` para sincronizar avaliações via Google Places API quando o administrador informar `googlePlacesApiKey` e, opcionalmente, `googlePlaceId`.
+  - A opção com API Key é complementar: o fluxo sem API por widget público continua disponível.

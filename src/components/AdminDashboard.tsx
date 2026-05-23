@@ -87,6 +87,8 @@ export default function AdminDashboard() {
     evolutionInstance: "",
     googleMapsEmbedUrl: "",
     googleReviewsWidget: "",
+    googlePlacesApiKey: "",
+    googlePlaceId: "",
     googleRating: 0,
     googleReviewsCount: 0,
     colorAccentGold: "#c5a880",
@@ -107,6 +109,7 @@ export default function AdminDashboard() {
   const [editingTestimonialId, setEditingTestimonialId] = useState<string | null>(null);
   const [testimonialLoading, setTestimonialLoading] = useState(false);
   const [importingGoogleWidget, setImportingGoogleWidget] = useState(false);
+  const [syncingGooglePlaces, setSyncingGooglePlaces] = useState(false);
 
   // Novos States de Gestão de Clientes (CRM)
   const [clients, setClients] = useState<any[]>([]);
@@ -269,6 +272,8 @@ export default function AdminDashboard() {
         evolutionInstance: "",
         googleMapsEmbedUrl: "",
         googleReviewsWidget: "",
+        googlePlacesApiKey: "",
+        googlePlaceId: "",
         googleRating: 0,
         googleReviewsCount: 0,
         colorAccentGold: "#c5a880",
@@ -601,6 +606,8 @@ export default function AdminDashboard() {
           evolutionInstance: settings.evolutionInstance,
           googleMapsEmbedUrl: settings.googleMapsEmbedUrl,
           googleReviewsWidget: settings.googleReviewsWidget,
+          googlePlacesApiKey: settings.googlePlacesApiKey,
+          googlePlaceId: settings.googlePlaceId,
           googleRating: settings.googleRating,
           googleReviewsCount: settings.googleReviewsCount,
           colorAccentGold: settings.colorAccentGold,
@@ -908,6 +915,46 @@ export default function AdminDashboard() {
       setError(err.message || "Falha ao importar avaliações do widget.");
     } finally {
       setImportingGoogleWidget(false);
+    }
+  };
+
+  const handleSyncGooglePlaces = async () => {
+    setError("");
+    setSuccess("");
+    setSyncingGooglePlaces(true);
+
+    try {
+      const saveRes = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          googleMapsEmbedUrl: settings.googleMapsEmbedUrl,
+          googlePlacesApiKey: settings.googlePlacesApiKey,
+          googlePlaceId: settings.googlePlaceId,
+        }),
+      });
+      const saveData = await saveRes.json();
+      if (!saveRes.ok) throw new Error(saveData.error || "Erro ao salvar dados do Google Places.");
+
+      const res = await fetch("/api/admin/google-reviews/sync", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao sincronizar avaliações via Google Places.");
+
+      setSettings({
+        ...settings,
+        googlePlaceId: data.placeId || settings.googlePlaceId,
+        googleRating: data.rating || 0,
+        googleReviewsCount: data.reviewsCount || 0,
+      });
+
+      const testimonialsRes = await fetch("/api/admin/testimonials");
+      const testimonialsData = await testimonialsRes.json();
+      setTestimonials(testimonialsData.error ? [] : testimonialsData);
+      setSuccess(`Avaliações sincronizadas via API Key. Total processado: ${data.importedCount}.`);
+    } catch (err: any) {
+      setError(err.message || "Falha ao sincronizar avaliações via Google Places.");
+    } finally {
+      setSyncingGooglePlaces(false);
     }
   };
 
@@ -2240,7 +2287,7 @@ export default function AdminDashboard() {
                       <div>
                         <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600, marginBottom: "8px" }}>Google & Localização</h4>
                         <p style={{ marginBottom: "20px", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                          Integre Google Maps e avaliações sem chave de API usando embed do Maps ou HTML/URL pública de widget de avaliações.
+                          Integre Google Maps e avaliações por widget sem API ou, opcionalmente, por Google Places API Key.
                         </p>
 
                         <form onSubmit={handleSaveSettings}>
@@ -2300,12 +2347,38 @@ export default function AdminDashboard() {
                             </small>
                           </div>
 
+                          <div className="form-group-row" style={{ marginTop: "12px" }}>
+                            <div className="form-group">
+                              <label className="form-label">Google Places API Key (Opcional)</label>
+                              <input
+                                type="password"
+                                className="form-input"
+                                placeholder="AIza..."
+                                value={settings.googlePlacesApiKey || ""}
+                                onChange={(e) => setSettings({ ...settings, googlePlacesApiKey: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label className="form-label">Place ID (Opcional)</label>
+                              <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Deixe vazio para resolver por nome/endereço"
+                                value={settings.googlePlaceId || ""}
+                                onChange={(e) => setSettings({ ...settings, googlePlaceId: e.target.value })}
+                              />
+                            </div>
+                          </div>
+
                           <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
-                            <button type="submit" className="btn-gold" style={{ flex: 1 }} disabled={actionLoading || importingGoogleWidget}>
+                            <button type="submit" className="btn-gold" style={{ flex: 1 }} disabled={actionLoading || importingGoogleWidget || syncingGooglePlaces}>
                               {actionLoading ? "Salvando..." : "Salvar Google"}
                             </button>
-                            <button type="button" className="btn-gold" style={{ flex: 1.2, background: "transparent", border: "1px solid var(--accent-gold)", color: "var(--accent-gold)" }} onClick={handleImportGoogleWidget} disabled={importingGoogleWidget || actionLoading}>
+                            <button type="button" className="btn-gold" style={{ flex: 1.2, background: "transparent", border: "1px solid var(--accent-gold)", color: "var(--accent-gold)" }} onClick={handleImportGoogleWidget} disabled={importingGoogleWidget || actionLoading || syncingGooglePlaces}>
                               {importingGoogleWidget ? "Importando..." : "Importar Avaliações"}
+                            </button>
+                            <button type="button" className="btn-gold" style={{ flex: 1.2, background: "rgba(66, 133, 244, 0.08)", border: "1px solid rgba(66, 133, 244, 0.25)", color: "#8ab4f8" }} onClick={handleSyncGooglePlaces} disabled={syncingGooglePlaces || actionLoading || importingGoogleWidget}>
+                              {syncingGooglePlaces ? "Sincronizando..." : "Usar API Key"}
                             </button>
                           </div>
                         </form>

@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
       evolutionInstance: settings.evolutionInstance || "",
       googleMapsEmbedUrl: settings.googleMapsEmbedUrl || "",
       googleReviewsWidget: settings.googleReviewsWidget || "",
+      googlePlacesApiKey: settings.googlePlacesApiKey || "",
+      googlePlaceId: settings.googlePlaceId || "",
       googleRating: settings.googleRating || 0,
       googleReviewsCount: settings.googleReviewsCount || 0,
       colorAccentGold: settings.colorAccentGold || "#c5a880",
@@ -65,6 +67,8 @@ export async function PUT(request: NextRequest) {
       evolutionInstance,
       googleMapsEmbedUrl,
       googleReviewsWidget,
+      googlePlacesApiKey,
+      googlePlaceId,
       googleRating,
       googleReviewsCount,
       colorAccentGold,
@@ -88,6 +92,8 @@ export async function PUT(request: NextRequest) {
     if (evolutionInstance !== undefined) updateData.evolutionInstance = evolutionInstance || "";
     if (googleMapsEmbedUrl !== undefined) updateData.googleMapsEmbedUrl = googleMapsEmbedUrl || "";
     if (googleReviewsWidget !== undefined) updateData.googleReviewsWidget = googleReviewsWidget || "";
+    if (googlePlacesApiKey !== undefined) updateData.googlePlacesApiKey = googlePlacesApiKey || "";
+    if (googlePlaceId !== undefined) updateData.googlePlaceId = googlePlaceId || "";
     if (googleRating !== undefined) updateData.googleRating = Number(googleRating) || 0;
     if (googleReviewsCount !== undefined) updateData.googleReviewsCount = Number(googleReviewsCount) || 0;
     if (colorAccentGold !== undefined) updateData.colorAccentGold = colorAccentGold || "#c5a880";
@@ -120,6 +126,8 @@ export async function PUT(request: NextRequest) {
         evolutionInstance: updated.evolutionInstance || "",
         googleMapsEmbedUrl: updated.googleMapsEmbedUrl || "",
         googleReviewsWidget: updated.googleReviewsWidget || "",
+        googlePlacesApiKey: updated.googlePlacesApiKey || "",
+        googlePlaceId: updated.googlePlaceId || "",
         googleRating: updated.googleRating || 0,
         googleReviewsCount: updated.googleReviewsCount || 0,
         colorAccentGold: updated.colorAccentGold || "#c5a880",

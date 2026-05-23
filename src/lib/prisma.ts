@@ -164,6 +164,8 @@ async function ensureBarberBlockTableExists(pool: Pool) {
     );
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleMapsEmbedUrl" TEXT DEFAULT '';
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleReviewsWidget" TEXT DEFAULT '';
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googlePlacesApiKey" TEXT DEFAULT '';
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googlePlaceId" TEXT DEFAULT '';
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleRating" DOUBLE PRECISION DEFAULT 0;
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleReviewsCount" INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "colorAccentGold" TEXT NOT NULL DEFAULT '#c5a880';

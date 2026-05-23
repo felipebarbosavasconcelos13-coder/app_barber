@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   "whatsappReengagementTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}',
   "googleMapsEmbedUrl" TEXT DEFAULT '',
   "googleReviewsWidget" TEXT DEFAULT '',
+  "googlePlacesApiKey" TEXT DEFAULT '',
+  "googlePlaceId" TEXT DEFAULT '',
   "googleRating" DOUBLE PRECISION DEFAULT 0,
   "googleReviewsCount" INTEGER NOT NULL DEFAULT 0,
   "colorAccentGold" TEXT NOT NULL DEFAULT '#c5a880',
@@ -162,6 +164,8 @@ ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "reengagementSent" BOOLEAN NOT NU
 
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleMapsEmbedUrl" TEXT DEFAULT '';
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleReviewsWidget" TEXT DEFAULT '';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googlePlacesApiKey" TEXT DEFAULT '';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googlePlaceId" TEXT DEFAULT '';
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleRating" DOUBLE PRECISION DEFAULT 0;
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleReviewsCount" INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "colorAccentGold" TEXT NOT NULL DEFAULT '#c5a880';

@@ -27,6 +27,8 @@ model SystemSettings {
   whatsappReengagementTemplate String   @default("Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}") // Template de reengajamento
   googleMapsEmbedUrl           String?  @default("") // URL de incorporação do Google Maps
   googleReviewsWidget          String?  @default("") // Código do widget de reviews de terceiros
+  googlePlacesApiKey           String?  @default("") // Chave opcional da Google Places API
+  googlePlaceId                String?  @default("") // Place ID opcional para sincronizar avaliações via API
   googleRating                 Float?   @default(0) // Nota média pública do Google Meu Negócio
   googleReviewsCount           Int      @default(0) // Quantidade pública de avaliações no Google
   colorAccentGold              String   @default("#c5a880") // Cor principal de destaque da marca
