@@ -390,6 +390,7 @@ Esta fase reúne melhorias de branding, clareza visual de usabilidade (contraste
 - **Importação de Widget Público Sem API** ✅: Implementado endpoint `POST /api/admin/google-reviews/import-widget` para importar avaliações a partir de HTML ou URL pública de widgets renderizados, como o exemplo WordPress `wp-gr rpi wpac`. O painel agora permite colar esse HTML/URL e importar os depoimentos para `Testimonial` sem chave Google.
 - **Opção com Google Places API Key** ✅: Adicionada alternativa oficial para quem quiser usar chave de API: campos `googlePlacesApiKey` e `googlePlaceId`, botão "Usar API Key" no painel e endpoint `POST /api/admin/google-reviews/sync`. A opção sem API por widget público permanece disponível.
 - **Ambiente de Teste da API Key** ✅: Criado endpoint `POST /api/admin/google-reviews/test` e botão "Testar API Key" no painel. O teste valida a chave e o estabelecimento sem importar dados, retornando diagnósticos claros de permissões, billing, Places API desativada ou Place ID inválido.
+- **Correção de Exibição das Avaliações** ✅: Ajustada a landing para priorizar as avaliações salvas em `Testimonial` e não renderizar iframe/link de Google Maps como widget de depoimentos. O painel agora explica que a Google Places API retorna no máximo 5 avaliações e recomenda widget público ou cadastro manual para mostrar mais.
 
 **Toda a Fase 28 foi concluída com sucesso e homologada em build local!**
 

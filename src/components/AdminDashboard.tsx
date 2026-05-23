@@ -952,7 +952,7 @@ export default function AdminDashboard() {
       const testimonialsRes = await fetch("/api/admin/testimonials");
       const testimonialsData = await testimonialsRes.json();
       setTestimonials(testimonialsData.error ? [] : testimonialsData);
-      setSuccess(`Avaliações sincronizadas via API Key. Total processado: ${data.importedCount}.`);
+      setSuccess(`Avaliações sincronizadas via API Key. Total processado: ${data.importedCount}. Observação: a Google Places API retorna no máximo 5 avaliações por estabelecimento; para exibir mais, use a importação por widget público.`);
     } catch (err: any) {
       setError(err.message || "Falha ao sincronizar avaliações via Google Places.");
     } finally {
@@ -2377,6 +2377,11 @@ export default function AdminDashboard() {
                             <small style={{ color: "var(--text-muted)", fontSize: "0.72rem", display: "block", marginTop: "4px" }}>
                               O importador lê widgets públicos já renderizados e salva as avaliações encontradas no banco. Não usa chave de API do Google.
                             </small>
+                          </div>
+
+                          <div style={{ marginTop: "10px", background: "rgba(66, 133, 244, 0.06)", border: "1px solid rgba(66, 133, 244, 0.16)", padding: "10px", borderRadius: "8px", fontSize: "0.72rem", color: "var(--text-muted)", lineHeight: 1.45 }}>
+                            <strong style={{ color: "#8ab4f8", display: "block", marginBottom: "4px" }}>Limite oficial do Google Places:</strong>
+                            A API Key do Google retorna somente até 5 avaliações com texto. Para mostrar mais avaliações na landing, importe por um widget público renderizado ou cadastre avaliações reais manualmente abaixo.
                           </div>
 
                           <div className="form-group-row" style={{ marginTop: "12px" }}>

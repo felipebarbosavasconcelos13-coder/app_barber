@@ -171,6 +171,13 @@ export default async function HomePage() {
     console.error("Erro ao buscar depoimentos na home page:", error);
   }
 
+  const googleReviewsWidgetHtml = settings.googleReviewsWidget.trim();
+  const canRenderGoogleReviewsWidget = Boolean(
+    googleReviewsWidgetHtml &&
+    /<[^>]+>/.test(googleReviewsWidgetHtml) &&
+    !/(google\.[^\s"']+\/maps|maps\.google|\/maps\/embed|output=embed)/i.test(googleReviewsWidgetHtml)
+  );
+
   // Busca barbeiros e serviços cadastrados no banco
   let barbers: Array<{
     id: string;
@@ -287,7 +294,7 @@ export default async function HomePage() {
       </section>
 
       {/* Depoimentos & Avaliações Google Section */}
-      {(settings.googleReviewsWidget || testimonials.length > 0) && (
+      {(testimonials.length > 0 || canRenderGoogleReviewsWidget) && (
       <section className="testimonials-section container animate-fade-in" style={{ marginTop: "80px", marginBottom: "40px" }}>
         <div className="section-title text-center">
           <span className="badge badge-gold" style={{ marginBottom: "10px", textTransform: "uppercase", fontSize: "0.75rem", letterSpacing: "0.05em", padding: "6px 12px" }}>
@@ -299,11 +306,7 @@ export default async function HomePage() {
           </p>
         </div>
 
-        {settings.googleReviewsWidget ? (
-          <div className="google-widget-wrapper glass-card animate-fade-in" style={{ padding: "24px", borderRadius: "14px", marginTop: "30px", overflow: "hidden" }}>
-            <div dangerouslySetInnerHTML={{ __html: settings.googleReviewsWidget }} />
-          </div>
-        ) : (
+        {testimonials.length > 0 ? (
           <div className="testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px", marginTop: "30px" }}>
             {testimonials.map((t) => (
               <div key={t.id} className="testimonial-card glass-card animate-fade-in" style={{
@@ -355,6 +358,10 @@ export default async function HomePage() {
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="google-widget-wrapper glass-card animate-fade-in" style={{ padding: "24px", borderRadius: "14px", marginTop: "30px", overflow: "hidden" }}>
+            <div dangerouslySetInnerHTML={{ __html: googleReviewsWidgetHtml }} />
           </div>
         )}
       </section>
