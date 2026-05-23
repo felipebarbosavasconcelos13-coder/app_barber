@@ -95,12 +95,15 @@ export async function POST(request: NextRequest) {
           .replace(/{estabelecimento}/gi, settings?.barberShopName || "Barbearia Premium")
           .replace(/{endereco}/gi, settings?.address || "");
 
-        sendWhatsappNotification({
+        const whatsappRes = await sendWhatsappNotification({
           phone: clientPhone,
           message,
-        }).catch((err) => {
-          console.error("[route-booking-create] Erro no envio assíncrono do WhatsApp:", err);
         });
+        if (!whatsappRes.ok) {
+          console.warn("[route-booking-create] Falha no disparo de confirmação imediata:", whatsappRes.error);
+        } else {
+          console.log("[route-booking-create] Confirmação imediata disparada com sucesso!");
+        }
       }
     } catch (msgErr) {
       console.error("[route-booking-create] Falha ao processar notificação de WhatsApp:", msgErr);

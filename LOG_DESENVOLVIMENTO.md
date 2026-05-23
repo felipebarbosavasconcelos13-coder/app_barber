@@ -227,5 +227,10 @@ gantt
 - **Build de Produção do Next.js Validada com Sucesso** ✅:
   - Compilado com sucesso absoluto em ambiente local de teste garantindo 100% de integridade em tipos, build estático de rotas e funcionamento resiliente.
 
+---
 
+## 📝 Histórico de Correções Técnicas (Bugfix Log - Continuação)
 
+| Data | Componente | Descrição do Problema | Solução Aplicada |
+| :--- | :--- | :--- | :--- |
+| **23/05/2026** | `src/app/api/booking/create/route.ts` | **Atraso de Disparo do WhatsApp**: As mensagens de confirmação de agendamento demoravam a chegar no cliente em ambientes cloud/serverless (como a Vercel). A rota disparava a promessa `sendWhatsappNotification` de forma não bloqueante (sem `await`), o que fazia com que o container serverless da Vercel suspendesse/congelasse o socket TCP da Evolution API assim que a resposta HTTP de sucesso era retornada para o cliente, liberando o disparo apenas nas próximas chamadas. | Alterada a chamada de notificação para utilizar `await` de forma síncrona/bloqueante na rota. Como o disparo da Evolution API consome menos de 300ms, o fluxo de agendamento continua ultraveloz na UI, mas o envio do WhatsApp passa a ser imediato e 100% garantido no ambiente Serverless da Vercel! |

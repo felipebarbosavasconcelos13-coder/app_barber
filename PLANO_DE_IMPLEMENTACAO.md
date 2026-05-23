@@ -184,3 +184,98 @@ model Booking {
 
 4. **Build de Producao**:
    - Executar `npm run build` para validar compilacao TypeScript e rotas Next.js.
+
+---
+
+## 📅 Fase 25: Integracao Facilitada com Google (Ficha, Reviews Curados & Mapa) [PROPOSTA REVISADA]
+
+### **Resumo do Recurso (Zero Chave de API ou Custos)**
+Para eliminar a necessidade de criar contas de faturamento no Google Cloud, expor dados de cartao ou lidar com configuracoes de API Keys complexas, implementaremos uma abordagem de alta conversao e 100% simplificada:
+1. **Depoimentos de Sucesso (Curadoria Local - CRUD)**: Criaremos uma aba simples no painel administrativo para que o dono da barbearia possa cadastrar depoimentos de destaque (copiando os melhores elogios de 5 estrelas da sua ficha do Google). Isso garante controle de reputacao (evitando comentarios maliciosos na Home), exibe depoimentos estilizados com selos elegantes do Google no nosso design de luxo, e funciona de forma 100% gratuita.
+2. **Suporte a Widgets Externos Gratuitos**: Um campo de texto livre no painel permitira colar o código de integracao de qualquer widget de reviews gratuito de terceiros (ex: *Elfsight*, *SociableKIT*, *ReviewsOnMyWebsite*), caso o administrador prefira injetar o widget dinamico em tempo real de forma automatica.
+3. **Mapa do Google Facilitado (Embed Gratuito)**: O administrador cola a URL de incorporacao direta do Google Maps obtida com apenas 3 cliques no Maps (Compartilhar -> Incorporar -> Copiar URL). Se ele nao fornecer nenhuma URL, o aplicativo resolve e gera uma URL de mapa dinamica resiliente baseada no endereco fisico cadastrado no estabelecimento (`settings.address`).
+
+### **Proposta de Alteracoes Arquiteturais**
+
+#### 1. Banco de Dados & Migracoes
+- **[MODIFY] [schema.prisma](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/prisma/schema.prisma)**:
+  - Adicionar o modelo `Testimonial` para curadoria de depoimentos:
+    ```prisma
+    model Testimonial {
+      id         String   @id @default(uuid())
+      authorName String
+      rating     Int      @default(5)
+      content    String
+      avatarUrl  String?
+      source     String   @default("Google") // Google, Local, etc.
+      createdAt  DateTime @default(now())
+      updatedAt  DateTime @updatedAt
+    }
+    ```
+  - Adicionar campos no modelo `SystemSettings`:
+    - `googleMapsEmbedUrl` (String, opcional)
+    - `googleReviewsWidget` (String, opcional) - Para injetar iframe/script de terceiros se desejado.
+- **[MODIFY] [prisma.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/lib/prisma.ts)**:
+  - Adicionar DDLs automáticas em runtime:
+    ```sql
+    CREATE TABLE IF NOT EXISTS "Testimonial" (
+      "id" TEXT NOT NULL,
+      "authorName" TEXT NOT NULL,
+      "rating" INTEGER NOT NULL DEFAULT 5,
+      "content" TEXT NOT NULL,
+      "avatarUrl" TEXT,
+      "source" TEXT NOT NULL DEFAULT 'Google',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL,
+      CONSTRAINT "Testimonial_pkey" PRIMARY KEY ("id")
+    );
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleMapsEmbedUrl" TEXT;
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleReviewsWidget" TEXT;
+    ```
+- **[MODIFY] [route.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/api/install/run/route.ts)**:
+  - Atualizar setup inicial DDL para novas instalacoes e inserir 3 depoimentos padrão de seed para a Landing Page iniciar linda.
+
+#### 2. Backend APIs
+- **[NEW] [route.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/api/admin/testimonials/route.ts)**:
+  - Criar CRUD completo para o painel de administracao: `GET`, `POST`, `PUT` e `DELETE` para gerenciar depoimentos curados.
+- **[NEW] [route.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/api/testimonials/route.ts)**:
+  - Criar rota pública `GET /api/testimonials` que retorna os depoimentos cadastrados ou fallbacks de demonstração premium caso a lista esteja vazia.
+- **[MODIFY] [route.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/api/admin/settings/route.ts)**:
+  - Estender o `PUT` de salvar configuracoes para gravar e persistir `googleMapsEmbedUrl` e `googleReviewsWidget`.
+
+#### 3. Frontend Landing Page (Cliente)
+- **[MODIFY] [page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/page.tsx)**:
+  - Buscar `googleMapsEmbedUrl`, `googleReviewsWidget` e `address` nas configuracoes gerais do banco.
+  - Inserir **Secao de Avaliacoes ("O que dizem nossos clientes")**:
+    - Layout de luxo com glassmorphic cards, estrelas douradas animadas e carousel/grid.
+    - Se `googleReviewsWidget` estiver configurado, injeta o iframe/widget de terceiros de forma limpa. Caso contrario, consome a rota pública `/api/testimonials` mostrando os depoimentos curados pelo dono da barbearia (com o selo elegante *"Avaliação do Google"*).
+  - Inserir **Secao de Localizacao ("Onde Estamos")**:
+    - Layout com duas colunas: Informacoes de contato e o **Mapa do Google**.
+    - Se `googleMapsEmbedUrl` estiver configurado, usa ele direto. Se nao estiver, monta a URL dinamica resiliente baseada no endereco cadastrado:
+      `https://maps.google.com/maps?q=${encodeURIComponent(settings.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`
+
+#### 4. Frontend Painel Administrativo (Barbeiro)
+- **[MODIFY] [AdminDashboard.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/components/AdminDashboard.tsx)**:
+  - Adicionar campos `googleMapsEmbedUrl` e `googleReviewsWidget` no state local de `settings` e estender o payload do submit.
+  - Adicionar aba ou Card de configuracao dedicada: **Integracao Google & Localizacao**:
+    - Formulário CRUD simples e premium para Adicionar, Editar e Remover Depoimentos Curados (Nome, Nota 1-5, Comentário, Foto Opcional).
+    - Campo para colar Iframe/Link do Google Maps e do Widget de Reviews de Terceiros.
+    - **Instrucoes Passo a Passo Ricas**:
+      1. **Mapa Gratuito**: Como ir no Google Maps, buscar a barbearia, clicar em "Compartilhar" -> "Incorporar um mapa", copiar o código HTML iframe e colar o link correspondente no input (passo simples de 3 cliques).
+      2. **Widgets Gratuitos**: Links e instrucoes sugerindo ferramentas de widgets de reviews gratuitas (ex: Elfsight) e como colar o código final gerado.
+
+---
+
+### **Plano de Verificacao da Fase 25**
+1. **Verificacao no Painel Administrativo**:
+   - Confirmar se a nova aba ou seção de depoimentos aparece e permite Criar, Editar e Deletar depoimentos com sucesso.
+   - Validar se salvar o link do Mapa e do Widget de terceiros funciona de forma integrada.
+2. **Verificacao no Backend**:
+   - Acessar `/api/testimonials` e atestar o retorno dos depoimentos cadastrados ou dos fallbacks simulados elegantes se a base estiver vazia.
+3. **Verificacao na Landing Page**:
+   - Validar o carrossel glassmorphic e o selo de verificação de avaliações do Google.
+   - Testar o Mapa:
+     - Com Iframe customizado: deve exibir exatamente a incorporação inserida pelo usuário.
+     - Sem Iframe (padrão): deve construir a URL dinâmica baseada em `settings.address` e exibir o mapa do endereço físico correspondente.
+4. **Build Geral**:
+   - Rodar `npm run build` confirmando total integridade e integridade TypeScript do projeto.
