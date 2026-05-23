@@ -1016,26 +1016,26 @@ export default function AdminDashboard() {
                         <tbody>
                           {bookings.map((booking) => (
                             <tr key={booking.id} className="animate-fade-in">
-                              <td className="font-weight-600">{formatDateTime(booking.dateTime)}</td>
-                              <td>
+                              <td className="font-weight-600" data-label="Data/Hora">{formatDateTime(booking.dateTime)}</td>
+                              <td data-label="Cliente">
                                 <div className="client-info">
                                   <span className="client-name">{booking.clientName}</span>
                                 </div>
                               </td>
-                              <td>
+                              <td data-label="Contato">
                                 <div className="client-contact">
                                   <span>{booking.clientEmail}</span>
                                   <span className="contact-phone">{booking.clientPhone}</span>
                                 </div>
                               </td>
-                              <td>
+                              <td data-label="Barbeiro">
                                 <span className="barber-badge">{booking.barber?.name || "Excluído"}</span>
                               </td>
-                              <td>{booking.service?.name || "Desconhecido"}</td>
-                              <td className="gold-text font-weight-600">
+                              <td data-label="Serviço">{booking.service?.name || "Desconhecido"}</td>
+                              <td className="gold-text font-weight-600" data-label="Preço">
                                 R$ {(booking.service?.price || 0).toFixed(2)}
                               </td>
-                              <td style={{ textAlign: "center" }}>
+                              <td style={{ textAlign: "center" }} data-label="Ações">
                                 <button
                                   onClick={() => handleDeleteBooking(booking.id)}
                                   className="btn-delete"
@@ -2227,7 +2227,7 @@ export default function AdminDashboard() {
                               <tbody>
                                 {testimonials.map((t) => (
                                   <tr key={t.id} className="animate-fade-in">
-                                    <td>
+                                    <td data-label="Autor">
                                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                         {t.avatarUrl ? (
                                           <img src={t.avatarUrl} alt={t.authorName} style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", border: "1px solid rgba(197, 168, 128, 0.2)" }} />
@@ -2239,20 +2239,20 @@ export default function AdminDashboard() {
                                         <span className="client-name">{t.authorName}</span>
                                       </div>
                                     </td>
-                                    <td>
+                                    <td data-label="Nota">
                                       <span className="gold-text" style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
                                         {t.rating} ★
                                       </span>
                                     </td>
-                                    <td style={{ maxWidth: "250px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={t.content}>
+                                    <td data-label="Depoimento" style={{ maxWidth: "250px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={t.content}>
                                       {t.content}
                                     </td>
-                                    <td>
+                                    <td data-label="Origem">
                                       <span className="badge" style={{ background: t.source === "Google" ? "rgba(66, 133, 244, 0.1)" : "rgba(197, 168, 128, 0.08)", border: t.source === "Google" ? "1px solid rgba(66, 133, 244, 0.2)" : "1px solid rgba(197, 168, 128, 0.15)", color: t.source === "Google" ? "#4285f4" : "var(--accent-gold)", fontSize: "0.75rem", padding: "4px 8px", borderRadius: "6px" }}>
                                         {t.source || "Google"}
                                       </span>
                                     </td>
-                                    <td style={{ textAlign: "center" }}>
+                                    <td style={{ textAlign: "center" }} data-label="Ações">
                                       <div style={{ display: "inline-flex", gap: "8px" }}>
                                         <button
                                           onClick={() => handleEditTestimonialClick(t)}
@@ -2486,7 +2486,7 @@ export default function AdminDashboard() {
                               const isAbsentLong = client.daysSinceLast && client.daysSinceLast >= (automations.whatsappReengagementDays || 30);
                               return (
                                 <tr key={client.clientPhone}>
-                                  <td>
+                                  <td data-label="Cliente">
                                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                       {clientsSortKey === "totalSpent" && idx < 3 && (
                                         <span title="Cliente VIP" style={{ color: "var(--accent-gold)", fontSize: "1.1rem" }}>
@@ -2499,18 +2499,18 @@ export default function AdminDashboard() {
                                       </div>
                                     </div>
                                   </td>
-                                  <td>
+                                  <td data-label="WhatsApp / Celular">
                                     <span style={{ fontFamily: "monospace", fontSize: "0.9rem" }}>{client.clientPhone}</span>
                                   </td>
-                                  <td style={{ textAlign: "center" }}>
+                                  <td style={{ textAlign: "center" }} data-label="Agendamentos">
                                     <span className="badge" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}>
                                       {client.totalBookings}
                                     </span>
                                   </td>
-                                  <td style={{ textAlign: "right", fontWeight: 600, color: "var(--accent-gold)" }}>
+                                  <td style={{ textAlign: "right", fontWeight: 600, color: "var(--accent-gold)" }} data-label="Total Gasto">
                                     R$ {client.totalSpent.toFixed(2)}
                                   </td>
-                                  <td style={{ textAlign: "center", fontSize: "0.85rem" }}>
+                                  <td style={{ textAlign: "center", fontSize: "0.85rem" }} data-label="Último Serviço">
                                     {client.lastVisitDate ? (
                                       <div>
                                         <span style={{ display: "block" }}>{client.lastVisitDate.split("-").reverse().join("/")}</span>
@@ -2520,7 +2520,7 @@ export default function AdminDashboard() {
                                       <span style={{ color: "var(--text-muted)" }}>Nenhum</span>
                                     )}
                                   </td>
-                                  <td style={{ textAlign: "center" }}>
+                                  <td style={{ textAlign: "center" }} data-label="Tempo sem Voltar">
                                     {client.daysSinceLast !== null ? (
                                       <span className={`badge ${isAbsentLong ? "badge-error-bg" : "badge-success-bg"}`} style={{
                                         background: isAbsentLong ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)",
@@ -2537,7 +2537,7 @@ export default function AdminDashboard() {
                                       <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Sem registro</span>
                                     )}
                                   </td>
-                                  <td style={{ textAlign: "center" }}>
+                                  <td style={{ textAlign: "center" }} data-label="Ação">
                                     <a
                                       href={`https://wa.me/${client.clientPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
                                         `Olá, ${client.clientName}! Tudo bem? Sentimos sua falta aqui na ${settings.barberShopName || "Barbearia"}! Faz algum tempo desde o seu último serviço (${client.lastServiceName || "corte"}). Que tal agendar um novo horário conosco? Link para agendamento: ${typeof window !== "undefined" ? window.location.origin : ""}`

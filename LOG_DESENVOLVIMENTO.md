@@ -40,6 +40,7 @@ gantt
     Fase 23: Auditoria e Análise de Segurança do Aplicativo      :done,    des23, 2026-05-23, 2026-05-23
     Fase 24: CRM de Clientes, Retenção & Automações Avançadas    :done,    des24, 2026-05-23, 2026-05-23
     Fase 25: Integração Google Meu Negócio & Localização         :done,    des25, 2026-05-23, 2026-05-23
+    Fase 26: Otimização Mobile Premium & Validação Visual        :done,    des26, 2026-05-23, 2026-05-23
 ```
 
 ---
@@ -259,3 +260,17 @@ gantt
 | Data | Componente | Descrição do Problema | Solução Aplicada |
 | :--- | :--- | :--- | :--- |
 | **23/05/2026** | `src/app/api/booking/create/route.ts` | **Atraso de Disparo do WhatsApp**: As mensagens de confirmação de agendamento demoravam a chegar no cliente em ambientes cloud/serverless (como a Vercel). A rota disparava a promessa `sendWhatsappNotification` de forma não bloqueante (sem `await`), o que fazia com que o container serverless da Vercel suspendesse/congelasse o socket TCP da Evolution API assim que a resposta HTTP de sucesso era retornada para o cliente, liberando o disparo apenas nas próximas chamadas. | Alterada a chamada de notificação para utilizar `await` de forma síncrona/bloqueante na rota. Como o disparo da Evolution API consome menos de 300ms, o fluxo de agendamento continua ultraveloz na UI, mas o envio do WhatsApp passa a ser imediato e 100% garantido no ambiente Serverless da Vercel! |
+
+---
+
+### **Fase 26: Otimização Mobile Premium Touch-First & Validação Visual (Concluída em 23/05/2026)**
+- **Ergonomia e Usabilidade Touch-First** ✅:
+  - Estendido e otimizado o design móvel `@media (max-width: 768px)` em [globals.css](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/globals.css) para que todos os botões clicáveis, abas de navegação `.nav-item` e botões rápidos (`.btn-delete`, `.btn-edit-action`) tenham área de clique mínima de `44px` a `48px`, evitando toques errôneos no celular.
+  - Implementada a quebra de tabelas com a classe `.premium-table` no mobile de forma elegante em cards empilhados via CSS puro.
+- **Refinamento SPA Administrativa & CRM de Clientes** ✅:
+  - Atualizada a tabela de **Clientes (CRM)** na aba `clients` em [AdminDashboard.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/components/AdminDashboard.tsx) adicionando a propriedade responsiva `data-label` em cada um dos elementos `<td>` (Autor, WhatsApp / Celular, Reservas, Total Gasto, Último Serviço, Sem Voltar, Ação).
+  - Com isso, a tabela de CRM se comporta como cartões responsivos premium, unindo-se às de Agendamentos e Depoimentos, eliminando totalmente qualquer barra de rolagem horizontal ou deformação de layout em smartphones.
+  - Otimizada a área de entrada de texto `.form-input` no celular para `font-size: 1.05rem` para anular o zoom forçado desagradável do Safari iOS ao focar em inputs.
+- **Validação de Sucesso e Build de Produção** ✅:
+  - Compilação do Next.js via `npm run build` executada com sucesso absoluto, sem nenhum erro de linting ou quebras de tipos TypeScript.
+

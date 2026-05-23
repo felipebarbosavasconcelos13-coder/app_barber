@@ -420,8 +420,9 @@ p {
   background: rgba(197, 168, 128, 0.05);
 }
 
-/* Responsividade */
+/* Responsividade & Otimização Mobile Touch-First Premium */
 @media (max-width: 768px) {
+  /* Otimização de Tipografia e Subtítulo */
   .hero-content h1 {
     font-size: 2.4rem;
   }
@@ -436,4 +437,111 @@ p {
   .booking-section {
     padding: 40px 12px;
   }
+
+  /* --- OTIMIZAÇÃO DE TABELAS ADMINISTRATIVAS NO CELULAR --- */
+  .premium-table, 
+  .premium-table tbody, 
+  .premium-table tr, 
+  .premium-table td {
+    display: block;
+    width: 100%;
+  }
+  .premium-table thead {
+    display: none; /* Oculta cabeçalho original */
+  }
+  .premium-table tr {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+  .premium-table td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+    padding: 10px 0 !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+  .premium-table td:last-child {
+    border-bottom: none !important;
+    justify-content: center;
+    padding-top: 12px !important;
+    gap: 10px;
+  }
+  /* Injeção de labels falsos baseados na propriedade data-label */
+  .premium-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--accent-gold);
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* --- ALVOS DE TOQUE (TOUCH TARGETS >= 44PX) NO CELULAR --- */
+  .nav-item {
+    padding: 16px 20px !important;
+    min-height: 48px;
+  }
+  .btn-delete, 
+  .btn-edit-action {
+    width: 44px !important;
+    height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .form-input {
+    padding: 16px !important;
+    min-height: 48px;
+    font-size: 1.05rem !important; /* Evita zoom automático desagradável no iOS Safari */
+  }
+  .btn-gold, 
+  .btn-outline {
+    padding: 16px 28px !important;
+    min-height: 48px;
+    width: 100%; /* Largura cheia no mobile para clique prático com o polegar */
+    margin-top: 8px;
+  }
 }
+
+@media (max-width: 480px) {
+  /* Espaçamentos do Hero para smartphones pequenos */
+  .hero-section {
+    padding: 60px 0 35px !important;
+  }
+  .hero-content h1 {
+    font-size: 1.8rem !important;
+  }
+  .hero-subtitle {
+    font-size: 0.9rem !important;
+    padding: 0 12px;
+  }
+  .booking-section {
+    padding: 30px 8px !important;
+  }
+
+  /* Grade em coluna cheia */
+  .services-grid, 
+  .testimonials-grid,
+  .location-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  /* Flexibilidade de cards de vidro */
+  .glass-card {
+    padding: 20px 16px !important;
+    border-radius: 12px !important;
+  }
+}
+

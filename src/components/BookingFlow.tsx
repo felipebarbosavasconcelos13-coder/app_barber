@@ -766,6 +766,12 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
           overflow-x: auto;
           padding-bottom: 10px;
           margin: 0 -10px;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none; /* IE/Edge */
+        }
+        .days-selector-wrapper::-webkit-scrollbar {
+          display: none; /* Safari e Chrome */
         }
 
         .days-list {
