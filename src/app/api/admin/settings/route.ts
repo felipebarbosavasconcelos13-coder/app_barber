@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
       evolutionUrl: settings.evolutionUrl || "",
       evolutionApiKey: settings.evolutionApiKey || "",
       evolutionInstance: settings.evolutionInstance || "",
+      googleMapsEmbedUrl: settings.googleMapsEmbedUrl || "",
+      googleReviewsWidget: settings.googleReviewsWidget || "",
     });
   } catch (error) {
     console.error("Erro ao buscar configurações:", error);
@@ -55,6 +57,8 @@ export async function PUT(request: NextRequest) {
       evolutionUrl,
       evolutionApiKey,
       evolutionInstance,
+      googleMapsEmbedUrl,
+      googleReviewsWidget,
       newPassword 
     } = body;
 
@@ -70,6 +74,8 @@ export async function PUT(request: NextRequest) {
     if (evolutionUrl !== undefined) updateData.evolutionUrl = evolutionUrl || "";
     if (evolutionApiKey !== undefined) updateData.evolutionApiKey = evolutionApiKey || "";
     if (evolutionInstance !== undefined) updateData.evolutionInstance = evolutionInstance || "";
+    if (googleMapsEmbedUrl !== undefined) updateData.googleMapsEmbedUrl = googleMapsEmbedUrl || "";
+    if (googleReviewsWidget !== undefined) updateData.googleReviewsWidget = googleReviewsWidget || "";
 
     // Atualiza a senha administrativa apenas se fornecida
     if (newPassword && newPassword.trim() !== "") {
@@ -94,6 +100,8 @@ export async function PUT(request: NextRequest) {
         evolutionUrl: updated.evolutionUrl || "",
         evolutionApiKey: updated.evolutionApiKey || "",
         evolutionInstance: updated.evolutionInstance || "",
+        googleMapsEmbedUrl: updated.googleMapsEmbedUrl || "",
+        googleReviewsWidget: updated.googleReviewsWidget || "",
       },
     });
   } catch (error) {

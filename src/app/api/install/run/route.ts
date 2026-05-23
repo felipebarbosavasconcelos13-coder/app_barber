@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   "whatsappReengagementEnabled" BOOLEAN NOT NULL DEFAULT FALSE,
   "whatsappReengagementDays" INTEGER NOT NULL DEFAULT 30,
   "whatsappReengagementTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}',
+  "googleMapsEmbedUrl" TEXT DEFAULT '',
+  "googleReviewsWidget" TEXT DEFAULT '',
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "SystemSettings_pkey" PRIMARY KEY ("id")
 );
@@ -82,6 +84,18 @@ CREATE TABLE IF NOT EXISTS "BarberBlock" (
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT "BarberBlock_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "Testimonial" (
+  "id" TEXT NOT NULL,
+  "authorName" TEXT NOT NULL,
+  "rating" INTEGER NOT NULL DEFAULT 5,
+  "content" TEXT NOT NULL,
+  "avatarUrl" TEXT DEFAULT '',
+  "source" TEXT NOT NULL DEFAULT 'Google',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Testimonial_pkey" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "_BarberServices" (
@@ -139,6 +153,9 @@ ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "lunchEnd" TEXT NOT NULL DEFAULT '
 ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "workDays" TEXT NOT NULL DEFAULT '1,2,3,4,5,6';
 
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "reengagementSent" BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleMapsEmbedUrl" TEXT DEFAULT '';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleReviewsWidget" TEXT DEFAULT '';
 `;
 
 function createPool(databaseUrl: string) {
@@ -192,6 +209,24 @@ async function seedInitialData(databaseUrl: string, adminPassword: string, gtmId
         [randomUUID(), service.name, service.price, service.duration]
       );
     }
+
+    // Seed de Depoimentos Iniciais (Fase 25)
+    const testimonials = [
+      { name: "Marcos Souza", rating: 5, content: "Excelente barbearia! O atendimento é impecável e o ambiente muito agradável. Recomendo o corte de cabelo masculino e o combo." },
+      { name: "Thiago Silva", rating: 5, content: "Melhor barba da cidade! O cuidado com a toalha quente e os produtos de alta qualidade fazem toda a diferença." },
+      { name: "Felipe Vasconcelos", rating: 5, content: "Lugar sensacional. Agendamento online prático e rápido pelo site, barbeiros super profissionais." }
+    ];
+
+    for (const test of testimonials) {
+      await pool.query(
+        `INSERT INTO "Testimonial" ("id", "authorName", "rating", "content", "avatarUrl", "source", "createdAt", "updatedAt")
+         SELECT $1, $2, $3, $4, '', 'Google', NOW(), NOW()
+         WHERE NOT EXISTS (SELECT 1 FROM "Testimonial" WHERE "authorName" = $2)`,
+        [randomUUID(), test.name, test.rating, test.content]
+      );
+    }
+  } catch (err) {
+    console.error("[seed] Erro ao popular depoimentos padrão:", err);
   } finally {
     await pool.end();
   }

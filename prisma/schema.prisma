@@ -25,6 +25,8 @@ model SystemSettings {
   whatsappReengagementEnabled  Boolean  @default(false) // Se o reengajamento pós-agendamento de retorno está ativo
   whatsappReengagementDays     Int      @default(30) // Dias de ausência para reengajamento
   whatsappReengagementTemplate String   @default("Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}") // Template de reengajamento
+  googleMapsEmbedUrl           String?  @default("") // URL de incorporação do Google Maps
+  googleReviewsWidget          String?  @default("") // Código do widget de reviews de terceiros
   updatedAt      DateTime @updatedAt
 }
 
@@ -81,5 +83,16 @@ model BarberBlock {
   reason    String?  // Motivo opcional (ex: "Consulta médica")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Testimonial {
+  id         String   @id @default(uuid())
+  authorName String
+  rating     Int      @default(5)
+  content    String
+  avatarUrl  String?  @default("")
+  source     String   @default("Google")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 

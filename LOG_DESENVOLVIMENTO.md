@@ -37,6 +37,9 @@ gantt
     Fase 20: Sincronização de Schema e Migração Supabase         :done,    des20, 2026-05-22, 2026-05-22
     Fase 21: Esquadro, Serviços & Evolution API                  :done,    des21, 2026-05-22, 2026-05-22
     Fase 22: Configurações Gerais e Diagnóstico Dinâmico do WhatsApp :done, des22, 2026-05-22, 2026-05-22
+    Fase 23: Auditoria e Análise de Segurança do Aplicativo      :done,    des23, 2026-05-23, 2026-05-23
+    Fase 24: CRM de Clientes, Retenção & Automações Avançadas    :done,    des24, 2026-05-23, 2026-05-23
+    Fase 25: Integração Google Meu Negócio & Localização         :done,    des25, 2026-05-23, 2026-05-23
 ```
 
 ---
@@ -226,6 +229,28 @@ gantt
   - Desenvolvidos endpoints assíncronos seguros para buscar clientes agrupados (`GET /api/admin/clients`), salvar configurações (`PUT /api/admin/automations`), calcular fila de pendências (`GET /api/admin/automations/reengagement-pending`) e efetuar disparos em lote sem travar a thread principal (`POST /api/admin/automations/trigger-reengagement`).
 - **Build de Produção do Next.js Validada com Sucesso** ✅:
   - Compilado com sucesso absoluto em ambiente local de teste garantindo 100% de integridade em tipos, build estático de rotas e funcionamento resiliente.
+
+### **Fase 25: Integração Google Meu Negócio & Localização (Concluída em 23/05/2026)**
+- **Integração Simplificada e Gratuita com Google Maps** ✅:
+  - Adicionado suporte a Mapas Interativos e Depoimentos sem dependência de chaves de API pagas ou cartões de crédito no Google Cloud.
+  - O administrador pode copiar a URL do iframe embed da sua barbearia no Google Maps e colar no novo campo `googleMapsEmbedUrl`.
+  - **Mapeamento Automático Baseado em Endereço**: Caso o campo de URL de embed esteja em branco, o sistema gera dinamicamente de forma 100% autônoma o Iframe de busca apontando para o endereço físico da barbearia (`settings.address`).
+- **Seção de Depoimentos & Avaliações Curadas (Google Business) na Landing Page** ✅:
+  - Exibição de um carrossel glassmorphic ultra-elegante antes do rodapé na página principal (`src/app/page.tsx`).
+  - Suporte a widgets de depoimentos de terceiros (como Elfsight) inserindo o script/HTML no campo `googleReviewsWidget`.
+  - Se deixado em branco, a página renderiza os depoimentos curados salvos no banco de dados. Caso o banco esteja vazio, renderiza depoimentos de demonstração com estilo de luxo, badges verificadas e estrelas douradas (`★ ★ ★ ★ ★`) para encantar o usuário.
+- **Seção de Localização ("Onde Estamos") na Landing Page** ✅:
+  - Exibição elegante do endereço físico, horário de funcionamento e telefone de contato de forma estruturada.
+  - Incorporação do Mapa do Google Maps com efeito escuro estilizado via filtros CSS (`filter: grayscale(0.8) invert(0.9)...`), harmonizando perfeitamente com a paleta de cores Premium Gold/Carvão da barbearia.
+  - Link dinâmico com botão de atalho para "Abrir no Google Maps" nativo (GPS/Celular).
+- **Painel Administrativo Completo no `/admin`** ✅:
+  - **Card 6: Google & Localização** injetado nas Configurações Gerais com o passo a passo educativo detalhado e links de acesso direto.
+  - **Painel de Depoimentos Curados**: Seção dedicada de largura total com listagem interativa (autor, nota em estrelas, avatar, conteúdo e origem do depoimento) e formulário dinâmico para cadastrar, editar e excluir depoimentos.
+- **Auto-Migrações e Atualizações Dinâmicas no Banco** ✅:
+  - Modificado o `schema.prisma` adicionando o model `Testimonial` e as colunas do Maps.
+  - Injetados scripts DDL de atualização retrocompatível em tempo real no carregador central (`src/lib/prisma.ts`) e no Wizard de Instalação (`src/app/api/install/run/route.ts`), semeando depoimentos iniciais padrão.
+- **Compilação de Produção 100% Concluída** ✅:
+  - Executado o comando `npm run build` confirmando sucesso na integridade de tipos TypeScript, compilação estática de páginas e carregamento serverless.
 
 ---
 

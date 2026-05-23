@@ -120,6 +120,21 @@ async function ensureBarberBlockTableExists(pool: Pool) {
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}';
 
     ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "reengagementSent" BOOLEAN NOT NULL DEFAULT FALSE;
+
+    -- Fase 25: Integração Google, Testimonials CRUD & Maps Embeds
+    CREATE TABLE IF NOT EXISTS "Testimonial" (
+      "id" TEXT NOT NULL,
+      "authorName" TEXT NOT NULL,
+      "rating" INTEGER NOT NULL DEFAULT 5,
+      "content" TEXT NOT NULL,
+      "avatarUrl" TEXT DEFAULT '',
+      "source" TEXT NOT NULL DEFAULT 'Google',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "Testimonial_pkey" PRIMARY KEY ("id")
+    );
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleMapsEmbedUrl" TEXT DEFAULT '';
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleReviewsWidget" TEXT DEFAULT '';
   `;
   try {
     await pool.query(ddl);
