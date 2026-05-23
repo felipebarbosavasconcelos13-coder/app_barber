@@ -389,6 +389,7 @@ Esta fase reúne melhorias de branding, clareza visual de usabilidade (contraste
 - **Revisão Sem Google API Key** ✅: Removida a abordagem com Google Places API por exigir chave. O painel agora documenta a limitação do iframe do Maps e oferece o caminho sem chave: embed/link do Google Maps, nota/quantidade e widget externo opcional de avaliações.
 - **Importação de Widget Público Sem API** ✅: Implementado endpoint `POST /api/admin/google-reviews/import-widget` para importar avaliações a partir de HTML ou URL pública de widgets renderizados, como o exemplo WordPress `wp-gr rpi wpac`. O painel agora permite colar esse HTML/URL e importar os depoimentos para `Testimonial` sem chave Google.
 - **Opção com Google Places API Key** ✅: Adicionada alternativa oficial para quem quiser usar chave de API: campos `googlePlacesApiKey` e `googlePlaceId`, botão "Usar API Key" no painel e endpoint `POST /api/admin/google-reviews/sync`. A opção sem API por widget público permanece disponível.
+- **Ambiente de Teste da API Key** ✅: Criado endpoint `POST /api/admin/google-reviews/test` e botão "Testar API Key" no painel. O teste valida a chave e o estabelecimento sem importar dados, retornando diagnósticos claros de permissões, billing, Places API desativada ou Place ID inválido.
 
 **Toda a Fase 28 foi concluída com sucesso e homologada em build local!**
 

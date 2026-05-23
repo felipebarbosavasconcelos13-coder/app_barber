@@ -266,6 +266,7 @@ gantt
 | **23/05/2026** | `src/components/AdminDashboard.tsx` | A alternativa via Google Places API exigia chave do Google, contrariando o requisito de não usar chave de API. Também foi confirmado que o iframe/link do Google Maps não expõe textos de avaliações para leitura automática pelo app. | Removida a abordagem com chave Places API. O painel voltou para um fluxo sem chave: link/embed do Maps para mapa/ficha visual, campos de nota/quantidade e widget HTML externo opcional (`googleReviewsWidget`) para exibição dinâmica sem API própria do Google. |
 | **23/05/2026** | `src/app/api/admin/google-reviews/import-widget/route.ts` + `src/components/AdminDashboard.tsx` | O usuário apresentou um exemplo real de site WordPress que exibe avaliações sem chave de API usando um widget HTML já renderizado (`wp-gr rpi wpac`). | Implementado importador sem Google API Key para HTML/URL pública de widgets de avaliações. O endpoint parseia nota, quantidade, autores, estrelas, avatar e texto dos reviews renderizados, salva na tabela `Testimonial` e atualiza o painel/Landing Page. |
 | **23/05/2026** | `src/app/api/admin/google-reviews/sync/route.ts` + `src/components/AdminDashboard.tsx` | Após manter a alternativa sem API, foi solicitada também a opção de usar API Key para quem quiser integração oficial. | Adicionada sincronização opcional via Google Places API Key, convivendo com o importador sem API. O painel agora oferece os botões "Importar Avaliações" (widget público) e "Usar API Key" (Google Places). |
+| **23/05/2026** | `src/app/api/admin/google-reviews/test/route.ts` + `src/components/AdminDashboard.tsx` | A chave API informada no painel não funcionou e faltava um ambiente de teste para diagnosticar se o problema era chave inválida, Places API desativada, billing, restrição ou Place ID. | Criado endpoint de teste Google Places API sem importação, com botão "Testar API Key" no painel. O teste retorna nome do estabelecimento, nota, total de avaliações, quantidade de reviews com texto, Place ID e mensagens explicativas para erros `REQUEST_DENIED`, `ZERO_RESULTS`, `OVER_QUERY_LIMIT` e afins. |
 
 ---
 
@@ -322,3 +323,5 @@ gantt
 - **Opção Oficial com API Key** ✅:
   - Adicionada rota `POST /api/admin/google-reviews/sync` para sincronizar avaliações via Google Places API quando o administrador informar `googlePlacesApiKey` e, opcionalmente, `googlePlaceId`.
   - A opção com API Key é complementar: o fluxo sem API por widget público continua disponível.
+- **Ambiente de Teste da API Key** ✅:
+  - Adicionado `POST /api/admin/google-reviews/test` e botão "Testar API Key" no card Google & Localização para validar credenciais, billing, permissões e resolução do estabelecimento antes de sincronizar.

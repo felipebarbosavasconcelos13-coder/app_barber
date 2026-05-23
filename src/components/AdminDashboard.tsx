@@ -110,6 +110,8 @@ export default function AdminDashboard() {
   const [testimonialLoading, setTestimonialLoading] = useState(false);
   const [importingGoogleWidget, setImportingGoogleWidget] = useState(false);
   const [syncingGooglePlaces, setSyncingGooglePlaces] = useState(false);
+  const [testingGooglePlaces, setTestingGooglePlaces] = useState(false);
+  const [googlePlacesTestResult, setGooglePlacesTestResult] = useState<any | null>(null);
 
   // Novos States de Gestão de Clientes (CRM)
   const [clients, setClients] = useState<any[]>([]);
@@ -955,6 +957,36 @@ export default function AdminDashboard() {
       setError(err.message || "Falha ao sincronizar avaliações via Google Places.");
     } finally {
       setSyncingGooglePlaces(false);
+    }
+  };
+
+  const handleTestGooglePlaces = async () => {
+    setError("");
+    setSuccess("");
+    setGooglePlacesTestResult(null);
+    setTestingGooglePlaces(true);
+
+    try {
+      const res = await fetch("/api/admin/google-reviews/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          googleMapsEmbedUrl: settings.googleMapsEmbedUrl,
+          googlePlacesApiKey: settings.googlePlacesApiKey,
+          googlePlaceId: settings.googlePlaceId,
+          barberShopName: settings.barberShopName,
+          address: settings.address,
+        }),
+      });
+      const data = await res.json();
+      setGooglePlacesTestResult(data);
+      if (!res.ok) throw new Error(data.error || "Falha ao testar Google Places API.");
+
+      setSuccess("Teste da Google Places API concluído com sucesso.");
+    } catch (err: any) {
+      setError(err.message || "Falha ao testar Google Places API.");
+    } finally {
+      setTestingGooglePlaces(false);
     }
   };
 
@@ -2370,14 +2402,42 @@ export default function AdminDashboard() {
                             </div>
                           </div>
 
-                          <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
-                            <button type="submit" className="btn-gold" style={{ flex: 1 }} disabled={actionLoading || importingGoogleWidget || syncingGooglePlaces}>
+                          {googlePlacesTestResult && (
+                            <div style={{
+                              marginTop: "12px",
+                              padding: "12px",
+                              borderRadius: "10px",
+                              background: googlePlacesTestResult.success ? "rgba(16, 185, 129, 0.08)" : "rgba(239, 68, 68, 0.08)",
+                              border: `1px solid ${googlePlacesTestResult.success ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"}`,
+                              color: googlePlacesTestResult.success ? "var(--status-success)" : "var(--status-error)",
+                              fontSize: "0.78rem",
+                              lineHeight: 1.45,
+                            }}>
+                              <strong>{googlePlacesTestResult.success ? "API funcionando" : "Falha no teste"}</strong>
+                              <div style={{ color: "var(--text-secondary)", marginTop: "4px" }}>
+                                {googlePlacesTestResult.success
+                                  ? `${googlePlacesTestResult.name || "Estabelecimento encontrado"} | Nota ${googlePlacesTestResult.rating || 0} | ${googlePlacesTestResult.reviewsCount || 0} avaliações | ${googlePlacesTestResult.reviewsWithText || 0} textos retornados`
+                                  : googlePlacesTestResult.error}
+                              </div>
+                              {googlePlacesTestResult.placeId && (
+                                <div style={{ color: "var(--text-muted)", marginTop: "4px", fontFamily: "monospace", wordBreak: "break-all" }}>
+                                  Place ID: {googlePlacesTestResult.placeId}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <div style={{ display: "flex", gap: "10px", marginTop: "15px", flexWrap: "wrap" }}>
+                            <button type="submit" className="btn-gold" style={{ flex: 1, minWidth: "140px" }} disabled={actionLoading || importingGoogleWidget || syncingGooglePlaces || testingGooglePlaces}>
                               {actionLoading ? "Salvando..." : "Salvar Google"}
                             </button>
-                            <button type="button" className="btn-gold" style={{ flex: 1.2, background: "transparent", border: "1px solid var(--accent-gold)", color: "var(--accent-gold)" }} onClick={handleImportGoogleWidget} disabled={importingGoogleWidget || actionLoading || syncingGooglePlaces}>
+                            <button type="button" className="btn-gold" style={{ flex: 1.2, minWidth: "170px", background: "transparent", border: "1px solid var(--accent-gold)", color: "var(--accent-gold)" }} onClick={handleImportGoogleWidget} disabled={importingGoogleWidget || actionLoading || syncingGooglePlaces || testingGooglePlaces}>
                               {importingGoogleWidget ? "Importando..." : "Importar Avaliações"}
                             </button>
-                            <button type="button" className="btn-gold" style={{ flex: 1.2, background: "rgba(66, 133, 244, 0.08)", border: "1px solid rgba(66, 133, 244, 0.25)", color: "#8ab4f8" }} onClick={handleSyncGooglePlaces} disabled={syncingGooglePlaces || actionLoading || importingGoogleWidget}>
+                            <button type="button" className="btn-gold" style={{ flex: 1.2, minWidth: "145px", background: "rgba(66, 133, 244, 0.04)", border: "1px solid rgba(66, 133, 244, 0.2)", color: "#8ab4f8" }} onClick={handleTestGooglePlaces} disabled={testingGooglePlaces || syncingGooglePlaces || actionLoading || importingGoogleWidget}>
+                              {testingGooglePlaces ? "Testando..." : "Testar API Key"}
+                            </button>
+                            <button type="button" className="btn-gold" style={{ flex: 1.2, minWidth: "130px", background: "rgba(66, 133, 244, 0.08)", border: "1px solid rgba(66, 133, 244, 0.25)", color: "#8ab4f8" }} onClick={handleSyncGooglePlaces} disabled={syncingGooglePlaces || actionLoading || importingGoogleWidget || testingGooglePlaces}>
                               {syncingGooglePlaces ? "Sincronizando..." : "Usar API Key"}
                             </button>
                           </div>
