@@ -262,6 +262,7 @@ gantt
 | Data | Componente | Descrição do Problema | Solução Aplicada |
 | :--- | :--- | :--- | :--- |
 | **23/05/2026** | `src/app/api/booking/create/route.ts` | **Atraso de Disparo do WhatsApp**: As mensagens de confirmação de agendamento demoravam a chegar no cliente em ambientes cloud/serverless (como a Vercel). A rota disparava a promessa `sendWhatsappNotification` de forma não bloqueante (sem `await`), o que fazia com que o container serverless da Vercel suspendesse/congelasse o socket TCP da Evolution API assim que a resposta HTTP de sucesso era retornada para o cliente, liberando o disparo apenas nas próximas chamadas. | Alterada a chamada de notificação para utilizar `await` de forma síncrona/bloqueante na rota. Como o disparo da Evolution API consome menos de 300ms, o fluxo de agendamento continua ultraveloz na UI, mas o envio do WhatsApp passa a ser imediato e 100% garantido no ambiente Serverless da Vercel! |
+| **23/05/2026** | `src/app/page.tsx` + `src/app/api/testimonials/route.ts` + `src/app/api/install/run/route.ts` | A seção pública "O Que Nossos Clientes Dizem" exibia depoimentos fictícios hardcoded quando não havia depoimentos reais cadastrados, dando a impressão de que não puxava os dados corretos do painel/admin ou do widget configurado. | Removido o fallback hardcoded da Landing Page e do endpoint público. A seção agora só renderiza quando existe `googleReviewsWidget` configurado ou depoimentos reais na tabela `Testimonial`. Novas instalações também deixam de semear avaliações fictícias no banco. |
 
 ---
 
@@ -305,4 +306,6 @@ gantt
   - Implementado modo foco no agendamento: após selecionar um barbeiro, seções externas da página são ocultadas via CSS `:has(.booking-focused)`, mantendo o cliente concentrado no fluxo de reserva.
 - **Validação de Build** ✅:
   - Executado `npm run build` com sucesso. Durante a geração estática local apareceram logs esperados de `ECONNREFUSED` por ausência de PostgreSQL local ativo, mas a compilação terminou sem erros de TypeScript ou Next.js.
-
+- **Correção Pós-Homologação de Depoimentos** ✅:
+  - Removidos os depoimentos fictícios da seção pública, da API pública `/api/testimonials` e do seed do instalador para evitar exibição de avaliações que não foram cadastradas pelo administrador.
+  - A seção de avaliações agora depende exclusivamente de dados reais: widget externo configurado ou registros persistidos na tabela `Testimonial`.

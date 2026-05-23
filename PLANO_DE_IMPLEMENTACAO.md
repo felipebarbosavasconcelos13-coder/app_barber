@@ -385,9 +385,9 @@ Esta fase reúne melhorias de branding, clareza visual de usabilidade (contraste
 - **Painel Administrativo de Branding** ✅: Criado card "Paleta da Marca" com inputs `type="color"` e campos hexadecimais para customização direta pelo barbeiro.
 - **Modo Foco do Agendamento** ✅: Após a seleção do barbeiro, `BookingFlow.tsx` adiciona a classe `booking-focused` e o CSS global oculta Hero, depoimentos, mapa e rodapé, centralizando o fluxo de reserva.
 - **Build Geral de Homologação** ✅: Executado `npm run build` com sucesso. Os logs locais de `ECONNREFUSED` ocorreram apenas pela ausência de PostgreSQL local durante prerender, sem falha de build.
+- **Correção de Exibição de Depoimentos** ✅: Removidos os fallbacks fictícios da Landing Page, da API pública `/api/testimonials` e do seed do instalador. A seção "O Que Nossos Clientes Dizem" agora só aparece se houver widget externo configurado ou depoimentos reais cadastrados no painel administrativo.
 
 **Toda a Fase 28 foi concluída com sucesso e homologada em build local!**
 
 ---
-
 

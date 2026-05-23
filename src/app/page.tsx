@@ -287,6 +287,7 @@ export default async function HomePage() {
       </section>
 
       {/* Depoimentos & Avaliações Google Section */}
+      {(settings.googleReviewsWidget || testimonials.length > 0) && (
       <section className="testimonials-section container animate-fade-in" style={{ marginTop: "80px", marginBottom: "40px" }}>
         <div className="section-title text-center">
           <span className="badge badge-gold" style={{ marginBottom: "10px", textTransform: "uppercase", fontSize: "0.75rem", letterSpacing: "0.05em", padding: "6px 12px" }}>
@@ -304,32 +305,7 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px", marginTop: "30px" }}>
-            {(testimonials.length > 0 ? testimonials : [
-              {
-                id: "1",
-                authorName: "Felipe Vasconcelos",
-                rating: 5,
-                content: "Melhor barbearia da região! O atendimento do profissional é impecável, além do espaço super climatizado e café de cortesia premium. Recomendo de olhos fechados!",
-                avatarUrl: "",
-                source: "Google"
-              },
-              {
-                id: "2",
-                authorName: "Bruno Martins",
-                rating: 5,
-                content: "Ambiente espetacular, música boa, cerveja gelada e profissionais de ponta. O corte de cabelo e a barba ficaram exatamente como pedi. Com certeza serei cliente fixo.",
-                avatarUrl: "",
-                source: "Google"
-              },
-              {
-                id: "3",
-                authorName: "Rodrigo Costa",
-                rating: 5,
-                content: "Praticidade total com o agendamento online. Cheguei e fui atendido exatamente no meu horário. O serviço é rápido e extremamente profissional. Nota 10!",
-                avatarUrl: "",
-                source: "Google"
-              }
-            ]).map((t) => (
+            {testimonials.map((t) => (
               <div key={t.id} className="testimonial-card glass-card animate-fade-in" style={{
                 padding: "28px",
                 borderRadius: "14px",
@@ -382,6 +358,7 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+      )}
 
       {/* Localização & Mapa Section */}
       <section className="location-section container animate-fade-in" style={{ marginTop: "60px", marginBottom: "80px" }}>

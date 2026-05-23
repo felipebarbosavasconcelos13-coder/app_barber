@@ -221,24 +221,8 @@ async function seedInitialData(databaseUrl: string, adminPassword: string, gtmId
         [randomUUID(), service.name, service.price, service.duration]
       );
     }
-
-    // Seed de Depoimentos Iniciais (Fase 25)
-    const testimonials = [
-      { name: "Marcos Souza", rating: 5, content: "Excelente barbearia! O atendimento é impecável e o ambiente muito agradável. Recomendo o corte de cabelo masculino e o combo." },
-      { name: "Thiago Silva", rating: 5, content: "Melhor barba da cidade! O cuidado com a toalha quente e os produtos de alta qualidade fazem toda a diferença." },
-      { name: "Felipe Vasconcelos", rating: 5, content: "Lugar sensacional. Agendamento online prático e rápido pelo site, barbeiros super profissionais." }
-    ];
-
-    for (const test of testimonials) {
-      await pool.query(
-        `INSERT INTO "Testimonial" ("id", "authorName", "rating", "content", "avatarUrl", "source", "createdAt", "updatedAt")
-         SELECT $1, $2, $3, $4, '', 'Google', NOW(), NOW()
-         WHERE NOT EXISTS (SELECT 1 FROM "Testimonial" WHERE "authorName" = $2)`,
-        [randomUUID(), test.name, test.rating, test.content]
-      );
-    }
   } catch (err) {
-    console.error("[seed] Erro ao popular depoimentos padrão:", err);
+    console.error("[seed] Erro ao popular dados iniciais:", err);
   } finally {
     await pool.end();
   }
