@@ -204,3 +204,28 @@ gantt
 - **Gravação Resiliente e Direta no Supabase** ✅: Todas as credenciais de WhatsApp são gravadas e lidas em tempo real diretamente da tabela `SystemSettings` no Supabase PostgreSQL remoto. Isso evita qualquer tentativa de gravação em disco local no ambiente Serverless da Vercel (eliminando o bug clássico de read-only filesystem `EROFS`).
 - **Validação com Build de Produção de Alta Integridade** ✅: Concluído o build de produção final via `npm run build` com sucesso absoluto, confirmando a ausência de quaisquer erros de tipos estáticos TypeScript ou falhas de lint em todas as rotas e componentes.
 
+### **Fase 23: Auditoria e Análise de Segurança do Aplicativo (Concluída em 23/05/2026)**
+- **Mapeamento de Riscos de Credenciais e Tokens** ✅: Realizada uma varredura completa nas rotas de login administrativo (`/api/admin/login`), validação de sessões, persistência do instalador (`/install/wizard` e `/api/install/run`), proxy de conexão Prisma e TLS.
+- **Relatório de Auditoria Gerado nos Artefatos** ✅: Criado o arquivo [analise_seguranca.md](file:///C:/Users/felip/.gemini/antigravity-ide/brain/68024731-f77d-40a2-9a19-48ab52c0444d/analise_seguranca.md) detalhando riscos críticos (armazenamento de senhas em texto plano, persistência de tokens sensíveis no `localStorage` do cliente e sessões de cookie literais sem assinatura digital), seus impactos causais e recomendações de mitigação empresarial (bcrypt, JWT e higienização pós-wizard).
+
+### **Fase 24: CRM de Clientes, Retenção & Automações Avançadas de Retorno de Clientes (Concluída em 23/05/2026)**
+- **Aba de Gestão de Clientes (CRM) no `/admin`** ✅:
+  - Desenvolvida uma interface de alta fidelidade com Design System Vanilla CSS unificado, com destaque de badges, glassmorphism e efeitos premium.
+  - Implementada tabela inteligente mostrando informações cruciais para retenção de clientes agrupados por telefone único: total de agendamentos realizados, **faturamento acumulado do cliente (VIP Ranking)** para identificar os clientes que mais geram receita, **data da última visita com o nome do serviço realizado**, e **número exato de dias desde a última visita** para follow-up de clientes ausentes.
+  - Adicionado campo de busca instantânea (por nome e telefone) e alternadores de ordenação rápida: por faturamento ("VIP / Gasto") e por inatividade ("Ausência").
+  - Injetados atalhos de contato rápido individuais com link dinâmico para o WhatsApp (`https://wa.me/55...`), pré-preenchendo mensagens personalizadas inteligentes de reengajamento baseadas no nome do cliente e no último serviço realizado por ele.
+- **Aba de Automações de Mensagem (WhatsApp CRM) no `/admin`** ✅:
+  - Integrado painel avançado para gerenciar e customizar os templates de mensagens disparadas via Evolution API.
+  - **Confirmação de Agendamento (Instantâneo)**: Toggle ativo/inativo e editor de mensagem personalizada suportando substituição dinâmica de variáveis em tempo real (ex: `{{cliente}}`, `{{data}}`, `{{hora}}`, `{{barbeiro}}`, `{{servico}}`, `{{preco}}`).
+  - **Lembrete de Retorno (Reengajamento por Ausência)**: Toggle ativo/inativo, input de quantidade de dias de tolerância para ausência (ex: 30 dias) e editor de mensagem de reengajamento suportando tags dinâmicas como `{{cliente}}`, `{{ultimo_servico}}` e `{{dias}}`.
+  - **Fila de Reengajamento e Disparo Manual em Lote**: Painel lateral inteligente que calcula dinamicamente em tempo real os clientes que não retornam há mais de N dias e que não possuem nenhum agendamento futuro no sistema.
+  - Desenvolvido botão premium de **Disparo em Lote Manual**, permitindo que o administrador faça follow-up ativo em massa com apenas um clique. A Evolution API envia as mensagens personalizadas individualmente e o sistema marca a flag `reengagementSent` como verdadeira para evitar disparos duplicados ou incômodos repetitivos aos clientes.
+- **Estruturação de APIs e Banco de Dados Resilientes** ✅:
+  - Adicionadas colunas adicionais de controle em `prisma/schema.prisma` (`whatsappConfirmationEnabled`, `whatsappConfirmationTemplate`, `whatsappReengagementEnabled`, `whatsappReengagementDays`, `whatsappReengagementTemplate`, e `reengagementSent`).
+  - Atualizadas as rotas de migração dinâmica automática e patches do instalador (`ALTER TABLE` robustos com proteção de dados no runtime e no instalador).
+  - Desenvolvidos endpoints assíncronos seguros para buscar clientes agrupados (`GET /api/admin/clients`), salvar configurações (`PUT /api/admin/automations`), calcular fila de pendências (`GET /api/admin/automations/reengagement-pending`) e efetuar disparos em lote sem travar a thread principal (`POST /api/admin/automations/trigger-reengagement`).
+- **Build de Produção do Next.js Validada com Sucesso** ✅:
+  - Compilado com sucesso absoluto em ambiente local de teste garantindo 100% de integridade em tipos, build estático de rotas e funcionamento resiliente.
+
+
+

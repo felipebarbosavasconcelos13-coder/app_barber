@@ -17,7 +17,10 @@ import {
   Tag,
   Loader2,
   Lock,
-  Edit
+  Edit,
+  MessageSquare,
+  Send,
+  Award
 } from "lucide-react";
 
 interface Barber {
@@ -61,7 +64,7 @@ interface Booking {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"bookings" | "barbers" | "services" | "settings" | "esquadro">("bookings");
+  const [activeTab, setActiveTab] = useState<"bookings" | "barbers" | "services" | "settings" | "esquadro" | "clients" | "automations">("bookings");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -83,6 +86,22 @@ export default function AdminDashboard() {
     evolutionApiKey: "",
     evolutionInstance: "",
   });
+
+  // Novos States de Gestão de Clientes (CRM)
+  const [clients, setClients] = useState<any[]>([]);
+  const [searchClient, setSearchClient] = useState("");
+  const [clientsSortKey, setClientsSortKey] = useState<"totalSpent" | "daysSinceLast">("totalSpent");
+
+  // Novos States de Automações de WhatsApp
+  const [automations, setAutomations] = useState({
+    whatsappConfirmationEnabled: true,
+    whatsappConfirmationTemplate: "",
+    whatsappReengagementEnabled: false,
+    whatsappReengagementDays: 30,
+    whatsappReengagementTemplate: "",
+  });
+  const [pendingReengagement, setPendingReengagement] = useState<any[]>([]);
+  const [sendingReengagement, setSendingReengagement] = useState(false);
 
   // States para testes e status do WhatsApp (Evolution API)
   const [testingConnection, setTestingConnection] = useState(false);
@@ -168,13 +187,16 @@ export default function AdminDashboard() {
     setLoading(true);
     setError("");
     try {
-      // Carrega em paralelo agendamentos, barbeiros, serviços, bloqueios e configurações
-      const [bookingsRes, barbersRes, servicesRes, settingsRes, blocksRes] = await Promise.all([
+      // Carrega em paralelo agendamentos, barbeiros, serviços, bloqueios, configurações, clientes e automações
+      const [bookingsRes, barbersRes, servicesRes, settingsRes, blocksRes, clientsRes, automationsRes, pendingRes] = await Promise.all([
         fetch("/api/admin/bookings"),
         fetch("/api/admin/barbers"),
         fetch("/api/admin/services"),
         fetch("/api/admin/settings"),
         fetch("/api/admin/barber-blocks"),
+        fetch("/api/admin/clients"),
+        fetch("/api/admin/automations"),
+        fetch("/api/admin/automations/reengagement-pending"),
       ]);
 
       if (bookingsRes.status === 401) {
@@ -188,6 +210,9 @@ export default function AdminDashboard() {
       const servicesData = await servicesRes.json();
       const settingsData = await settingsRes.json();
       const blocksData = await blocksRes.json();
+      const clientsData = await clientsRes.json();
+      const automationsData = await automationsRes.json();
+      const pendingData = await pendingRes.json();
 
       setBookings(bookingsData.error ? [] : bookingsData);
       
@@ -195,6 +220,18 @@ export default function AdminDashboard() {
       setBarbers(loadedBarbers);
       setServices(servicesData.error ? [] : servicesData);
       setBarberBlocks(blocksData.error ? [] : blocksData);
+      setClients(clientsData.error ? [] : clientsData);
+      setPendingReengagement(pendingData.error ? [] : pendingData);
+
+      const defaultAutomations = {
+        whatsappConfirmationEnabled: true,
+        whatsappConfirmationTemplate: "",
+        whatsappReengagementEnabled: false,
+        whatsappReengagementDays: 30,
+        whatsappReengagementTemplate: "",
+      };
+      setAutomations(automationsData.error ? defaultAutomations : { ...defaultAutomations, ...automationsData });
+
       const defaultSettings = {
         gtmId: "",
         openingTime: "09:00",
@@ -637,6 +674,80 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSaveAutomations = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setActionLoading(true);
+
+    try {
+      const res = await fetch("/api/admin/automations", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(automations),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Erro ao salvar automações.");
+
+      setSuccess("Automações atualizadas com sucesso!");
+      
+      // Recarrega a fila de reengajamento pendente caso o limite de dias tenha mudado
+      const pendingRes = await fetch("/api/admin/automations/reengagement-pending");
+      const pendingData = await pendingRes.json();
+      setPendingReengagement(pendingData.error ? [] : pendingData);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleTriggerReengagement = async () => {
+    if (pendingReengagement.length === 0) return;
+    if (!confirm(`Deseja enviar lembretes para ${pendingReengagement.length} cliente(s) ausente(s)?`)) return;
+
+    setError("");
+    setSuccess("");
+    setSendingReengagement(true);
+
+    try {
+      const targets = pendingReengagement.map(p => ({
+        bookingId: p.bookingId,
+        clientPhone: p.clientPhone,
+        clientName: p.clientName,
+        lastService: p.lastService,
+        daysSinceLast: p.daysSinceLast
+      }));
+
+      const res = await fetch("/api/admin/automations/trigger-reengagement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targets }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Erro ao disparar mensagens.");
+
+      setSuccess(`Lembretes de reengajamento enviados com sucesso! Disparos: ${data.sentCount}.`);
+      
+      // Recarrega dados de clientes e pendências
+      const [pendingRes, clientsRes] = await Promise.all([
+        fetch("/api/admin/automations/reengagement-pending"),
+        fetch("/api/admin/clients")
+      ]);
+      const pendingData = await pendingRes.json();
+      const clientsData = await clientsRes.json();
+      
+      setPendingReengagement(pendingData.error ? [] : pendingData);
+      setClients(clientsData.error ? [] : clientsData);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSendingReengagement(false);
+    }
+  };
+
   // Formatação de data
   const formatDateTime = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -724,6 +835,20 @@ export default function AdminDashboard() {
             >
               <Scissors size={18} />
               <span>Serviços</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab("clients"); setError(""); setSuccess(""); }}
+              className={`nav-item ${activeTab === "clients" ? "active" : ""}`}
+            >
+              <Users size={18} />
+              <span>Clientes</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab("automations"); setError(""); setSuccess(""); }}
+              className={`nav-item ${activeTab === "automations" ? "active" : ""}`}
+            >
+              <MessageSquare size={18} />
+              <span>Automações</span>
             </button>
             <button
               onClick={() => { setActiveTab("settings"); setError(""); setSuccess(""); }}
@@ -1900,6 +2025,409 @@ export default function AdminDashboard() {
                             </button>
                           </div>
                         </form>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+              {/* ABA CLIENTES (CRM) */}
+              {activeTab === "clients" && (
+                <div className="tab-pane animate-fade-in">
+                  <div className="pane-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "16px" }}>
+                    <div>
+                      <h3 className="title-serif">Gestão de Clientes (CRM)</h3>
+                      <p>Visualize o ranking de clientes que mais investem e monitore a retenção e dias desde o último retorno.</p>
+                    </div>
+                    
+                    {/* Controles de Busca e Ordenação */}
+                    <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                      <input
+                        type="text"
+                        placeholder="Buscar por nome ou celular..."
+                        className="form-input"
+                        style={{ width: "260px", marginBottom: 0 }}
+                        value={searchClient}
+                        onChange={(e) => setSearchClient(e.target.value)}
+                      />
+                      
+                      <div className="flex-center" style={{ gap: "6px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)", borderRadius: "8px", padding: "4px" }}>
+                        <button
+                          type="button"
+                          onClick={() => setClientsSortKey("totalSpent")}
+                          className={`btn-gold ${clientsSortKey === "totalSpent" ? "" : "inactive-btn"}`}
+                          style={{ padding: "6px 12px", fontSize: "0.8rem", background: clientsSortKey === "totalSpent" ? "var(--accent-gold)" : "transparent", border: "none", color: clientsSortKey === "totalSpent" ? "#000" : "var(--text-secondary)", borderRadius: "6px" }}
+                        >
+                          <Award size={14} style={{ marginRight: "4px", display: "inline-block", verticalAlign: "middle" }} />
+                          VIP / Gasto
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setClientsSortKey("daysSinceLast")}
+                          className={`btn-gold ${clientsSortKey === "daysSinceLast" ? "" : "inactive-btn"}`}
+                          style={{ padding: "6px 12px", fontSize: "0.8rem", background: clientsSortKey === "daysSinceLast" ? "var(--accent-gold)" : "transparent", border: "none", color: clientsSortKey === "daysSinceLast" ? "#000" : "var(--text-secondary)", borderRadius: "6px" }}
+                        >
+                          Ausência
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="glass-card table-wrapper">
+                    {(() => {
+                      const filtered = clients
+                        .filter(c => 
+                          c.clientName.toLowerCase().includes(searchClient.toLowerCase()) || 
+                          c.clientPhone.includes(searchClient)
+                        )
+                        .sort((a, b) => {
+                          if (clientsSortKey === "totalSpent") {
+                            return b.totalSpent - a.totalSpent;
+                          } else {
+                            return (b.daysSinceLast ?? -1) - (a.daysSinceLast ?? -1);
+                          }
+                        });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <div className="empty-state">
+                            <Users size={48} className="empty-icon" />
+                            <h4>Nenhum cliente localizado</h4>
+                            <p>Tente ajustar sua busca ou aguarde novos agendamentos.</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <table className="premium-table">
+                          <thead>
+                            <tr>
+                              <th>Cliente</th>
+                              <th>WhatsApp / Celular</th>
+                              <th style={{ textAlign: "center" }}>Agendamentos</th>
+                              <th style={{ textAlign: "right" }}>Total Gasto</th>
+                              <th style={{ textAlign: "center" }}>Último Serviço</th>
+                              <th style={{ textAlign: "center" }}>Tempo sem Voltar</th>
+                              <th style={{ textAlign: "center" }}>Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filtered.map((client, idx) => {
+                              const isAbsentLong = client.daysSinceLast && client.daysSinceLast >= (automations.whatsappReengagementDays || 30);
+                              return (
+                                <tr key={client.clientPhone}>
+                                  <td>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                      {clientsSortKey === "totalSpent" && idx < 3 && (
+                                        <span title="Cliente VIP" style={{ color: "var(--accent-gold)", fontSize: "1.1rem" }}>
+                                          👑
+                                        </span>
+                                      )}
+                                      <div>
+                                        <span className="client-name">{client.clientName}</span>
+                                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Fidelidade Barber</span>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <span style={{ fontFamily: "monospace", fontSize: "0.9rem" }}>{client.clientPhone}</span>
+                                  </td>
+                                  <td style={{ textAlign: "center" }}>
+                                    <span className="badge" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}>
+                                      {client.totalBookings}
+                                    </span>
+                                  </td>
+                                  <td style={{ textAlign: "right", fontWeight: 600, color: "var(--accent-gold)" }}>
+                                    R$ {client.totalSpent.toFixed(2)}
+                                  </td>
+                                  <td style={{ textAlign: "center", fontSize: "0.85rem" }}>
+                                    {client.lastVisitDate ? (
+                                      <div>
+                                        <span style={{ display: "block" }}>{client.lastVisitDate.split("-").reverse().join("/")}</span>
+                                        <span style={{ display: "block", fontSize: "0.75rem", color: "var(--text-muted)" }}>{client.lastServiceName}</span>
+                                      </div>
+                                    ) : (
+                                      <span style={{ color: "var(--text-muted)" }}>Nenhum</span>
+                                    )}
+                                  </td>
+                                  <td style={{ textAlign: "center" }}>
+                                    {client.daysSinceLast !== null ? (
+                                      <span className={`badge ${isAbsentLong ? "badge-error-bg" : "badge-success-bg"}`} style={{
+                                        background: isAbsentLong ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)",
+                                        border: `1px solid ${isAbsentLong ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.2)"}`,
+                                        color: isAbsentLong ? "var(--status-error)" : "var(--status-success)",
+                                        padding: "4px 10px",
+                                        borderRadius: "20px"
+                                      }}>
+                                        {client.daysSinceLast === 0 ? "Hoje" : 
+                                         client.daysSinceLast === 1 ? "1 dia" : 
+                                         `${client.daysSinceLast} dias`}
+                                      </span>
+                                    ) : (
+                                      <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Sem registro</span>
+                                    )}
+                                  </td>
+                                  <td style={{ textAlign: "center" }}>
+                                    <a
+                                      href={`https://wa.me/${client.clientPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                                        `Olá, ${client.clientName}! Tudo bem? Sentimos sua falta aqui na ${settings.barberShopName || "Barbearia"}! Faz algum tempo desde o seu último serviço (${client.lastServiceName || "corte"}). Que tal agendar um novo horário conosco? Link para agendamento: ${typeof window !== "undefined" ? window.location.origin : ""}`
+                                      )}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="btn-gold"
+                                      style={{ padding: "6px 12px", fontSize: "0.75rem", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", display: "inline-flex", alignItems: "center", gap: "6px", textDecoration: "none" }}
+                                    >
+                                      <MessageSquare size={12} />
+                                      WhatsApp
+                                    </a>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* ABA AUTOMAÇÕES (WHATSAPP CRM) */}
+              {activeTab === "automations" && (
+                <div className="tab-pane animate-fade-in">
+                  <div className="pane-header">
+                    <h3 className="title-serif">Automações de Notificação (CRM)</h3>
+                    <p>Configure disparos automáticos e lembretes de retenção via Evolution API do WhatsApp.</p>
+                  </div>
+
+                  <div className="pane-grid" style={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: "24px", alignItems: "start" }}>
+                    
+                    {/* Configuração dos Templates (Lado Esquerdo) */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                      <form onSubmit={handleSaveAutomations} className="glass-card form-card">
+                        
+                        {/* 1. Confirmação de Agendamento */}
+                        <div style={{ paddingBottom: "24px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                            <div>
+                              <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600 }}>1. Confirmação de Agendamento</h4>
+                              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                                Dispara uma notificação instantânea no WhatsApp do cliente assim que ele agenda.
+                              </p>
+                            </div>
+                            <label className="switch-container" style={{ display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
+                              <input
+                                type="checkbox"
+                                checked={automations.whatsappConfirmationEnabled}
+                                onChange={(e) => setAutomations({ ...automations, whatsappConfirmationEnabled: e.target.checked })}
+                                style={{ display: "none" }}
+                              />
+                              <span style={{
+                                width: "42px",
+                                height: "22px",
+                                background: automations.whatsappConfirmationEnabled ? "var(--accent-gold)" : "rgba(255,255,255,0.1)",
+                                borderRadius: "15px",
+                                position: "relative",
+                                display: "block",
+                                transition: "all 0.3s ease"
+                              }}>
+                                <span style={{
+                                  width: "16px",
+                                  height: "16px",
+                                  background: automations.whatsappConfirmationEnabled ? "#000" : "#fff",
+                                  borderRadius: "50%",
+                                  position: "absolute",
+                                  top: "3px",
+                                  left: automations.whatsappConfirmationEnabled ? "23px" : "3px",
+                                  transition: "all 0.3s ease"
+                                }} />
+                              </span>
+                            </label>
+                          </div>
+
+                          <div className="form-group" style={{ marginTop: "15px" }}>
+                            <label className="form-label">Mensagem Personalizada</label>
+                            <textarea
+                              className="form-input"
+                              rows={5}
+                              style={{ height: "auto", fontFamily: "sans-serif", fontSize: "0.9rem", resize: "vertical" }}
+                              placeholder="Olá, {{cliente}}! Seu agendamento foi confirmado para o dia {{data}} às {{hora}} com o barbeiro {{barbeiro}}."
+                              value={automations.whatsappConfirmationTemplate || ""}
+                              onChange={(e) => setAutomations({ ...automations, whatsappConfirmationTemplate: e.target.value })}
+                            />
+                            <div style={{ marginTop: "8px", fontSize: "0.75rem", color: "var(--text-muted)", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                              <strong>Variáveis:</strong>
+                              <span><code>{"{{cliente}}"}</code></span>
+                              <span><code>{"{{data}}"}</code></span>
+                              <span><code>{"{{hora}}"}</code></span>
+                              <span><code>{"{{barbeiro}}"}</code></span>
+                              <span><code>{"{{servico}}"}</code></span>
+                              <span><code>{"{{preco}}"}</code></span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 2. Lembrete de Retorno (Reengajamento) */}
+                        <div style={{ paddingTop: "20px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                            <div>
+                              <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600 }}>2. Reengajamento (Ausência de Clientes)</h4>
+                              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                                Envia um cupom ou lembrete para clientes sumidos há mais de N dias e sem novas reservas.
+                              </p>
+                            </div>
+                            <label className="switch-container" style={{ display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
+                              <input
+                                type="checkbox"
+                                checked={automations.whatsappReengagementEnabled}
+                                onChange={(e) => setAutomations({ ...automations, whatsappReengagementEnabled: e.target.checked })}
+                                style={{ display: "none" }}
+                              />
+                              <span style={{
+                                width: "42px",
+                                height: "22px",
+                                background: automations.whatsappReengagementEnabled ? "var(--accent-gold)" : "rgba(255,255,255,0.1)",
+                                borderRadius: "15px",
+                                position: "relative",
+                                display: "block",
+                                transition: "all 0.3s ease"
+                              }}>
+                                <span style={{
+                                  width: "16px",
+                                  height: "16px",
+                                  background: automations.whatsappReengagementEnabled ? "#000" : "#fff",
+                                  borderRadius: "50%",
+                                  position: "absolute",
+                                  top: "3px",
+                                  left: automations.whatsappReengagementEnabled ? "23px" : "3px",
+                                  transition: "all 0.3s ease"
+                                }} />
+                              </span>
+                            </label>
+                          </div>
+
+                          <div className="form-group-row" style={{ marginTop: "15px" }}>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label className="form-label">Período de Ausência (Dias)</label>
+                              <input
+                                type="number"
+                                className="form-input"
+                                min={5}
+                                max={180}
+                                value={automations.whatsappReengagementDays}
+                                onChange={(e) => setAutomations({ ...automations, whatsappReengagementDays: parseInt(e.target.value) || 30 })}
+                                required
+                              />
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", fontSize: "0.8rem", color: "var(--text-muted)", paddingLeft: "10px", paddingTop: "18px" }}>
+                              Dispara quando o cliente ficar sem voltar por mais do que este prazo.
+                            </div>
+                          </div>
+
+                          <div className="form-group" style={{ marginTop: "15px" }}>
+                            <label className="form-label">Mensagem de Reengajamento</label>
+                            <textarea
+                              className="form-input"
+                              rows={5}
+                              style={{ height: "auto", fontFamily: "sans-serif", fontSize: "0.9rem", resize: "vertical" }}
+                              placeholder="Olá, {{cliente}}! Já faz {{dias}} dias desde o seu último corte ({{ultimo_servico}}). Que tal marcar um horário para dar aquele tapa no visual?"
+                              value={automations.whatsappReengagementTemplate || ""}
+                              onChange={(e) => setAutomations({ ...automations, whatsappReengagementTemplate: e.target.value })}
+                            />
+                            <div style={{ marginTop: "8px", fontSize: "0.75rem", color: "var(--text-muted)", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                              <strong>Variáveis:</strong>
+                              <span><code>{"{{cliente}}"}</code></span>
+                              <span><code>{"{{ultimo_servico}}"}</code></span>
+                              <span><code>{"{{dias}}"}</code></span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button type="submit" className="btn-gold" style={{ width: "100%", marginTop: "24px" }} disabled={actionLoading}>
+                          {actionLoading ? "Salvando Automações..." : "Salvar Configurações de Automação"}
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* Fila de Reengajamento Pendente (Lado Direito) */}
+                    <div className="pane-form">
+                      <div className="glass-card form-card">
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                          <div>
+                            <h4 className="title-serif" style={{ fontSize: "1.2rem", fontWeight: 600 }}>Fila de Reengajamento</h4>
+                            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                              Clientes ausentes há mais de {automations.whatsappReengagementDays || 30} dias qualificados para follow-up.
+                            </p>
+                          </div>
+                          <span className="badge badge-gold">{pendingReengagement.length}</span>
+                        </div>
+
+                        {/* Botão de Disparo em Lote */}
+                        {pendingReengagement.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleTriggerReengagement}
+                            className="btn-gold flex-center"
+                            style={{ width: "100%", marginBottom: "20px", gap: "8px" }}
+                            disabled={sendingReengagement}
+                          >
+                            {sendingReengagement ? (
+                              <>
+                                <Loader2 size={16} className="spinner" /> Disparando mensagens...
+                              </>
+                            ) : (
+                              <>
+                                <Send size={16} /> Disparar em Lote para Todos ({pendingReengagement.length})
+                              </>
+                            )}
+                          </button>
+                        )}
+
+                        {/* Lista dos Clientes da Fila */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "400px", overflowY: "auto", paddingRight: "4px" }}>
+                          {pendingReengagement.length === 0 ? (
+                            <div style={{ textAlign: "center", padding: "30px 10px", color: "var(--text-muted)" }}>
+                              <CheckCircle size={32} style={{ color: "var(--status-success)", opacity: 0.7, marginBottom: "10px" }} />
+                              <p style={{ fontSize: "0.85rem", fontWeight: 500 }}>Fila de reengajamento limpa!</p>
+                              <p style={{ fontSize: "0.75rem", marginTop: "4px" }}>Nenhum cliente ausente pendente de lembrete no momento.</p>
+                            </div>
+                          ) : (
+                            pendingReengagement.map((item) => (
+                              <div
+                                key={item.bookingId}
+                                style={{
+                                  padding: "12px 14px",
+                                  borderRadius: "10px",
+                                  background: "rgba(255, 255, 255, 0.01)",
+                                  border: "1px solid rgba(255, 255, 255, 0.04)",
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center"
+                                }}
+                              >
+                                <div>
+                                  <span style={{ fontSize: "0.9rem", fontWeight: 500, color: "#fff", display: "block" }}>{item.clientName}</span>
+                                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block" }}>
+                                    Último: {item.lastService} (há {item.daysSinceLast} dias)
+                                  </span>
+                                  <span style={{ fontSize: "0.7rem", color: "var(--text-secondary)", fontFamily: "monospace" }}>{item.clientPhone}</span>
+                                </div>
+                                <span style={{
+                                  fontSize: "0.75rem",
+                                  padding: "4px 8px",
+                                  borderRadius: "12px",
+                                  background: "rgba(239, 68, 68, 0.08)",
+                                  color: "var(--status-error)",
+                                  border: "1px solid rgba(239, 68, 68, 0.15)",
+                                  fontWeight: 500
+                                }}>
+                                  +{item.daysSinceLast}d
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
                       </div>
                     </div>
 

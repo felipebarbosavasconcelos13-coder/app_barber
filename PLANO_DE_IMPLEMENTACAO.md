@@ -150,6 +150,18 @@ model Booking {
 - **[UPDATED] `src/lib/installer/supabase.ts`**: **CAUSA RAIZ ENCONTRADA E CORRIGIDA.** O host do Connection Pooler era montado manualmente como `aws-0-{region}.pooler.supabase.com`, mas o cluster real varia por projeto (ex: `aws-1-sa-east-1.pooler.supabase.com`). Agora o sistema consulta a API `GET /v1/projects/:ref/config/database/pooler` para obter o host exato, a porta e o usuário do pooler dinamicamente. Fallback para `aws-0` apenas se a API não retornar dados.
 - **[NEW] `scripts/diagnose-supabase.mjs`**: Script de diagnóstico que consulta a Supabase Management API para verificar status do projeto, health check, configuração do pooler e testa conectividade TCP nas portas 5432 e 6543.
 
+### 8. Aba de Gestão de Clientes (CRM) [NEW]
+- **[NEW] `src/app/api/admin/clients/route.ts`**: Endpoint que processa e agrupa agendamentos por telefone exclusivo (`clientPhone`). Calcula valor total gasto, contagem de agendamentos, data do último serviço e dias sem retornar de cada cliente.
+- **[UPDATED] `src/components/AdminDashboard.tsx`**: Nova aba interativa "Clientes" com filtros de pesquisa e badges de tempo de ausência para follow-up.
+
+### 9. Automações e Disparos de WhatsApp [NEW]
+- **[NEW] `src/app/api/admin/automations/route.ts`**: Endpoint que lê e atualiza as configurações da tabela `SystemSettings`.
+- **[NEW] `src/app/api/admin/automations/reengagement-pending/route.ts`**: Rota que calcula e retorna a lista de clientes sem visitas há mais de X dias e sem agendamentos futuros.
+- **[NEW] `src/app/api/admin/automations/trigger-reengagement/route.ts`**: Rota que envia lembretes por WhatsApp via Evolution API em lote e ativa a flag de controle `reengagementSent` no banco.
+- **[UPDATED] `prisma/schema.prisma` + `src/lib/prisma.ts` + `src/app/api/install/run/route.ts`**: Auto-migrações retrocompatíveis e campos no schema para controle das configurações e disparos.
+- **[UPDATED] `src/app/api/booking/create/route.ts`**: Dispara mensagens de confirmação consumindo o template customizado do banco de dados (se habilitado).
+- **[UPDATED] `src/components/AdminDashboard.tsx`**: Nova aba interativa "Automações" com formulário de edição de templates dinâmicos e controle de disparos em lote dos lembretes pendentes de reengajamento.
+
 ---
 
 ## Plano de Verificacao
@@ -160,10 +172,15 @@ model Booking {
    - Acessar `/install` apos conclusao e verificar redirecionamento para `/admin`.
    - **Caso de Teste - Banco Pausado / Pooler Inativo**: Simular a conexão com um banco pausado ou com pooler inativo e validar se a mensagem didática refinada e os links são renderizados de forma perfeita na tela.
 
-2. **Testes do Sistema de Agendamento**:
-   - Cadastrar barbeiro com horarios customizados.
-   - Verificar se os slots disponiveis respeitam os horarios do barbeiro.
-   - Criar agendamento e verificar se o slot fica indisponivel.
+2. **Testes de Clientes (CRM) e Ausência**:
+   - Forçar inserção de agendamento concluído há mais de 30 dias de um cliente no banco.
+   - Acessar aba "Clientes" e atestar cálculo do total gasto e contagem de ausência em dias perfeita.
+   - Verificar filtro e ordenação da listagem.
 
-3. **Build de Producao**:
+3. **Testes das Automações**:
+   - Ativar e testar templates dinâmicos da aba "Automações".
+   - Criar agendamento e verificar disparo personalizado.
+   - Realizar disparo em lote de clientes ausentes há mais de 30 dias e atestar mudança da flag `reengagementSent` para evitar duplicidade.
+
+4. **Build de Producao**:
    - Executar `npm run build` para validar compilacao TypeScript e rotas Next.js.

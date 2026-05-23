@@ -24,6 +24,11 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   "evolutionUrl" TEXT,
   "evolutionApiKey" TEXT,
   "evolutionInstance" TEXT,
+  "whatsappConfirmationEnabled" BOOLEAN NOT NULL DEFAULT TRUE,
+  "whatsappConfirmationTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Seu agendamento de *{servico}* com o profissional *{barbeiro}* foi confirmado para o dia *{data}* às *{horario}*. Valor: *{valor}*. Esperamos você!',
+  "whatsappReengagementEnabled" BOOLEAN NOT NULL DEFAULT FALSE,
+  "whatsappReengagementDays" INTEGER NOT NULL DEFAULT 30,
+  "whatsappReengagementTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}',
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "SystemSettings_pkey" PRIMARY KEY ("id")
 );
@@ -61,6 +66,7 @@ CREATE TABLE IF NOT EXISTS "Booking" (
   "serviceId" TEXT NOT NULL,
   "barberId" TEXT NOT NULL,
   "googleEventId" TEXT,
+  "reengagementSent" BOOLEAN NOT NULL DEFAULT FALSE,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")
@@ -122,10 +128,17 @@ ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "phone" TEXT NOT NULL DEFA
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "evolutionUrl" TEXT DEFAULT '';
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "evolutionApiKey" TEXT DEFAULT '';
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "evolutionInstance" TEXT DEFAULT '';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappConfirmationEnabled" BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappConfirmationTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Seu agendamento de *{servico}* com o profissional *{barbeiro}* foi confirmado para o dia *{data}* às *{horario}*. Valor: *{valor}*. Esperamos você!';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementEnabled" BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementDays" INTEGER NOT NULL DEFAULT 30;
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}';
 
 ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "lunchStart" TEXT NOT NULL DEFAULT '12:00';
 ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "lunchEnd" TEXT NOT NULL DEFAULT '13:00';
 ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "workDays" TEXT NOT NULL DEFAULT '1,2,3,4,5,6';
+
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "reengagementSent" BOOLEAN NOT NULL DEFAULT FALSE;
 `;
 
 function createPool(databaseUrl: string) {

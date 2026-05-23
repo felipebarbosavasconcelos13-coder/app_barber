@@ -20,6 +20,11 @@ model SystemSettings {
   evolutionUrl   String?  @default("") // URL base da Evolution API
   evolutionApiKey String? @default("") // Chave de acesso apikey da Evolution
   evolutionInstance String? @default("") // Nome da instância do WhatsApp no servidor
+  whatsappConfirmationEnabled  Boolean  @default(true) // Se a mensagem de confirmação de agendamento está ativa
+  whatsappConfirmationTemplate String   @default("Olá, *{cliente}*! Seu agendamento de *{servico}* com o profissional *{barbeiro}* foi confirmado para o dia *{data}* às *{horario}*. Valor: *{valor}*. Esperamos você!") // Template de confirmação
+  whatsappReengagementEnabled  Boolean  @default(false) // Se o reengajamento pós-agendamento de retorno está ativo
+  whatsappReengagementDays     Int      @default(30) // Dias de ausência para reengajamento
+  whatsappReengagementTemplate String   @default("Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}") // Template de reengajamento
   updatedAt      DateTime @updatedAt
 }
 
@@ -61,6 +66,7 @@ model Booking {
   barberId      String
   barber        Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
   googleEventId String?  // ID do evento criado no Google Calendar
+  reengagementSent Boolean @default(false) // Indica se o lembrete de reengajamento já foi enviado para este agendamento
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

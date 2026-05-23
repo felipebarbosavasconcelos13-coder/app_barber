@@ -111,12 +111,21 @@ async function ensureBarberBlockTableExists(pool: Pool) {
         ALTER TABLE "BarberBlock" ADD CONSTRAINT "BarberBlock_barberId_fkey" FOREIGN KEY ("barberId") REFERENCES "Barber"("id") ON DELETE CASCADE ON UPDATE CASCADE;
       END IF;
     END $$;
+
+    -- Patches de Migração Retrocompatível para Automações de WhatsApp
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappConfirmationEnabled" BOOLEAN NOT NULL DEFAULT TRUE;
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappConfirmationTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Seu agendamento de *{servico}* com o profissional *{barbeiro}* foi confirmado para o dia *{data}* às *{horario}*. Valor: *{valor}*. Esperamos você!';
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementEnabled" BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementDays" INTEGER NOT NULL DEFAULT 30;
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}';
+
+    ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "reengagementSent" BOOLEAN NOT NULL DEFAULT FALSE;
   `;
   try {
     await pool.query(ddl);
-    console.log("[prisma-client] Auto-migração executada: Tabela BarberBlock garantida!");
+    console.log("[prisma-client] Auto-migração executada: Tabela BarberBlock, colunas SystemSettings e Booking garantidas!");
   } catch (err) {
-    console.error("[prisma-client] Falha ao rodar auto-migração BarberBlock:", err);
+    console.error("[prisma-client] Falha ao rodar auto-migração:", err);
   }
 }
 
