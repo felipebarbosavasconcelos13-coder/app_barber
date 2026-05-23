@@ -41,6 +41,7 @@ gantt
     Fase 24: CRM de Clientes, Retenção & Automações Avançadas    :done,    des24, 2026-05-23, 2026-05-23
     Fase 25: Integração Google Meu Negócio & Localização         :done,    des25, 2026-05-23, 2026-05-23
     Fase 26: Otimização Mobile Premium & Validação Visual        :done,    des26, 2026-05-23, 2026-05-23
+    Fase 27: Resiliência de Deploy & Updates Silenciosos         :done,    des27, 2026-05-23, 2026-05-23
 ```
 
 ---
@@ -273,4 +274,19 @@ gantt
   - Otimizada a área de entrada de texto `.form-input` no celular para `font-size: 1.05rem` para anular o zoom forçado desagradável do Safari iOS ao focar em inputs.
 - **Validação de Sucesso e Build de Produção** ✅:
   - Compilação do Next.js via `npm run build` executada com sucesso absoluto, sem nenhum erro de linting ou quebras de tipos TypeScript.
+
+---
+
+### **Fase 27: Resiliência de Deploy & Atualização Silenciosa Pós-Push (Concluída em 23/05/2026)**
+- **Inteligência de Estado & Detecção Resiliente** ✅:
+  - Implementada e exportada a função `isDatabaseConfigured()` em [prisma.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/lib/prisma.ts) para validar de forma robusta e persistente a presença de uma connection string real e funcional no ambiente (`process.env.DATABASE_URL`), desconsiderando placeholders de templates ou fallbacks locais.
+- **Telas de Erro Luxuosas em Dark Mode** ✅:
+  - Refatoradas as rotas da Landing Page pública [src/app/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/page.tsx) e do Painel Administrativo [src/app/admin/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/admin/page.tsx). 
+  - Se o banco estiver offline, inativo ou pausado temporariamente na Supabase, o sistema **NÃO** redireciona mais os usuários e o administrador para o instalador `/install`. 
+  - Em vez disso, é renderizada uma **linda tela de erro de conexão integrada no Design System Premium**, orientando de forma didática sobre como reativar o banco de dados Supabase na nuvem e disponibilizando o botão de "Tentar Novamente", evitando pânico de "perda de dados" e loops de instalação.
+- **Blindagem do Wizard de Instalação** ✅:
+  - Rota [/api/install/check](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/api/install/check/route.ts) reescrita para reportar `initialized: true` se a connection string do banco de dados estiver configurada, blindando as rotas `/install`, `/install/start` e `/install/wizard` para desviar os usuários e redirecionar imediatamente para `/admin`.
+- **Validação de Build** ✅:
+  - Executado `npm run build` com sucesso absoluto, atestando conformidade estrutural do Next.js Turbopack e 100% de sucesso nas checagens estáticas e compilação de tipos TypeScript.
+
 

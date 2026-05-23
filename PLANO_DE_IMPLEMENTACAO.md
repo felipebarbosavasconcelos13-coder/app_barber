@@ -309,3 +309,31 @@ Para proporcionar uma experiência premium e impecável aos clientes e administr
 
 **Toda a Fase 26 foi concluída com sucesso e homologada em produção!**
 
+---
+
+## 📅 Fase 27: Resiliência contra Loops de Reinstalação e Atualização Silenciosa Pós-Push (Concluída em 23/05/2026)
+
+### **Resumo do Recurso (Proteção de Deploy & Atualização Contínua)**
+Para resolver definitivamente a instabilidade em que atualizações pós-push forçavam o redirecionamento indevido para o instalador (`/install`), implementamos uma barreira arquitetural de resiliência baseada em variáveis de ambiente ativas:
+1. **Inteligência de Estado (`isDatabaseConfigured`)**:
+   - Criada a função `isDatabaseConfigured()` em [prisma.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/lib/prisma.ts) que atesta em tempo de execução se a connection string do banco de dados PostgreSQL real de produção já está ativa nas variáveis de ambiente virtuais ou físicas (`process.env.DATABASE_URL`).
+   - Se ativa, o aplicativo é considerado **Instalado Definitivamente**, independente do estado da rede ou da atividade momentânea do banco.
+2. **Páginas de Indisponibilidade de Banco de Luxo**:
+   - Refatoradas as rotas da Landing Page pública [src/app/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/page.tsx) e do Painel Administrativo [src/app/admin/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/admin/page.tsx).
+   - Se o banco de dados estiver inativo, pausado ou apresentar qualquer oscilação temporária de cold start, o sistema **NÃO** redireciona o usuário para `/install`. 
+   - Em vez disso, renderiza uma **página de indisponibilidade luxuosa em Dark Mode**, com instruções claras de como reativar o projeto no painel da Supabase ("Restore project") e um botão "Tentar Novamente", mitigando falsos alarmes de perda de dados.
+3. **Refatoração da API e Proteção do Instalador**:
+   - A rota de check [/api/install/check](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/api/install/check/route.ts) agora responde `initialized: true` se o banco estiver configurado no ambiente, mesmo que offline no momento.
+   - O instalador [src/app/install/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/install/page.tsx), a tela inicial [src/app/install/start/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/install/start/page.tsx) e o Wizard [src/app/install/wizard/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/install/wizard/page.tsx) foram blindados. Se acessados diretamente no navegador após a instalação, eles consultam a API, detectam a configuração ativa e desviam o usuário instantaneamente para `/admin`.
+4. **Auto-Migrações Silenciosas**:
+   - Novas tabelas e colunas adicionadas nos commits do Git são aplicadas silenciosamente e de forma 100% invisível em runtime por meio do proxy Prisma pg pool na inicialização do servidor, sem exigir intervenções manuais ou reinstalações.
+
+### **Status e Conclusão da Fase 27**
+- **Resiliência de Estado Homologada** ✅: O aplicativo agora diferencia perfeitamente quedas temporárias de banco de dados da ausência total de setup.
+- **Telas de Erro Integradas** ✅: Criados componentes de erro de conexão responsivos e alinhados com o Design System Premium Gold/Carvão da barbearia.
+- **Rotas Blindadas contra Reinstalação** ✅: O Wizard de Instalação está 100% inacessível após a configuração inicial estar salva.
+- **Build Geral de Homologação** ✅: Compilação local e de produção realizada com sucesso absoluto (`npm run build`), garantindo total integridade e compilação do Next.js sem erros de build.
+
+**Toda a Fase 27 foi concluída com sucesso e homologada em produção!**
+
+

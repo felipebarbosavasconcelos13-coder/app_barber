@@ -38,6 +38,35 @@ const getLiveDatabaseUrl = (): string => {
   return dbUrl;
 };
 
+// Função para checar se a DATABASE_URL real do banco está configurada de forma definitiva no servidor
+export const isDatabaseConfigured = (): boolean => {
+  let dbUrl = process.env.DATABASE_URL;
+
+  // Tenta ler o .env físico em disco
+  try {
+    const envPath = path.join(process.cwd(), ".env");
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, "utf-8");
+      const match = envContent.match(/^DATABASE_URL="(.+)"/m);
+      if (match && match[1] && !match[1].includes("[SENHA_DO_BANCO]") && !match[1].includes("[ID_DO_PROJETO]") && !match[1].includes("[")) {
+        dbUrl = match[1];
+      }
+    }
+  } catch {}
+
+  if (
+    !dbUrl ||
+    dbUrl.includes("[SENHA_DO_BANCO]") ||
+    dbUrl.includes("[ID_DO_PROJETO]") ||
+    dbUrl.includes("[") ||
+    dbUrl.includes("]") ||
+    dbUrl.includes("localhost:5432/postgres")
+  ) {
+    return false;
+  }
+
+  return true;
+};
 
 // Declaração de propriedades globais para armazenar as referências ativas
 declare global {

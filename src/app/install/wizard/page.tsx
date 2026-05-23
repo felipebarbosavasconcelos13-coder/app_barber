@@ -76,6 +76,23 @@ export default function InstallWizardPage() {
     } catch {}
   }, []);
 
+  // Protege o Wizard redirecionando caso o app já esteja configurado no ambiente
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/install/check', { cache: 'no-store' });
+        const data = await res.json();
+        if (!cancelled && data?.initialized === true) {
+          router.replace('/admin');
+        }
+      } catch (err) {
+        console.warn('[install-wizard] Erro ao checar inicialização:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [router]);
+
   // Auto-detecta projeto Vercel (bootstrap)
   useEffect(() => {
     if (!vercelToken.trim() || vercelBootstrapDone) return;

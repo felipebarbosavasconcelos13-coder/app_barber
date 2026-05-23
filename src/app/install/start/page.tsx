@@ -9,12 +9,29 @@ const LS_SUPABASE = 'barber_install_supabase';
 export default function InstallStartPage() {
   const router = useRouter();
 
-  // Resume: se ja tem token Supabase salvo, vai direto pro wizard
+  // Protege a rota e redireciona caso o app já esteja configurado
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(LS_SUPABASE);
-      if (saved) router.replace('/install/wizard');
-    } catch {}
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/install/check', { cache: 'no-store' });
+        const data = await res.json();
+        if (!cancelled && data?.initialized === true) {
+          router.replace('/admin');
+          return;
+        }
+      } catch (err) {
+        console.warn('[install-start] Erro ao checar inicialização:', err);
+      }
+
+      // Se não está instalado, mas tem token Supabase local salvo, prossegue para o wizard
+      try {
+        const saved = localStorage.getItem(LS_SUPABASE);
+        if (!cancelled && saved) router.replace('/install/wizard');
+      } catch {}
+    })();
+
+    return () => { cancelled = true; };
   }, [router]);
 
   const requisitos = [
