@@ -12,9 +12,9 @@
   --accent-gold-hover: #b3946d;
   --accent-gold-glow: rgba(197, 168, 128, 0.15);
   
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --text-primary: #ffffff;
+  --text-secondary: #c8c8cc; /* Melhor contraste (WCAG 2.2) */
+  --text-muted: #8e8e93; /* Melhor contraste (WCAG 2.2) */
   
   --border-color: rgba(255, 255, 255, 0.08);
   --border-light: rgba(255, 255, 255, 0.04);
@@ -129,14 +129,36 @@ p {
   border: 1px solid var(--border-color);
   border-radius: 16px;
   box-shadow: var(--shadow-premium);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
               border-color 0.3s ease, 
               box-shadow 0.3s ease;
+  user-select: none; /* Desativa seleção de texto no toque */
 }
 
 .glass-card:hover {
   border-color: var(--glass-border);
   box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.8), 0 0 15px var(--accent-gold-glow);
+}
+
+/* Acessibilidade de Foco Visual no Teclado (WCAG 2.2) */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--accent-gold) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 4px rgba(197, 168, 128, 0.4) !important;
+}
+
+/* Animação Luxury de Revelação Dourada */
+@keyframes goldGlowEntrance {
+  0% { opacity: 0; transform: translateY(15px); box-shadow: 0 0 0 transparent; }
+  100% { opacity: 1; transform: translateY(0); box-shadow: var(--shadow-premium); }
+}
+
+.gold-glow-entrance {
+  animation: goldGlowEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Botões Premium */
@@ -156,6 +178,7 @@ p {
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 4px 15px rgba(197, 168, 128, 0.3);
+  user-select: none;
 }
 
 .btn-gold:hover {
@@ -165,7 +188,7 @@ p {
 }
 
 .btn-gold:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98); /* Feedback tátil de clique */
 }
 
 .btn-gold:disabled {
@@ -189,6 +212,7 @@ p {
   gap: 10px;
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
 }
 
 .btn-outline:hover {
@@ -199,7 +223,7 @@ p {
 }
 
 .btn-outline:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98); /* Feedback tátil de clique */
 }
 
 /* Formulários */

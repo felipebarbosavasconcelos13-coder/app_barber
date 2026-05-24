@@ -473,3 +473,28 @@ Para dar total liberdade ao barbeiro sobre a copy institucional de sua marca, to
    - Substituído o parágrafo estático sobre a barbearia pelo valor dinâmico `{settings.aboutText}` vindo do banco, com fallback seguro para a copy premium caso esteja em branco.
 
 **A Fase 32 foi totalmente concluída e homologada em build local de produção com sucesso absoluto!**
+
+---
+
+## 📅 Fase 33: Refinamento de Design Premium, Acessibilidade & Mobile Touch-First (Proposta)
+
+### **Resumo do Recurso**
+Com base nas diretrizes das skills `frontend-design`, `mobile-design` e `ui-visual-validator`, aplicaremos uma camada de refinamento estético de altíssimo nível para desktop e mobile, além de alinhar o aplicativo com rigorosos requisitos de acessibilidade (WCAG 2.2) e comportamento de app nativo.
+
+1. **Aprimoramento Visual Luxury Minimal (Design System)**:
+   - Refinar a borda dourada translúcida e as propriedades de vidro (`.glass-card`).
+   - Adicionar uma transição de entrada suave (`gold-glow-entrance`) para revelar elementos com elegância.
+   - Tornar o scroll do carrossel de agendamento de dias de data (`.days-selector-wrapper`) extremamente agradável e preciso com `scroll-snap-type` e `scroll-snap-align`.
+
+2. **Acessibilidade de Teclado & Visibilidade (WCAG 2.2)**:
+   - Forçar `:focus-visible` em todos os botões clicáveis, agendadores, slots e inputs, destacando-os com uma borda gold nítida e sombra neon dourada translúcida de `0 0 0 3px var(--accent-gold-glow)`.
+   - Elevar o contraste de cores das classes de texto secundário (`--text-secondary: #c8c8cc`) e texto mutado (`--text-muted: #8e8e93`) para estar em conformidade absoluta de contraste de texto da WCAG.
+
+3. **Comportamento Touch-First de App Nativo**:
+   - Ajustar o tamanho dos slots de agendamento (`.slot-btn`) no mobile para expandir a área de toque para cliques fáceis, mantendo a altura confortável Fitts' Law.
+   - Desativar a seleção de texto (`user-select: none`) em botões, abas e cards interativos no celular para evitar comportamentos indesejados ao realizar múltiplos cliques rápidos.
+   - Adicionar feedbacks táteis instantâneos em estado de clique (`:active { transform: scale(0.98); }`) em botões e cards de seleção.
+
+4. **Auditoria Visual & Homologação**:
+   - Compilar a aplicação (`npm run build`) para atestar a estabilidade estrutural do Next.js e TypeScript.
+   - Realizar uma rigorosa auditoria visual cética (Visual Validation Audit) confirmando a integridade das modificações visuais do app.

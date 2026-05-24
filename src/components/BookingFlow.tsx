@@ -780,6 +780,20 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
           padding: 0 10px;
         }
 
+        .days-selector-wrapper {
+          overflow-x: auto;
+          padding-bottom: 10px;
+          margin: 0 -10px;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          scroll-snap-type: x mandatory;
+        }
+
+        .days-selector-wrapper::-webkit-scrollbar {
+          display: none;
+        }
+
         .day-btn {
           display: flex;
           flex-direction: column;
@@ -789,10 +803,17 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
           border-radius: 12px;
           cursor: pointer;
           border-color: var(--border-color);
+          scroll-snap-align: start;
+          user-select: none;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .day-btn:hover {
           border-color: rgba(197, 168, 128, 0.3);
+        }
+
+        .day-btn:active {
+          transform: scale(0.96);
         }
 
         .day-btn.selected {
@@ -851,6 +872,12 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
           color: var(--text-primary);
           background: rgba(255, 255, 255, 0.04);
           border-color: rgba(255, 255, 255, 0.12);
+          user-select: none;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .slot-btn:active {
+          transform: scale(0.95);
         }
 
         .slot-btn span {
@@ -1007,6 +1034,18 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
             flex-direction: column;
             gap: 4px;
             align-items: flex-start;
+          }
+          .day-btn {
+            min-width: 78px;
+            padding: 12px 14px;
+          }
+          .slots-grid {
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+          }
+          .slot-btn {
+            padding: 16px 12px;
+            min-height: 48px; /* Fitts' Law e touch target confortável */
           }
         }
       `}</style>
