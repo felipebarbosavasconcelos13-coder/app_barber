@@ -443,6 +443,8 @@ gantt
 - **Frontend - Exibição no Fluxo de Clientes e Home Page** ✅:
   - Atualizado o [src/components/BookingFlow.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/components/BookingFlow.tsx) para renderizar a imagem do profissional no Passo 1 do fluxo de agendamento (avatar redondo com `object-fit: cover`), mantendo o placeholder de iniciais como fallback caso a foto esteja vazia.
   - Atualizado o [src/app/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/page.tsx) para carregar o campo `avatarUrl` do banco de dados na query inicial e propagá-lo para a UI pública.
+  - **Ajuste Fino na Landing Page (Contato do Hero)** ✅: Removido o link telefônico "Ligar para a Barbearia" do Hero, mantendo o layout limpo e focado no fluxo de agendamento.
 - **Homologação Técnica do Build de Produção** ✅:
   - Compilação executada com sucesso absoluto por meio do script de build, certificando a conformidade estrutural do Next.js e TypeScript livres de erros.
+
 

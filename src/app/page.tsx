@@ -275,10 +275,6 @@ export default async function HomePage() {
               <Clock size={16} className="gold-text" />
               <span>Seg a Sáb - {settings.openingTime} às {settings.closingTime}</span>
             </div>
-            <a href={`tel:${settings.phone.replace(/\D/g, "")}`} className="hero-info-item flex-center" style={{ textDecoration: "none", cursor: "pointer" }}>
-              <Phone size={16} className="gold-text" />
-              <span>Ligar para a Barbearia</span>
-            </a>
           </div>
         </div>
       </section>
