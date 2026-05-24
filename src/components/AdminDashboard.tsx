@@ -122,12 +122,15 @@ export default function AdminDashboard() {
   const [automations, setAutomations] = useState({
     whatsappConfirmationEnabled: true,
     whatsappConfirmationTemplate: "",
+    whatsappReminderEnabled: true,
+    whatsappReminderTemplate: "",
     whatsappReengagementEnabled: false,
     whatsappReengagementDays: 30,
     whatsappReengagementTemplate: "",
   });
   const [pendingReengagement, setPendingReengagement] = useState<any[]>([]);
   const [sendingReengagement, setSendingReengagement] = useState(false);
+  const [sendingReminders, setSendingReminders] = useState(false);
 
   // States para testes e status do WhatsApp (Evolution API)
   const [testingConnection, setTestingConnection] = useState(false);
@@ -255,6 +258,8 @@ export default function AdminDashboard() {
       const defaultAutomations = {
         whatsappConfirmationEnabled: true,
         whatsappConfirmationTemplate: "",
+        whatsappReminderEnabled: true,
+        whatsappReminderTemplate: "",
         whatsappReengagementEnabled: false,
         whatsappReengagementDays: 30,
         whatsappReengagementTemplate: "",
@@ -794,6 +799,31 @@ export default function AdminDashboard() {
       setError(err.message);
     } finally {
       setSendingReengagement(false);
+    }
+  };
+
+  const handleTriggerReminders = async () => {
+    setError("");
+    setSuccess("");
+    setSendingReminders(true);
+
+    try {
+      const res = await fetch("/api/admin/automations/trigger-reminders", {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Erro ao processar lembretes.");
+
+      if (data.sentCount > 0) {
+        setSuccess(`Processamento concluído! Lembretes disparados com sucesso: ${data.sentCount}.`);
+      } else {
+        setSuccess("Processamento concluído! Nenhum agendamento pendente de lembrete no intervalo de 1h.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Erro ao processar lembretes.");
+    } finally {
+      setSendingReminders(false);
     }
   };
 
@@ -2753,11 +2783,73 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
-                        {/* 2. Lembrete de Retorno (Reengajamento) */}
+                        {/* 2. Lembrete de Horário (1h Antes) */}
+                        <div style={{ paddingBottom: "24px", paddingTop: "20px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                            <div>
+                              <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600 }}>2. Lembrete de Horário (1h Antes)</h4>
+                              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                                Dispara uma notificação automática de lembrete no WhatsApp do cliente 1 hora antes do agendamento.
+                              </p>
+                            </div>
+                            <label className="switch-container" style={{ display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
+                              <input
+                                type="checkbox"
+                                checked={automations.whatsappReminderEnabled}
+                                onChange={(e) => setAutomations({ ...automations, whatsappReminderEnabled: e.target.checked })}
+                                style={{ display: "none" }}
+                              />
+                              <span style={{
+                                width: "42px",
+                                height: "22px",
+                                background: automations.whatsappReminderEnabled ? "var(--accent-gold)" : "rgba(255,255,255,0.1)",
+                                borderRadius: "15px",
+                                position: "relative",
+                                display: "block",
+                                transition: "all 0.3s ease"
+                              }}>
+                                <span style={{
+                                  width: "16px",
+                                  height: "16px",
+                                  background: automations.whatsappReminderEnabled ? "#000" : "#fff",
+                                  borderRadius: "50%",
+                                  position: "absolute",
+                                  top: "3px",
+                                  left: automations.whatsappReminderEnabled ? "23px" : "3px",
+                                  transition: "all 0.3s ease"
+                                }} />
+                              </span>
+                            </label>
+                          </div>
+
+                          <div className="form-group" style={{ marginTop: "15px" }}>
+                            <label className="form-label">Mensagem Personalizada</label>
+                            <textarea
+                              className="form-input"
+                              rows={5}
+                              style={{ height: "auto", fontFamily: "sans-serif", fontSize: "0.9rem", resize: "vertical" }}
+                              placeholder="Olá, {{cliente}}! Passando para lembrar que seu horário de {{servico}} com o profissional {{barbeiro}} está agendado para hoje às {{hora}}."
+                              value={automations.whatsappReminderTemplate || ""}
+                              onChange={(e) => setAutomations({ ...automations, whatsappReminderTemplate: e.target.value })}
+                            />
+                            <div style={{ marginTop: "8px", fontSize: "0.75rem", color: "var(--text-muted)", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                              <strong>Variáveis:</strong>
+                              <span><code>{"{{cliente}}"}</code></span>
+                              <span><code>{"{{data}}"}</code></span>
+                              <span><code>{"{{hora}}"}</code></span>
+                              <span><code>{"{{barbeiro}}"}</code></span>
+                              <span><code>{"{{servico}}"}</code></span>
+                              <span><code>{"{{preco}}"}</code></span>
+                              <span><code>{"{{barbearia}}"}</code></span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 3. Reengajamento (Ausência de Clientes) */}
                         <div style={{ paddingTop: "20px" }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                             <div>
-                              <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600 }}>2. Reengajamento (Ausência de Clientes)</h4>
+                              <h4 className="title-serif gold-text" style={{ fontSize: "1.2rem", fontWeight: 600 }}>3. Reengajamento (Ausência de Clientes)</h4>
                               <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "2px" }}>
                                 Envia um cupom ou lembrete para clientes sumidos há mais de N dias e sem novas reservas.
                               </p>
@@ -2836,7 +2928,36 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Fila de Reengajamento Pendente (Lado Direito) */}
-                    <div className="pane-form">
+                    <div className="pane-form" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                      
+                      {/* Lembretes de Hoje (Manuais) */}
+                      <div className="glass-card form-card" style={{ padding: "24px", borderRadius: "14px" }}>
+                        <div style={{ marginBottom: "16px" }}>
+                          <h4 className="title-serif" style={{ fontSize: "1.2rem", fontWeight: 600, color: "var(--accent-gold)" }}>Lembretes de Hoje</h4>
+                          <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "4px" }}>
+                            Dispare manualmente as notificações para os clientes com horários agendados para hoje nas próximas horas.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleTriggerReminders}
+                          className="btn-gold flex-center"
+                          style={{ width: "100%", gap: "8px", justifyContent: "center" }}
+                          disabled={sendingReminders}
+                        >
+                          {sendingReminders ? (
+                            <>
+                              <Loader2 size={16} className="spinner" /> Processando disparos...
+                            </>
+                          ) : (
+                            <>
+                              <Clock size={16} /> Disparar Lembretes (1h Antes)
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Fila de Reengajamento */}
                       <div className="glass-card form-card">
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
                           <div>

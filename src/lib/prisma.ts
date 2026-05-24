@@ -147,8 +147,11 @@ async function ensureBarberBlockTableExists(pool: Pool) {
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementEnabled" BOOLEAN NOT NULL DEFAULT FALSE;
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementDays" INTEGER NOT NULL DEFAULT 30;
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}';
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReminderEnabled" BOOLEAN NOT NULL DEFAULT TRUE;
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReminderTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Passando para lembrar que seu horário de *{servico}* com o profissional *{barbeiro}* está agendado para hoje às *{horario}*. Esperamos você!';
 
     ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "reengagementSent" BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "reminderSent" BOOLEAN NOT NULL DEFAULT FALSE;
 
     -- Fase 25: Integração Google, Testimonials CRUD & Maps Embeds
     CREATE TABLE IF NOT EXISTS "Testimonial" (

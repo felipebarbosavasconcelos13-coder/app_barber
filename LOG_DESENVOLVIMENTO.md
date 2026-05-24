@@ -270,6 +270,7 @@ gantt
 | **23/05/2026** | `src/app/api/admin/google-reviews/sync/route.ts` + `src/components/AdminDashboard.tsx` | Após manter a alternativa sem API, foi solicitada também a opção de usar API Key para quem quiser integração oficial. | Adicionada sincronização opcional via Google Places API Key, convivendo com o importador sem API. O painel agora oferece os botões "Importar Avaliações" (widget público) e "Usar API Key" (Google Places). |
 | **23/05/2026** | `src/app/api/admin/google-reviews/test/route.ts` + `src/components/AdminDashboard.tsx` | A chave API informada no painel não funcionou e faltava um ambiente de teste para diagnosticar se o problema era chave inválida, Places API desativada, billing, restrição ou Place ID. | Criado endpoint de teste Google Places API sem importação, com botão "Testar API Key" no painel. O teste retorna nome do estabelecimento, nota, total de avaliações, quantidade de reviews com texto, Place ID e mensagens explicativas para erros `REQUEST_DENIED`, `ZERO_RESULTS`, `OVER_QUERY_LIMIT` e afins. |
 | **23/05/2026** | `src/app/page.tsx` + `src/components/AdminDashboard.tsx` | A integração via API funcionou, mas a Google Places API retornou apenas 5 avaliações e a landing exibiu um mapa na área de avaliações quando o campo de widget continha HTML/link de Maps. | Ajustada a landing para priorizar cards salvos em `Testimonial` e só renderizar widget HTML quando ele não for Google Maps. O painel agora informa o limite oficial de até 5 avaliações da Places API e orienta usar widget público ou cadastro manual para exibir mais avaliações. |
+| **23/05/2026** | `prisma/schema.prisma` | **Erro de Tipos no Build do Next.js**: Ao estender os endpoints de API de automação e o painel administrativo com os novos campos de lembrete (`whatsappReminderEnabled`, `whatsappReminderTemplate`, `reminderSent`), a compilação local falhou porque essas colunas não estavam mapeadas no esquema do Prisma local (`schema.prisma`), gerando erros de tipagem no Prisma Client gerado automaticamente. | Adicionados os novos campos de lembretes ao `prisma/schema.prisma` local e re-executado o build. A compilação e a geração de tipos TypeScript do Prisma Client foram concluídas com sucesso de ponta a ponta! |
 
 ---
 
@@ -369,5 +370,23 @@ gantt
   - Footer simplificado com slogan dinâmico e sem textos redundantes: `"Sua marca registrada é o seu estilo. Agende online hoje mesmo."`
 - **Validação de Compilação & Build de Produção** ✅:
   - Executado o build de produção final via `npm run build` com sucesso absoluto, certificando a conformidade estrutural do Next.js e TypeScript após todas as alterações.
+
+---
+
+### **Fase 31: Automação de Lembrete 1h Antes do Agendamento (Concluída em 23/05/2026)**
+- **Mapeamento de Banco de Dados & Auto-Migração Silenciosa** ✅:
+  - Adicionados os campos `whatsappReminderEnabled` e `whatsappReminderTemplate` na tabela `SystemSettings`.
+  - Adicionado o campo `reminderSent` na tabela `Booking` para evitar disparos duplicados.
+  - Implementadas DDLs automáticas em [src/lib/prisma.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/lib/prisma.ts) e no instalador [src/app/api/install/run/route.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/api/install/run/route.ts) para auto-migração de bancos remotos da Supabase sem downtime.
+  - Atualizado o [prisma/schema.prisma](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/prisma/schema.prisma) local para manter a consistência de tipos TypeScript estáticos do Prisma Client.
+- **Backend - API de CRUD & Disparo de Lembretes** ✅:
+  - Estendido o endpoint de automações [src/app/api/admin/automations/route.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/api/admin/automations/route.ts) para buscar e persistir os campos de lembrete do banco.
+  - Criado o novo endpoint de processamento em lote [src/app/api/admin/automations/trigger-reminders/route.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/api/admin/automations/trigger-reminders/route.ts). Ele busca agendamentos futuros pendentes de lembrete com antecedência entre 45 e 75 minutos (janela de resiliência de 1 hora), processa as tags dinâmicas do template personalizado e efetua os disparos reais de WhatsApp via Evolution API.
+  - O endpoint suporta bypass de token anônimo via query string `?token=adminPassword`, permitindo a sua execução segura a partir de Cron Jobs externos gratuitos.
+- **Frontend - Seção de Automações & Disparador Manual** ✅:
+  - Atualizada a SPA Administrativa [src/components/AdminDashboard.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/components/AdminDashboard.tsx) adicionando a nova área visual de **`2. Lembrete de Horário (1h Antes)`** na aba Automações, com toggle de controle on/off e textarea de edição do template.
+  - Adicionado o card **`Lembretes de Hoje`** na barra lateral de automações, contendo o botão de ação rápida **`Disparar Lembretes (1h Antes)`**, permitindo que o administrador force o disparo manual a qualquer momento.
+- **Homologação Completa do Build** ✅:
+  - Rodado o comando `npm run build` na raiz do workspace, completando a compilação do TypeScript e Next.js com sucesso absoluto.
 
 

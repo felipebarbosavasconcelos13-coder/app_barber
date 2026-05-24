@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
       whatsappReengagementEnabled: settings.whatsappReengagementEnabled,
       whatsappReengagementDays: settings.whatsappReengagementDays,
       whatsappReengagementTemplate: settings.whatsappReengagementTemplate,
+      whatsappReminderEnabled: settings.whatsappReminderEnabled,
+      whatsappReminderTemplate: settings.whatsappReminderTemplate,
     });
   } catch (error) {
     console.error("[api-admin-automations] Erro ao buscar configurações de automação:", error);
@@ -46,6 +48,8 @@ export async function PUT(request: NextRequest) {
       whatsappReengagementEnabled,
       whatsappReengagementDays,
       whatsappReengagementTemplate,
+      whatsappReminderEnabled,
+      whatsappReminderTemplate,
     } = body;
 
     const updateData: any = {};
@@ -66,6 +70,12 @@ export async function PUT(request: NextRequest) {
     if (whatsappReengagementTemplate !== undefined) {
       updateData.whatsappReengagementTemplate = whatsappReengagementTemplate;
     }
+    if (whatsappReminderEnabled !== undefined) {
+      updateData.whatsappReminderEnabled = !!whatsappReminderEnabled;
+    }
+    if (whatsappReminderTemplate !== undefined) {
+      updateData.whatsappReminderTemplate = whatsappReminderTemplate;
+    }
 
     const updated = await prisma.systemSettings.update({
       where: { id: "default" },
@@ -80,6 +90,8 @@ export async function PUT(request: NextRequest) {
         whatsappReengagementEnabled: updated.whatsappReengagementEnabled,
         whatsappReengagementDays: updated.whatsappReengagementDays,
         whatsappReengagementTemplate: updated.whatsappReengagementTemplate,
+        whatsappReminderEnabled: updated.whatsappReminderEnabled,
+        whatsappReminderTemplate: updated.whatsappReminderTemplate,
       },
     });
   } catch (error) {

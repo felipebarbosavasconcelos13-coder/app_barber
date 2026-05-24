@@ -428,5 +428,26 @@ Para elevar a taxa de agendamentos (conversão) e limpar a Landing Page de eleme
    - **Remoção de Repetição**: Retirada da linha contendo o endereço completo e telefone redundantes.
    - Slogan de marca elegante: `"Sua marca registrada é o seu estilo. Agende online hoje mesmo."`
 
+---
+
+## 📅 Fase 31: Automação de Lembrete 1h Antes do Agendamento (Concluída em 23/05/2026)
+
+### **Resumo do Recurso**
+Para reduzir a taxa de faltas (no-shows) de clientes e agregar valor à experiência operacional, implementamos um disparador automático de **Lembretes de WhatsApp 1 hora antes do agendamento**.
+
+1. **Banco de Dados & Auto-Migração (`src/lib/prisma.ts` e `src/app/api/install/run/route.ts`)**:
+   - **Campos no Banco**: Adicionado `whatsappReminderEnabled` (Boolean, default: true) e `whatsappReminderTemplate` (String, default) na tabela `SystemSettings`.
+   - Adicionado a flag de controle de envio `reminderSent` (Boolean, default: false) na tabela `Booking` para evitar envios duplicados.
+   - Adicionado patches de auto-migração SQL no proxy Prisma, no instalador e também no `prisma/schema.prisma` local para suportar runtime e compilação do Next.js sem quebra de tipos.
+
+2. **API de Disparo Periódico (`src/app/api/admin/automations/trigger-reminders/route.ts`)**:
+   - Desenvolvido o endpoint de trigger assíncrono que pode ser chamado por cron ou manualmente.
+   - O algoritmo busca agendamentos futuros pendentes de lembrete (`reminderSent = false`) que acontecem entre `agora + 45 minutos` e `agora + 75 minutos` (resiliência de 1 hora antes com tolerância).
+   - Formata o template de forma personalizada substituindo as tags dinâmicas: `{cliente}`, `{data}`, `{horario}`, `{barbeiro}`, `{servico}`, `{valor}` e `{barbearia}`.
+   - Dispara a notificação via Evolution API do WhatsApp e grava `reminderSent = true` no banco.
+
+3. **Painel de Automações (`src/components/AdminDashboard.tsx` & `/api/admin/automations`)**:
+
+
 
 

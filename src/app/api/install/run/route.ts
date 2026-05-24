@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   "whatsappReengagementEnabled" BOOLEAN NOT NULL DEFAULT FALSE,
   "whatsappReengagementDays" INTEGER NOT NULL DEFAULT 30,
   "whatsappReengagementTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}',
+  "whatsappReminderEnabled" BOOLEAN NOT NULL DEFAULT TRUE,
+  "whatsappReminderTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Passando para lembrar que seu horário de *{servico}* com o profissional *{barbeiro}* está agendado para hoje às *{horario}*. Esperamos você!',
   "googleMapsEmbedUrl" TEXT DEFAULT '',
   "googleReviewsWidget" TEXT DEFAULT '',
   "googlePlacesApiKey" TEXT DEFAULT '',
@@ -77,6 +79,7 @@ CREATE TABLE IF NOT EXISTS "Booking" (
   "barberId" TEXT NOT NULL,
   "googleEventId" TEXT,
   "reengagementSent" BOOLEAN NOT NULL DEFAULT FALSE,
+  "reminderSent" BOOLEAN NOT NULL DEFAULT FALSE,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")
@@ -155,12 +158,15 @@ ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappConfirmationTempl
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementEnabled" BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementDays" INTEGER NOT NULL DEFAULT 30;
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReminderEnabled" BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReminderTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Passando para lembrar que seu horário de *{servico}* com o profissional *{barbeiro}* está agendado para hoje às *{horario}*. Esperamos você!';
 
 ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "lunchStart" TEXT NOT NULL DEFAULT '12:00';
 ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "lunchEnd" TEXT NOT NULL DEFAULT '13:00';
 ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "workDays" TEXT NOT NULL DEFAULT '1,2,3,4,5,6';
 
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "reengagementSent" BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "reminderSent" BOOLEAN NOT NULL DEFAULT FALSE;
 
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleMapsEmbedUrl" TEXT DEFAULT '';
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "googleReviewsWidget" TEXT DEFAULT '';
