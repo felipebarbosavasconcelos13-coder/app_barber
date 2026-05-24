@@ -420,9 +420,9 @@ gantt
   - Executado `npm run build` com sucesso absoluto na compilação estática do Next.js e TypeScript, garantindo toda a integridade das modificações.
 
 ### **Fase 35: Integração de Eventos GTM dataLayer (AddToCart & Schedule) (Concluída em 24/05/2026)**
-- **Evento AddToCart na Seleção de Serviço** ✅:
-  - Criada a função `handleSelectService` no componente [src/components/BookingFlow.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/components/BookingFlow.tsx).
-  - Ao clicar para selecionar um serviço, o sistema dispara o evento `AddToCart` no `window.dataLayer` com as propriedades solicitadas: `content_ids` (ID do serviço em formato de array), `content_type` (`"product"`), `contents` (detalhes do produto contendo ID, nome, quantidade = 1 e preço), `currency` (`"BRL"`) e `value` (preço do serviço).
+- **Evento AddToCart no Avanço de Passo** ✅:
+  - O evento `AddToCart` é disparado na função `handleNextStep` no componente [src/components/BookingFlow.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/components/BookingFlow.tsx) quando o cliente seleciona o serviço no Passo 2 e clica no botão "Próximo Passo" para avançar na jornada de agendamento (Passo 3).
+  - Passa na camada de dados (`window.dataLayer`) as propriedades solicitadas: `content_ids` (ID do serviço em formato de array), `content_type` (`"product"`), `contents` (detalhes do produto contendo ID, nome, quantidade = 1 e preço), `currency` (`"BRL"`) e `value` (preço do serviço).
 - **Evento Schedule na Confirmação de Agendamento** ✅:
   - Adicionado o disparo do evento `Schedule` na função `handleFormSubmit` após a criação bem-sucedida do agendamento no banco.
   - O evento passa as propriedades exatas solicitadas na camada de dados: `nome` (`clientData.name`), `email` (`clientData.email`), `whatsapp` (`clientData.phone`), `value` (preço do serviço agendado) e `currency` (`"BRL"`).

@@ -142,35 +142,34 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
     if (step === 1 && !selectedBarber) return;
     if (step === 2 && !selectedService) return;
     if (step === 3 && !selectedSlot) return;
+
+    // Dispara o evento AddToCart quando avança do Passo 2 (Escolha de Serviço) para o Passo 3
+    if (step === 2 && selectedService) {
+      if (typeof window !== "undefined") {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: "AddToCart",
+          content_ids: [selectedService.id],
+          content_type: "product",
+          contents: [
+            {
+              id: selectedService.id,
+              name: selectedService.name,
+              quantity: 1,
+              price: selectedService.price
+            }
+          ],
+          currency: "BRL",
+          value: selectedService.price
+        });
+      }
+    }
+
     setStep(step + 1);
   };
 
   const handlePrevStep = () => {
     setStep(step - 1);
-  };
-
-  const handleSelectService = (service: InitialService) => {
-    setSelectedService(service);
-    
-    // DISPARO DO EVENTO ADDTOCART PARA O GOOGLE TAG MANAGER (GTM)
-    if (typeof window !== "undefined") {
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        event: "AddToCart",
-        content_ids: [service.id],
-        content_type: "product",
-        contents: [
-          {
-            id: service.id,
-            name: service.name,
-            quantity: 1,
-            price: service.price
-          }
-        ],
-        currency: "BRL",
-        value: service.price
-      });
-    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -369,7 +368,7 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
                 return filteredServices.map((service) => (
                   <div
                     key={service.id}
-                    onClick={() => handleSelectService(service)}
+                    onClick={() => setSelectedService(service)}
                     className={`glass-card service-select-card ${selectedService?.id === service.id ? "selected" : ""}`}
                   >
                     <div className="service-details">
