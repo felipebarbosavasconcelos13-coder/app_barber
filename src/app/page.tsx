@@ -250,7 +250,7 @@ export default async function HomePage() {
           </div>
           <div className="hero-badge flex-center">
             <Award size={14} style={{ marginRight: "6px", color: "var(--accent-gold)" }} />
-            <span>Experiência Tradicional & Moderna</span>
+            <span>⭐ EXCELÊNCIA E PRECISÃO NO CUIDADO DO SEU VISUAL</span>
           </div>
           <h1 className="title-serif gold-glow">{settings.barberShopName}</h1>
           {(settings.googleMapsEmbedUrl || settings.googleRating > 0 || settings.googleReviewsCount > 0) && (
@@ -261,22 +261,21 @@ export default async function HomePage() {
             </div>
           )}
           <p className="hero-subtitle">
-            Agende seu horário com os melhores barbeiros da cidade em segundos.
-            Conexão em tempo real e sincronização automática.
+            Escolha o barbeiro de sua preferência, selecione o serviço e garanta a sua reserva em menos de 1 minuto — de forma prática, online e sem filas.
           </p>
           <div className="hero-info-grid">
-            <div className="hero-info-item flex-center">
+            <a href="#onde-estamos" className="hero-info-item flex-center scroll-link" style={{ textDecoration: "none", cursor: "pointer" }}>
               <MapPin size={16} className="gold-text" />
-              <span>{settings.address}</span>
-            </div>
+              <span>📍 Ver Localização no Mapa</span>
+            </a>
             <div className="hero-info-item flex-center">
               <Clock size={16} className="gold-text" />
               <span>Seg a Sáb - {settings.openingTime} às {settings.closingTime}</span>
             </div>
-            <div className="hero-info-item flex-center">
+            <a href={`tel:${settings.phone.replace(/\D/g, "")}`} className="hero-info-item flex-center" style={{ textDecoration: "none", cursor: "pointer" }}>
               <Phone size={16} className="gold-text" />
-              <span>{settings.phone}</span>
-            </div>
+              <span>📞 Ligar para a Barbearia</span>
+            </a>
           </div>
         </div>
       </section>
@@ -284,8 +283,8 @@ export default async function HomePage() {
       {/* Booking Form Section */}
       <section className="booking-section container">
         <div className="section-title text-center animate-fade-in">
-          <h2 className="title-serif gold-glow">Agendamento Online</h2>
-          <p>Selecione suas preferências e reserve o seu horário</p>
+          <h2 className="title-serif gold-glow">Reserve Seu Horário</h2>
+          <p>Selecione o profissional, o serviço e defina a melhor data para você.</p>
         </div>
         
         <div className="booking-wrapper animate-fade-in">
@@ -298,11 +297,11 @@ export default async function HomePage() {
       <section className="testimonials-section container animate-fade-in" style={{ marginTop: "80px", marginBottom: "40px" }}>
         <div className="section-title text-center">
           <span className="badge badge-gold" style={{ marginBottom: "10px", textTransform: "uppercase", fontSize: "0.75rem", letterSpacing: "0.05em", padding: "6px 12px" }}>
-            Reputação & Avaliações
+            ⭐ REPUTAÇÃO E CONFIANÇA
           </span>
-          <h2 className="title-serif gold-glow" style={{ fontSize: "2.2rem" }}>O Que Nossos Clientes Dizem</h2>
+          <h2 className="title-serif gold-glow" style={{ fontSize: "2.2rem" }}>Quem Frequenta, Recomenda</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", maxWidth: "600px", margin: "8px auto 0 auto" }}>
-            A opinião dos nossos clientes é o reflexo da nossa dedicação e excelência em cada detalhe.
+            Veja a experiência de quem confia na nossa equipe para cuidar do seu estilo todos os dias.
           </p>
         </div>
 
@@ -368,7 +367,7 @@ export default async function HomePage() {
       )}
 
       {/* Localização & Mapa Section */}
-      <section className="location-section container animate-fade-in" style={{ marginTop: "60px", marginBottom: "80px" }}>
+      <section id="onde-estamos" className="location-section container animate-fade-in" style={{ marginTop: "60px", marginBottom: "80px" }}>
         <div className="section-title text-center">
           <span className="badge badge-gold" style={{ marginBottom: "10px", textTransform: "uppercase", fontSize: "0.75rem", letterSpacing: "0.05em", padding: "6px 12px" }}>
             Onde Estamos
@@ -385,7 +384,7 @@ export default async function HomePage() {
             <div>
               <h3 className="title-serif gold-text" style={{ fontSize: "1.4rem", fontWeight: 600, marginBottom: "15px" }}>{settings.barberShopName}</h3>
               <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", marginBottom: "20px", lineHeight: "1.6" }}>
-                Estamos localizados em uma área de fácil acesso com estacionamento no local. Venha tomar uma cerveja ou café conosco enquanto cuidamos do seu estilo!
+                Ambiente climatizado com estacionamento privativo, café gourmet e cerveja gelada esperando por você. Cada detalhe foi planejado para transformar o seu corte de cabelo em um momento exclusivo de relaxamento.
               </p>
               
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -469,7 +468,7 @@ export default async function HomePage() {
             )}
             <h3 className="title-serif gold-text">{settings.barberShopName}</h3>
           </div>
-          <p style={{ margin: "10px 0" }}>{settings.address} | Telefone: {settings.phone}</p>
+          <p style={{ margin: "10px 0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Sua marca registrada é o seu estilo. Agende online hoje mesmo.</p>
           <p>&copy; {new Date().getFullYear()} {settings.barberShopName}. Todos os direitos reservados.</p>
           <div className="footer-links">
             <Link href="/admin" className="admin-link">

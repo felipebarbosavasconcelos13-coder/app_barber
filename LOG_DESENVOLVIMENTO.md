@@ -43,6 +43,8 @@ gantt
     Fase 26: Otimização Mobile Premium & Validação Visual        :done,    des26, 2026-05-23, 2026-05-23
     Fase 27: Resiliência de Deploy & Updates Silenciosos         :done,    des27, 2026-05-23, 2026-05-23
     Fase 28: Branding Dinâmico, Reviews Hero & Modo Foco          :done,    des28, 2026-05-23, 2026-05-23
+    Fase 29: Integração Avançada com Vercel MCP                   :done,    des29, 2026-05-23, 2026-05-23
+    Fase 30: Otimização de Copy & Redução de Repetições          :done,    des30, 2026-05-23, 2026-05-23
 ```
 
 ---
@@ -267,6 +269,7 @@ gantt
 | **23/05/2026** | `src/app/api/admin/google-reviews/import-widget/route.ts` + `src/components/AdminDashboard.tsx` | O usuário apresentou um exemplo real de site WordPress que exibe avaliações sem chave de API usando um widget HTML já renderizado (`wp-gr rpi wpac`). | Implementado importador sem Google API Key para HTML/URL pública de widgets de avaliações. O endpoint parseia nota, quantidade, autores, estrelas, avatar e texto dos reviews renderizados, salva na tabela `Testimonial` e atualiza o painel/Landing Page. |
 | **23/05/2026** | `src/app/api/admin/google-reviews/sync/route.ts` + `src/components/AdminDashboard.tsx` | Após manter a alternativa sem API, foi solicitada também a opção de usar API Key para quem quiser integração oficial. | Adicionada sincronização opcional via Google Places API Key, convivendo com o importador sem API. O painel agora oferece os botões "Importar Avaliações" (widget público) e "Usar API Key" (Google Places). |
 | **23/05/2026** | `src/app/api/admin/google-reviews/test/route.ts` + `src/components/AdminDashboard.tsx` | A chave API informada no painel não funcionou e faltava um ambiente de teste para diagnosticar se o problema era chave inválida, Places API desativada, billing, restrição ou Place ID. | Criado endpoint de teste Google Places API sem importação, com botão "Testar API Key" no painel. O teste retorna nome do estabelecimento, nota, total de avaliações, quantidade de reviews com texto, Place ID e mensagens explicativas para erros `REQUEST_DENIED`, `ZERO_RESULTS`, `OVER_QUERY_LIMIT` e afins. |
+| **23/05/2026** | `src/app/page.tsx` + `src/components/AdminDashboard.tsx` | A integração via API funcionou, mas a Google Places API retornou apenas 5 avaliações e a landing exibiu um mapa na área de avaliações quando o campo de widget continha HTML/link de Maps. | Ajustada a landing para priorizar cards salvos em `Testimonial` e só renderizar widget HTML quando ele não for Google Maps. O painel agora informa o limite oficial de até 5 avaliações da Places API e orienta usar widget público ou cadastro manual para exibir mais avaliações. |
 
 ---
 
@@ -325,3 +328,40 @@ gantt
   - A opção com API Key é complementar: o fluxo sem API por widget público continua disponível.
 - **Ambiente de Teste da API Key** ✅:
   - Adicionado `POST /api/admin/google-reviews/test` e botão "Testar API Key" no card Google & Localização para validar credenciais, billing, permissões e resolução do estabelecimento antes de sincronizar.
+- **Correção de Exibição das Avaliações na Landing** ✅:
+  - A landing agora mostra primeiro os depoimentos reais salvos no banco e evita renderizar Google Maps dentro da seção de avaliações. Também foi documentado no painel que a Places API retorna no máximo 5 avaliações.
+
+---
+
+### **Fase 29: Integração Avançada com Vercel MCP para Agentes de IA (Concluída em 23/05/2026)**
+- **Instalação Automática do Vercel MCP** ✅:
+  - Executado o utilitário oficial da Vercel `npx add-mcp -y https://mcp.vercel.com` para habilitar a integração com o Model Context Protocol (MCP) da Vercel no projeto.
+- **Configuração Multi-Agente** ✅:
+  - Configurado o servidor MCP remoto de forma automática para 9 clientes e agentes de IA distintos que operam no diretório do projeto:
+    - **Claude Code**: Arquivo de configuração `.mcp.json` criado na raiz do workspace.
+    - **Cursor**: Arquivo `.cursor/mcp.json` gerado para integração nativa com o painel do editor.
+    - **Gemini CLI**: Arquivo `.gemini/settings.json` atualizado.
+    - **VS Code & GitHub Copilot CLI**: Arquivo `.vscode/mcp.json` configurado.
+    - **OpenCode**: Arquivo `opencode.json` sincronizado.
+    - **Zed, Codex, MCPorter e outros**: Configurações específicas geradas nos diretórios de configurações de projeto correspondentes.
+- **Benefícios Obtidos** ✅:
+  - Os assistentes e agentes agora possuem contexto nativo sobre o ecossistema Vercel do usuário, permitindo o gerenciamento de deploys, equipes, projetos e consultas otimizadas da documentação diretamente pelo protocolo sem exposição insegura de segredos.
+
+---
+
+### **Fase 30: Otimização de Copy para Conversão & Redução de Repetições (Concluída em 23/05/2026)**
+- **Revisão de Copy com Foco em Conversão (Copywriting)** ✅:
+  - Utilizadas as melhores práticas da skill `content-creator` para tornar a Landing Page (`src/app/page.tsx`) muito mais persuasiva.
+  - Modificado a badge superior do Hero para `"⭐ EXCELÊNCIA E PRECISÃO NO CUIDADO DO SEU VISUAL"`.
+  - Refatorado o subtítulo para focar na conveniência, velocidade e escassez do processo: `"Escolha o barbeiro de sua preferência, selecione o serviço e garanta a sua reserva em menos de 1 minuto — de forma prática, online e sem filas."`
+  - Badges e headlines de Depoimentos e Localização otimizadas para aumentar a conexão emocional e prova social.
+- **Eliminação de Repetições de Endereço e Contato** ✅:
+  - Removido o endereço completo estático do Hero e do Footer do site, reduzindo a fadiga visual e duplicidade.
+  - O endereço agora é apresentado de forma completa exclusivamente no bloco de Localização ("Onde Estamos"), onde ele é altamente contextual.
+- **Interatividade & Contatos Rápidos** ✅:
+  - Transformado o item de endereço do Hero em um botão interativo: `📍 Ver Localização no Mapa`, atuando como âncora suave para a seção do mapa (`#onde-estamos`).
+  - Transformado o item de telefone do Hero em um botão clicável: `📞 Ligar para a Barbearia` (`tel:`), otimizando a taxa de conversão em dispositivos móveis.
+  - Footer simplificado com slogan dinâmico e sem textos redundantes: `"Sua marca registrada é o seu estilo. Agende online hoje mesmo."`
+- **Validação de Compilação & Build de Produção** ✅:
+  - Executado o build de produção final via `npm run build` com sucesso absoluto, certificando a conformidade estrutural do Next.js e TypeScript após todas as alterações.
+

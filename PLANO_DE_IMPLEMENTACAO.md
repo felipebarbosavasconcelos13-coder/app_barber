@@ -395,3 +395,35 @@ Esta fase reúne melhorias de branding, clareza visual de usabilidade (contraste
 **Toda a Fase 28 foi concluída com sucesso e homologada em build local!**
 
 ---
+
+## 📅 Fase 30: Otimização de Copy para Conversão & Redução de Repetições (Concluída em 23/05/2026)
+
+### **Resumo do Recurso**
+Para elevar a taxa de agendamentos (conversão) e limpar a Landing Page de elementos poluídos e redundantes, aplicamos técnicas avançadas de copywriting (baseadas na skill `content-creator`) e eliminamos a repetição excessiva do endereço físico e de contato.
+
+1. **Hero Section (`src/app/page.tsx`)**:
+   - **Remoção de Repetição**: Substituição do endereço completo e número de telefone estáticos por botões interativos de ação rápida.
+   - **Gatilhos de Conversão**:
+     - *Endereço* vira `📍 Ver Localização no Mapa` (link âncora suave para a seção `#onde-estamos`).
+     - *Telefone* vira `📞 Ligar para a Barbearia` (link de discagem direta `tel:`).
+   - **Copy Persuasiva**:
+     - Badge superior: `"⭐ EXCELÊNCIA E PRECISÃO NO CUIDADO DO SEU VISUAL"`.
+     - Subtítulo focado em simplicidade e escassez: `"Escolha o barbeiro de sua preferência, selecione o serviço e garanta a sua reserva em menos de 1 minuto — de forma prática, online e sem filas."`
+
+2. **Seção de Agendamento (`src/app/page.tsx`)**:
+   - Subtítulo focado em clareza: `"Selecione o profissional, o serviço e defina a melhor data para você."`
+
+3. **Seção de Depoimentos (`src/app/page.tsx`)**:
+   - Badge superior: `"⭐ REPUTAÇÃO E CONFIANÇA"`.
+   - H2 principal: `"Quem Frequenta, Recomenda"`.
+   - Subtítulo: `"Veja a experiência de quem confia na nossa equipe para cuidar do seu estilo todos os dias."`
+
+4. **Seção de Localização (`src/app/page.tsx`)**:
+   - Adição do ID `id="onde-estamos"` para ancoragem fluida do Hero.
+   - Melhoria da copy com foco em experiência sensorial e conforto: `"Ambiente climatizado com estacionamento privativo, café gourmet e cerveja gelada esperando por você. Cada detalhe foi planejado para transformar o seu corte de cabelo em um momento exclusivo de relaxamento."`
+
+5. **Footer (`src/app/page.tsx`)**:
+   - **Remoção de Repetição**: Retirada da linha contendo o endereço completo e telefone redundantes.
+   - Slogan de marca elegante: `"Sua marca registrada é o seu estilo. Agende online hoje mesmo."`
+
+
