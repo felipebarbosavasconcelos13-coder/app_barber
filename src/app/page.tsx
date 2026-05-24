@@ -1,6 +1,6 @@
 import prisma, { isDatabaseConfigured } from "@/lib/prisma";
 import BookingFlow from "@/components/BookingFlow";
-import { Scissors, MapPin, Clock, Phone, Award } from "lucide-react";
+import { Scissors, MapPin, Clock, Phone, Award, Star } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -250,14 +250,14 @@ export default async function HomePage() {
           </div>
           <div className="hero-badge flex-center">
             <Award size={14} style={{ marginRight: "6px", color: "var(--accent-gold)" }} />
-            <span>⭐ EXCELÊNCIA E PRECISÃO NO CUIDADO DO SEU VISUAL</span>
+            <span>EXCELÊNCIA E PRECISÃO NO CUIDADO DO SEU VISUAL</span>
           </div>
           <h1 className="title-serif gold-glow">{settings.barberShopName}</h1>
           {(settings.googleMapsEmbedUrl || settings.googleRating > 0 || settings.googleReviewsCount > 0) && (
             <div className="hero-google-rating flex-center">
-              <span className="rating-stars">★</span>
+              <Star size={14} className="gold-text" style={{ fill: "var(--accent-gold)", marginRight: "5px" }} />
               <strong>{settings.googleRating > 0 ? settings.googleRating.toFixed(1) : "5.0"}</strong>
-              <span>({settings.googleReviewsCount > 0 ? settings.googleReviewsCount : "+100"} avaliações no Google Meu Negócio)</span>
+              <span style={{ marginLeft: "5px" }}>({settings.googleReviewsCount > 0 ? settings.googleReviewsCount : "+100"} avaliações no Google)</span>
             </div>
           )}
           <p className="hero-subtitle">
@@ -266,7 +266,7 @@ export default async function HomePage() {
           <div className="hero-info-grid">
             <a href="#onde-estamos" className="hero-info-item flex-center scroll-link" style={{ textDecoration: "none", cursor: "pointer" }}>
               <MapPin size={16} className="gold-text" />
-              <span>📍 Ver Localização no Mapa</span>
+              <span>Ver Localização no Mapa</span>
             </a>
             <div className="hero-info-item flex-center">
               <Clock size={16} className="gold-text" />
@@ -274,7 +274,7 @@ export default async function HomePage() {
             </div>
             <a href={`tel:${settings.phone.replace(/\D/g, "")}`} className="hero-info-item flex-center" style={{ textDecoration: "none", cursor: "pointer" }}>
               <Phone size={16} className="gold-text" />
-              <span>📞 Ligar para a Barbearia</span>
+              <span>Ligar para a Barbearia</span>
             </a>
           </div>
         </div>
@@ -297,7 +297,7 @@ export default async function HomePage() {
       <section className="testimonials-section container animate-fade-in" style={{ marginTop: "80px", marginBottom: "40px" }}>
         <div className="section-title text-center">
           <span className="badge badge-gold" style={{ marginBottom: "10px", textTransform: "uppercase", fontSize: "0.75rem", letterSpacing: "0.05em", padding: "6px 12px" }}>
-            ⭐ REPUTAÇÃO E CONFIANÇA
+            REPUTAÇÃO E CONFIANÇA
           </span>
           <h2 className="title-serif gold-glow" style={{ fontSize: "2.2rem" }}>Quem Frequenta, Recomenda</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", maxWidth: "600px", margin: "8px auto 0 auto" }}>

@@ -352,16 +352,22 @@ gantt
 ### **Fase 30: Otimização de Copy para Conversão & Redução de Repetições (Concluída em 23/05/2026)**
 - **Revisão de Copy com Foco em Conversão (Copywriting)** ✅:
   - Utilizadas as melhores práticas da skill `content-creator` para tornar a Landing Page (`src/app/page.tsx`) muito mais persuasiva.
-  - Modificado a badge superior do Hero para `"⭐ EXCELÊNCIA E PRECISÃO NO CUIDADO DO SEU VISUAL"`.
+  - Modificada a badge superior do Hero para `"EXCELÊNCIA E PRECISÃO NO CUIDADO DO SEU VISUAL"`.
   - Refatorado o subtítulo para focar na conveniência, velocidade e escassez do processo: `"Escolha o barbeiro de sua preferência, selecione o serviço e garanta a sua reserva em menos de 1 minuto — de forma prática, online e sem filas."`
   - Badges e headlines de Depoimentos e Localização otimizadas para aumentar a conexão emocional e prova social.
+- **Design Ultra-Premium (Remoção de Emoticons & Ícones SVG)** ✅:
+  - Identificada e eliminada a duplicidade visual de emoticons ao lado de ícones de vetor (como `⭐`, `📍` e `📞`).
+  - Mantidos apenas os ícones SVG nativos e elegantes (`Award`, `MapPin`, `Phone`), elevando o aspecto visual estético e a seriedade da Landing Page.
+  - Upgrade nas estrelas de avaliação: o caractere unicode antigo `★` no Hero foi substituído pelo ícone vetorial premium `<Star size={14} />` do Lucide-React preenchido de ouro.
+  - Simplificação do texto de reputação: alterado de `"Google Meu Negócio"` para apenas `"Google"`, reduzindo o volume de texto no Hero.
 - **Eliminação de Repetições de Endereço e Contato** ✅:
   - Removido o endereço completo estático do Hero e do Footer do site, reduzindo a fadiga visual e duplicidade.
-  - O endereço agora é apresentado de forma completa exclusivamente no bloco de Localização ("Onde Estamos"), onde ele é altamente contextual.
+  - O endereço agora é apresentado de forma completa exclusivamente no bloco de Localização ("Onde Estamos"), onde ele é altamente de fato contextual.
 - **Interatividade & Contatos Rápidos** ✅:
-  - Transformado o item de endereço do Hero em um botão interativo: `📍 Ver Localização no Mapa`, atuando como âncora suave para a seção do mapa (`#onde-estamos`).
-  - Transformado o item de telefone do Hero em um botão clicável: `📞 Ligar para a Barbearia` (`tel:`), otimizando a taxa de conversão em dispositivos móveis.
+  - Transformado o item de endereço do Hero em um botão interativo: `Ver Localização no Mapa`, atuando como âncora suave para a seção do mapa (`#onde-estamos`).
+  - Transformado o item de telefone do Hero em um botão clicável: `Ligar para a Barbearia` (`tel:`), otimizando a taxa de conversão em dispositivos móveis.
   - Footer simplificado com slogan dinâmico e sem textos redundantes: `"Sua marca registrada é o seu estilo. Agende online hoje mesmo."`
 - **Validação de Compilação & Build de Produção** ✅:
   - Executado o build de produção final via `npm run build` com sucesso absoluto, certificando a conformidade estrutural do Next.js e TypeScript após todas as alterações.
+
 
