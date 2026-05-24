@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
       colorBgPrimary: settings.colorBgPrimary || "#0a0a0c",
       colorBgSecondary: settings.colorBgSecondary || "#121216",
       colorBgTertiary: settings.colorBgTertiary || "#1b1b22",
+      aboutText: settings.aboutText || "",
     });
   } catch (error) {
     console.error("Erro ao buscar configurações:", error);
@@ -75,6 +76,7 @@ export async function PUT(request: NextRequest) {
       colorBgPrimary,
       colorBgSecondary,
       colorBgTertiary,
+      aboutText,
       newPassword 
     } = body;
 
@@ -100,6 +102,7 @@ export async function PUT(request: NextRequest) {
     if (colorBgPrimary !== undefined) updateData.colorBgPrimary = colorBgPrimary || "#0a0a0c";
     if (colorBgSecondary !== undefined) updateData.colorBgSecondary = colorBgSecondary || "#121216";
     if (colorBgTertiary !== undefined) updateData.colorBgTertiary = colorBgTertiary || "#1b1b22";
+    if (aboutText !== undefined) updateData.aboutText = aboutText || "";
 
     // Atualiza a senha administrativa apenas se fornecida
     if (newPassword && newPassword.trim() !== "") {
@@ -134,6 +137,7 @@ export async function PUT(request: NextRequest) {
         colorBgPrimary: updated.colorBgPrimary || "#0a0a0c",
         colorBgSecondary: updated.colorBgSecondary || "#121216",
         colorBgTertiary: updated.colorBgTertiary || "#1b1b22",
+        aboutText: updated.aboutText || "",
       },
     });
   } catch (error) {

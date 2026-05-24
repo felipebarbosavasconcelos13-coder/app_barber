@@ -95,6 +95,7 @@ export default function AdminDashboard() {
     colorBgPrimary: "#0a0a0c",
     colorBgSecondary: "#121216",
     colorBgTertiary: "#1b1b22",
+    aboutText: "",
   });
 
   // Novos States de Depoimentos Curados (Google / Local)
@@ -287,6 +288,7 @@ export default function AdminDashboard() {
         colorBgPrimary: "#0a0a0c",
         colorBgSecondary: "#121216",
         colorBgTertiary: "#1b1b22",
+        aboutText: "",
       };
       const resolvedSettings = settingsData.error ? defaultSettings : { ...defaultSettings, ...settingsData };
       setSettings(resolvedSettings);
@@ -2071,6 +2073,21 @@ export default function AdminDashboard() {
                               onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
                               required
                             />
+                          </div>
+
+                          <div className="form-group">
+                            <label className="form-label">Sobre a Barbearia (História / Diferenciais)</label>
+                            <textarea
+                              className="form-input"
+                              rows={3}
+                              style={{ height: "auto", fontFamily: "sans-serif", fontSize: "0.9rem", resize: "vertical" }}
+                              placeholder="Descreva a história, diferenciais e o ambiente da sua barbearia..."
+                              value={settings.aboutText || ""}
+                              onChange={(e) => setSettings({ ...settings, aboutText: e.target.value })}
+                            />
+                            <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", display: "block", marginTop: "4px" }}>
+                              Descrição curta exibida na seção "Nossa Localização" da página pública.
+                            </small>
                           </div>
 
                           <button type="submit" className="btn-gold" style={{ width: "100%", marginTop: "15px" }} disabled={actionLoading}>

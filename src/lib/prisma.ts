@@ -149,6 +149,7 @@ async function ensureBarberBlockTableExists(pool: Pool) {
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}';
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReminderEnabled" BOOLEAN NOT NULL DEFAULT TRUE;
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReminderTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Passando para lembrar que seu horário de *{servico}* com o profissional *{barbeiro}* está agendado para hoje às *{horario}*. Esperamos você!';
+    ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "aboutText" TEXT NOT NULL DEFAULT 'Ambiente climatizado com estacionamento privativo, café gourmet e cerveja gelada esperando por você. Cada detalhe foi planejado para transformar o seu corte de cabelo em um momento exclusivo de relaxamento.';
 
     ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "reengagementSent" BOOLEAN NOT NULL DEFAULT FALSE;
     ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "reminderSent" BOOLEAN NOT NULL DEFAULT FALSE;

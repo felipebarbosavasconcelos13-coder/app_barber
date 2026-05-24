@@ -129,6 +129,7 @@ export default async function HomePage() {
     googleReviewsWidget: "",
     googleRating: 0,
     googleReviewsCount: 0,
+    aboutText: "",
   };
 
   try {
@@ -147,6 +148,7 @@ export default async function HomePage() {
         googleReviewsWidget: rawSettings.googleReviewsWidget || "",
         googleRating: rawSettings.googleRating || 0,
         googleReviewsCount: rawSettings.googleReviewsCount || 0,
+        aboutText: rawSettings.aboutText || "",
       };
     }
   } catch (error) {
@@ -384,7 +386,7 @@ export default async function HomePage() {
             <div>
               <h3 className="title-serif gold-text" style={{ fontSize: "1.4rem", fontWeight: 600, marginBottom: "15px" }}>{settings.barberShopName}</h3>
               <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", marginBottom: "20px", lineHeight: "1.6" }}>
-                Ambiente climatizado com estacionamento privativo, café gourmet e cerveja gelada esperando por você. Cada detalhe foi planejado para transformar o seu corte de cabelo em um momento exclusivo de relaxamento.
+                {settings.aboutText || "Ambiente climatizado com estacionamento privativo, café gourmet e cerveja gelada esperando por você. Cada detalhe foi planejado para transformar o seu corte de cabelo em um momento exclusivo de relaxamento."}
               </p>
               
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

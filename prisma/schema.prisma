@@ -37,6 +37,7 @@ model SystemSettings {
   colorBgPrimary               String   @default("#0a0a0c") // Fundo principal do tema
   colorBgSecondary             String   @default("#121216") // Fundo secundário do tema
   colorBgTertiary              String   @default("#1b1b22") // Fundo terciário do tema
+  aboutText                    String?  @default("Ambiente climatizado com estacionamento privativo, café gourmet e cerveja gelada esperando por você. Cada detalhe foi planejado para transformar o seu corte de cabelo em um momento exclusivo de relaxamento.") // Texto sobre o estabelecimento
   updatedAt      DateTime @updatedAt
 }
 

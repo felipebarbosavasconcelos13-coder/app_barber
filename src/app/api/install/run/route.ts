@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS "SystemSettings" (
   "colorBgPrimary" TEXT NOT NULL DEFAULT '#0a0a0c',
   "colorBgSecondary" TEXT NOT NULL DEFAULT '#121216',
   "colorBgTertiary" TEXT NOT NULL DEFAULT '#1b1b22',
+  "aboutText" TEXT NOT NULL DEFAULT 'Ambiente climatizado com estacionamento privativo, café gourmet e cerveja gelada esperando por você. Cada detalhe foi planejado para transformar o seu corte de cabelo em um momento exclusivo de relaxamento.',
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "SystemSettings_pkey" PRIMARY KEY ("id")
 );
@@ -160,6 +161,7 @@ ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementDays"
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReengagementTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Faz *{dias}* dias desde o seu último serviço de *{servico}* com a gente. Que tal agendar um novo horário para manter o visual em dia? Agende no link: {link_app}';
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReminderEnabled" BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "whatsappReminderTemplate" TEXT NOT NULL DEFAULT 'Olá, *{cliente}*! Passando para lembrar que seu horário de *{servico}* com o profissional *{barbeiro}* está agendado para hoje às *{horario}*. Esperamos você!';
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "aboutText" TEXT NOT NULL DEFAULT 'Ambiente climatizado com estacionamento privativo, café gourmet e cerveja gelada esperando por você. Cada detalhe foi planejado para transformar o seu corte de cabelo em um momento exclusivo de relaxamento.';
 
 ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "lunchStart" TEXT NOT NULL DEFAULT '12:00';
 ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "lunchEnd" TEXT NOT NULL DEFAULT '13:00';

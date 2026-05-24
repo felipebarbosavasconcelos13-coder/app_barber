@@ -447,7 +447,29 @@ Para reduzir a taxa de faltas (no-shows) de clientes e agregar valor à experiê
    - Dispara a notificação via Evolution API do WhatsApp e grava `reminderSent = true` no banco.
 
 3. **Painel de Automações (`src/components/AdminDashboard.tsx` & `/api/admin/automations`)**:
+   - Atualizada a aba de Automações para renderizar um novo card **`2. Lembrete de Horário (1h Antes)`**, contendo toggle de ativação e campo de edição do template.
+   - Renomeado o bloco de Reengajamento para a numeração de **`3. Reengajamento (Ausência de Clientes)`**.
+   - Adicionado botão interativo **`"Disparar Lembretes (1h Antes)"`** no painel administrativo para o barbeiro acionar a verificação manual de agendamentos próximos a qualquer momento.
 
+---
 
+## 📅 Fase 32: Customização do Texto "Sobre a Barbearia" (Concluída em 23/05/2026)
 
+### **Resumo do Recurso**
+Para dar total liberdade ao barbeiro sobre a copy institucional de sua marca, tornamos dinâmico o parágrafo de introdução sobre o estabelecimento que é exibido ao lado do endereço na seção de localização da Landing Page (`#onde-estamos`).
 
+1. **Banco de Dados & Auto-Migração (`src/lib/prisma.ts` e `src/app/api/install/run/route.ts`)**:
+   - Adicionado o campo `aboutText` (tipo TEXT, com valor padrão igual à copy atual) no model `SystemSettings` do Prisma local (`schema.prisma`).
+   - Implementado script DDL retrocompatível automático `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "aboutText" ...` no proxy Prisma e no instalador para atualizar de forma silenciosa bancos Supabase ativos.
+
+2. **Backend API (`src/app/api/admin/settings/route.ts`)**:
+   - Atualizado o endpoint de configurações (`GET` e `PUT`) para recuperar e expor de forma persistente o campo `aboutText` do banco de dados.
+
+3. **Frontend Administrativo (`src/components/AdminDashboard.tsx`)**:
+   - Adicionado o campo `aboutText` na inicialização do estado de configurações gerais.
+   - Inserido um campo de entrada de texto longo (`textarea`) para **"Sobre a Barbearia (História / Diferenciais)"** logo abaixo do campo de Telefone de Contato no card **Identidade & Contato** da aba Configurações.
+
+4. **Página Pública (`src/app/page.tsx`)**:
+   - Substituído o parágrafo estático sobre a barbearia pelo valor dinâmico `{settings.aboutText}` vindo do banco, com fallback seguro para a copy premium caso esteja em branco.
+
+**A Fase 32 foi totalmente concluída e homologada em build local de produção com sucesso absoluto!**
