@@ -32,6 +32,7 @@ interface Barber {
   lunchStart?: string;
   lunchEnd?: string;
   workDays?: string;
+  avatarUrl?: string;
 }
 
 interface BarberBlock {
@@ -146,9 +147,47 @@ export default function AdminDashboard() {
     closingTime: "19:00",
     lunchStart: "12:00",
     lunchEnd: "13:00",
-    workDays: "1,2,3,4,5,6"
+    workDays: "1,2,3,4,5,6",
+    avatarUrl: ""
   });
   const [editingBarberId, setEditingBarberId] = useState<string | null>(null);
+
+  // Função para comprimir e redimensionar imagens via canvas HTML
+  const resizeAndCompressImage = (file: File, maxWidth: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+          resolve(dataUrl);
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
   
   // newService agora inclui barberIds para o relacionamento N-N
   const [newService, setNewService] = useState({ 
@@ -379,6 +418,7 @@ export default function AdminDashboard() {
         lunchStart: "12:00",
         lunchEnd: "13:00",
         workDays: "1,2,3,4,5,6",
+        avatarUrl: "",
       });
       setEditingBarberId(null);
     } catch (err: any) {
@@ -397,6 +437,7 @@ export default function AdminDashboard() {
       lunchStart: barber.lunchStart || "12:00",
       lunchEnd: barber.lunchEnd || "13:00",
       workDays: barber.workDays || "1,2,3,4,5,6",
+      avatarUrl: barber.avatarUrl || "",
     });
     setEditingBarberId(barber.id);
     setError("");
@@ -412,6 +453,7 @@ export default function AdminDashboard() {
       lunchStart: "12:00",
       lunchEnd: "13:00",
       workDays: "1,2,3,4,5,6",
+      avatarUrl: "",
     });
     setEditingBarberId(null);
     setError("");
@@ -1235,7 +1277,25 @@ export default function AdminDashboard() {
                           </div>
                         ) : (
                           barbers.map((barber) => (
-                            <div key={barber.id} className="glass-card barber-card animate-fade-in">
+                            <div key={barber.id} className="glass-card barber-card animate-fade-in" style={{ display: "flex", alignItems: "center", gap: "16px", padding: "20px" }}>
+                              <div style={{
+                                width: "60px",
+                                height: "60px",
+                                borderRadius: "50%",
+                                overflow: "hidden",
+                                background: "rgba(255, 255, 255, 0.03)",
+                                border: "1px solid rgba(197, 168, 128, 0.2)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0
+                              }}>
+                                {barber.avatarUrl ? (
+                                  <img src={barber.avatarUrl} alt={barber.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                ) : (
+                                  <Users size={24} style={{ color: "var(--accent-gold)", opacity: 0.6 }} />
+                                )}
+                              </div>
                               <div className="barber-card-info" style={{ flex: 1 }}>
                                 <h4 className="gold-text" style={{ fontSize: "1.2rem", fontWeight: 600 }}>{barber.name}</h4>
                                 <p style={{ margin: "2px 0 8px 0" }}>{barber.email}</p>
@@ -1305,6 +1365,73 @@ export default function AdminDashboard() {
                         </p>
 
                         <form onSubmit={handleAddBarber}>
+                          {/* Campo de Upload de Foto */}
+                          <div className="form-group" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginBottom: "20px", padding: "15px", borderRadius: "10px", background: "rgba(255,255,255,0.01)", border: "1px dashed rgba(255,255,255,0.08)" }}>
+                            <label className="form-label" style={{ alignSelf: "flex-start", marginBottom: 0 }}>Foto do Profissional</label>
+                            
+                            <div style={{
+                              width: "80px",
+                              height: "80px",
+                              borderRadius: "50%",
+                              overflow: "hidden",
+                              background: "rgba(255,255,255,0.02)",
+                              border: "1px solid rgba(197, 168, 128, 0.3)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              position: "relative"
+                            }}>
+                              {newBarber.avatarUrl ? (
+                                <img src={newBarber.avatarUrl} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              ) : (
+                                <Users size={32} style={{ color: "var(--accent-gold)", opacity: 0.5 }} />
+                              )}
+                            </div>
+
+                            <div style={{ display: "flex", gap: "10px" }}>
+                              <button
+                                type="button"
+                                className="btn-gold"
+                                style={{ padding: "6px 14px", fontSize: "0.8rem", background: "transparent", border: "1px solid var(--accent-gold)", color: "var(--accent-gold)" }}
+                                onClick={() => document.getElementById("barber-avatar-input")?.click()}
+                              >
+                                {newBarber.avatarUrl ? "Alterar Foto" : "Selecionar Foto"}
+                              </button>
+                              
+                              {newBarber.avatarUrl && (
+                                <button
+                                  type="button"
+                                  className="btn-delete"
+                                  style={{ padding: "6px 14px", fontSize: "0.8rem", height: "auto", width: "auto" }}
+                                  onClick={() => setNewBarber({ ...newBarber, avatarUrl: "" })}
+                                >
+                                  Remover
+                                </button>
+                              )}
+                            </div>
+
+                            <input
+                              id="barber-avatar-input"
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  try {
+                                    const base64 = await resizeAndCompressImage(file, 200);
+                                    setNewBarber({ ...newBarber, avatarUrl: base64 });
+                                  } catch (err) {
+                                    console.error("Erro ao processar imagem:", err);
+                                  }
+                                }
+                              }}
+                            />
+                            <small style={{ color: "var(--text-muted)", fontSize: "0.7rem", textAlign: "center" }}>
+                              Formatos aceitos: JPG, PNG. O arquivo será redimensionado automaticamente.
+                            </small>
+                          </div>
+
                           <div className="form-group">
                             <label className="form-label">Nome Completo</label>
                             <input
@@ -2039,7 +2166,72 @@ export default function AdminDashboard() {
                           </div>
 
                           <div className="form-group">
-                            <label className="form-label">URL da Logo (Logotipo)</label>
+                            <label className="form-label">Logotipo da Barbearia</label>
+                            
+                            {/* Pré-visualização da Logo */}
+                            {settings.logoUrl && (
+                              <div style={{
+                                width: "100%",
+                                height: "90px",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                background: "rgba(255,255,255,0.02)",
+                                border: "1px solid rgba(255,255,255,0.08)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                marginBottom: "12px",
+                                overflow: "hidden"
+                              }}>
+                                <img 
+                                  src={settings.logoUrl} 
+                                  alt="Preview Logo" 
+                                  style={{ maxHeight: "70px", maxWidth: "100%", objectFit: "contain" }} 
+                                />
+                              </div>
+                            )}
+
+                            <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
+                              <button
+                                type="button"
+                                className="btn-gold"
+                                style={{ padding: "8px 16px", fontSize: "0.85rem", background: "transparent", border: "1px solid var(--accent-gold)", color: "var(--accent-gold)", flex: 1 }}
+                                onClick={() => document.getElementById("barber-logo-input")?.click()}
+                              >
+                                {settings.logoUrl ? "Fazer Upload de Nova Logo" : "Upload do Logotipo"}
+                              </button>
+                              
+                              {settings.logoUrl && (
+                                <button
+                                  type="button"
+                                  className="btn-delete"
+                                  style={{ padding: "8px 16px", fontSize: "0.85rem", height: "auto", width: "auto" }}
+                                  onClick={() => setSettings({ ...settings, logoUrl: "" })}
+                                >
+                                  Remover
+                                </button>
+                              )}
+                            </div>
+
+                            <input
+                              id="barber-logo-input"
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  try {
+                                    const base64 = await resizeAndCompressImage(file, 400);
+                                    setSettings({ ...settings, logoUrl: base64 });
+                                  } catch (err) {
+                                    console.error("Erro ao processar imagem da logo:", err);
+                                  }
+                                }
+                              }}
+                            />
+
+                            <label className="form-label" style={{ fontSize: "0.8rem", marginTop: "10px", display: "block" }}>Ou insira a URL da imagem manualmente</label>
                             <input
                               type="text"
                               className="form-input"
@@ -2048,7 +2240,7 @@ export default function AdminDashboard() {
                               onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
                             />
                             <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", display: "block", marginTop: "4px" }}>
-                              URL para imagem PNG/JPEG ou SVG transparente da sua logo.
+                              Formatos aceitos para upload: PNG, JPEG, SVG. O arquivo será otimizado.
                             </small>
                           </div>
 

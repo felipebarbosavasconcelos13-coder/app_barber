@@ -220,6 +220,7 @@ export default async function HomePage() {
       lunchStart: b.lunchStart || "12:00",
       lunchEnd: b.lunchEnd || "13:00",
       workDays: b.workDays || "1,2,3,4,5,6",
+      avatarUrl: b.avatarUrl || "",
     }));
 
     services = rawServices.map((s) => ({

@@ -25,6 +25,7 @@ interface InitialBarber {
   lunchStart?: string;
   lunchEnd?: string;
   workDays?: string;
+  avatarUrl?: string;
 }
 
 function formatWorkDays(workDays?: string) {
@@ -148,6 +149,30 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
     setStep(step - 1);
   };
 
+  const handleSelectService = (service: InitialService) => {
+    setSelectedService(service);
+    
+    // DISPARO DO EVENTO ADDTOCART PARA O GOOGLE TAG MANAGER (GTM)
+    if (typeof window !== "undefined") {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "AddToCart",
+        content_ids: [service.id],
+        content_type: "product",
+        contents: [
+          {
+            id: service.id,
+            name: service.name,
+            quantity: 1,
+            price: service.price
+          }
+        ],
+        currency: "BRL",
+        value: service.price
+      });
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -184,6 +209,16 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
           barber: selectedBarber!.name,
           service: selectedService!.name,
           clientName: clientData.name
+        });
+
+        // DISPARO DO EVENTO DE SCHEDULE SOLICITADO PELO USUÁRIO
+        window.dataLayer.push({
+          event: "Schedule",
+          nome: clientData.name,
+          email: clientData.email,
+          whatsapp: clientData.phone,
+          value: selectedService!.price,
+          currency: "BRL"
         });
       }
 
@@ -257,8 +292,16 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
                     onClick={() => setSelectedBarber(barber)}
                     className={`glass-card barber-select-card ${selectedBarber?.id === barber.id ? "selected" : ""}`}
                   >
-                    <div className="avatar-placeholder flex-center">
-                      <span className="title-serif">{barber.name.charAt(0).toUpperCase()}</span>
+                    <div className="avatar-placeholder flex-center" style={{ overflow: "hidden", position: "relative" }}>
+                      {barber.avatarUrl ? (
+                        <img 
+                          src={barber.avatarUrl} 
+                          alt={barber.name} 
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                        />
+                      ) : (
+                        <span className="title-serif">{barber.name.charAt(0).toUpperCase()}</span>
+                      )}
                     </div>
                     <h3>{barber.name}</h3>
                     <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "6px", textAlign: "center", lineHeight: "1.4" }}>
@@ -326,7 +369,7 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
                 return filteredServices.map((service) => (
                   <div
                     key={service.id}
-                    onClick={() => setSelectedService(service)}
+                    onClick={() => handleSelectService(service)}
                     className={`glass-card service-select-card ${selectedService?.id === service.id ? "selected" : ""}`}
                   >
                     <div className="service-details">

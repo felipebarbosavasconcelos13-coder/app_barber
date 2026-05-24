@@ -419,6 +419,30 @@ gantt
 - **Homologação Técnica e Build de Produção** ✅:
   - Executado `npm run build` com sucesso absoluto na compilação estática do Next.js e TypeScript, garantindo toda a integridade das modificações.
 
+### **Fase 35: Integração de Eventos GTM dataLayer (AddToCart & Schedule) (Concluída em 24/05/2026)**
+- **Evento AddToCart na Seleção de Serviço** ✅:
+  - Criada a função `handleSelectService` no componente [src/components/BookingFlow.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/components/BookingFlow.tsx).
+  - Ao clicar para selecionar um serviço, o sistema dispara o evento `AddToCart` no `window.dataLayer` com as propriedades solicitadas: `content_ids` (ID do serviço em formato de array), `content_type` (`"product"`), `contents` (detalhes do produto contendo ID, nome, quantidade = 1 e preço), `currency` (`"BRL"`) e `value` (preço do serviço).
+- **Evento Schedule na Confirmação de Agendamento** ✅:
+  - Adicionado o disparo do evento `Schedule` na função `handleFormSubmit` após a criação bem-sucedida do agendamento no banco.
+  - O evento passa as propriedades exatas solicitadas na camada de dados: `nome` (`clientData.name`), `email` (`clientData.email`), `whatsapp` (`clientData.phone`), `value` (preço do serviço agendado) e `currency` (`"BRL"`).
+- **Validação de Compilação & Sucesso do Build** ✅:
+  - Compilação de homologação executada com sucesso absoluto por meio do script de build, atestando a integridade das importações e tipagem de dados.
 
-
+### **Fase 36: Upload de Fotos de Barbeiros e Logotipo da Barbearia (Concluída em 24/05/2026)**
+- **Mapeamento de Banco de Dados & Auto-Migração Silenciosa** ✅:
+  - Adicionado o campo `avatarUrl String? @default("")` ao modelo `Barber` em [prisma/schema.prisma](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/prisma/schema.prisma) para manter a consistência de tipos TypeScript estáticos do Prisma Client.
+  - Implementada a DDL automática em [src/lib/prisma.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/lib/prisma.ts) (`ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT DEFAULT '';`) para auto-migração retrocompatível do banco PostgreSQL na nuvem sem quebra de dados.
+- **Backend - APIs Administrativas Atualizadas** ✅:
+  - Modificada a rota de API de barbeiros [src/app/api/admin/barbers/route.ts](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/api/admin/barbers/route.ts) nos endpoints `GET`, `POST` e `PUT` para receber, persistir e retornar a coluna `avatarUrl`.
+- **Frontend - Componente de Compressão de Imagens (Canvas)** ✅:
+  - Implementada a função utilitária `resizeAndCompressImage` em [src/components/AdminDashboard.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/components/AdminDashboard.tsx). Ela lê o arquivo do usuário, desenha em um canvas HTML redimensionando-o mantendo proporções (largura máx. 200px para barbeiros e 400px para a logo) e exporta como JPEG comprimido de alta qualidade, gerando Base64 leves (<80KB) ideais para o banco e compatíveis com serverless (evitando estouro do limite de payload de 4.5MB da Vercel).
+- **Frontend - Upload de Avatar e Logo no Painel** ✅:
+  - Adicionado campo de upload de foto com preview circular elegante no formulário de barbeiros no `AdminDashboard.tsx`, além de renderizar a imagem na lista de profissionais cadastrados.
+  - Integrada a funcionalidade de upload de arquivo no card de Identidade da barbearia para o Logotipo na aba Configurações, preservando também a opção de URL manual.
+- **Frontend - Exibição no Fluxo de Clientes e Home Page** ✅:
+  - Atualizado o [src/components/BookingFlow.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/components/BookingFlow.tsx) para renderizar a imagem do profissional no Passo 1 do fluxo de agendamento (avatar redondo com `object-fit: cover`), mantendo o placeholder de iniciais como fallback caso a foto esteja vazia.
+  - Atualizado o [src/app/page.tsx](file:///c:/Users/felip/Desktop/N8N/Atigra/app_agendamento%20online/src/app/page.tsx) para carregar o campo `avatarUrl` do banco de dados na query inicial e propagá-lo para a UI pública.
+- **Homologação Técnica do Build de Produção** ✅:
+  - Compilação executada com sucesso absoluto por meio do script de build, certificando a conformidade estrutural do Next.js e TypeScript livres de erros.
 

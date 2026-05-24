@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
       lunchStart: b.lunchStart,
       lunchEnd: b.lunchEnd,
       workDays: b.workDays,
+      avatarUrl: b.avatarUrl || "",
       createdAt: b.createdAt,
     }));
 
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, email, openingTime, closingTime, lunchStart, lunchEnd, workDays } = body;
+    const { name, email, openingTime, closingTime, lunchStart, lunchEnd, workDays, avatarUrl } = body;
 
     if (!name || !email) {
       return NextResponse.json(
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
         lunchStart: lunchStart || "12:00",
         lunchEnd: lunchEnd || "13:00",
         workDays: workDays || "1,2,3,4,5,6",
+        avatarUrl: avatarUrl || "",
       },
     });
 
@@ -81,6 +83,7 @@ export async function POST(request: NextRequest) {
         lunchStart: newBarber.lunchStart,
         lunchEnd: newBarber.lunchEnd,
         workDays: newBarber.workDays,
+        avatarUrl: newBarber.avatarUrl,
       },
     });
   } catch (error) {
@@ -96,7 +99,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, name, email, openingTime, closingTime, lunchStart, lunchEnd, workDays } = body;
+    const { id, name, email, openingTime, closingTime, lunchStart, lunchEnd, workDays, avatarUrl } = body;
 
     if (!id) {
       return NextResponse.json({ error: "ID do barbeiro e obrigatorio." }, { status: 400 });
@@ -133,6 +136,7 @@ export async function PUT(request: NextRequest) {
         lunchStart: lunchStart || "12:00",
         lunchEnd: lunchEnd || "13:00",
         workDays: workDays || "1,2,3,4,5,6",
+        avatarUrl: avatarUrl !== undefined ? avatarUrl : undefined,
       },
     });
 
@@ -147,6 +151,7 @@ export async function PUT(request: NextRequest) {
         lunchStart: updated.lunchStart,
         lunchEnd: updated.lunchEnd,
         workDays: updated.workDays,
+        avatarUrl: updated.avatarUrl,
       },
     });
   } catch (error) {

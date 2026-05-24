@@ -176,6 +176,9 @@ async function ensureBarberBlockTableExists(pool: Pool) {
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "colorBgPrimary" TEXT NOT NULL DEFAULT '#0a0a0c';
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "colorBgSecondary" TEXT NOT NULL DEFAULT '#121216';
     ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "colorBgTertiary" TEXT NOT NULL DEFAULT '#1b1b22';
+
+    -- Adicionado na Fase 36: Upload de Fotos de Barbeiros
+    ALTER TABLE "Barber" ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT DEFAULT '';
   `;
   try {
     await pool.query(ddl);

@@ -50,6 +50,7 @@ model Barber {
   lunchStart      String    @default("12:00") // Início do almoço (HH:MM)
   lunchEnd        String    @default("13:00") // Fim do almoço (HH:MM)
   workDays        String    @default("1,2,3,4,5,6") // Dias de atendimento (0=Dom, 1=Seg, ..., 6=Sáb)
+  avatarUrl       String?   @default("") // Foto/Avatar do barbeiro em base64 ou URL
   services        Service[] @relation("BarberServices")
   bookings        Booking[]
   blocks          BarberBlock[]
