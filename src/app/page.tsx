@@ -245,10 +245,10 @@ export default async function HomePage() {
               <img 
                 src={settings.logoUrl} 
                 alt={settings.barberShopName} 
-                style={{ maxHeight: "80px", maxWidth: "240px", objectFit: "contain", filter: "drop-shadow(0 0 10px rgba(197, 168, 128, 0.3))" }} 
+                style={{ maxHeight: "140px", maxWidth: "360px", objectFit: "contain", filter: "drop-shadow(0 0 15px rgba(197, 168, 128, 0.35))" }} 
               />
             ) : (
-              <Scissors className="gold-text gold-glow" size={48} />
+              <Scissors className="gold-text gold-glow" size={72} />
             )}
           </div>
           <div className="hero-badge flex-center">
