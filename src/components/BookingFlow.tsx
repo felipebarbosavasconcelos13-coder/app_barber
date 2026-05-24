@@ -435,91 +435,93 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
               <p>Insira seus dados para finalizar e sincronizar com seu e-mail.</p>
             </div>
 
-            <div className="booking-summary-card glass-card">
-              <h3 className="title-serif gold-glow" style={{ fontSize: "1.2rem", marginBottom: "16px" }}>Resumo da Reserva</h3>
-              <div className="summary-grid">
-                <div className="summary-item">
-                  <span className="summary-label">Barbeiro:</span>
-                  <span className="summary-value flex-center" style={{ gap: "6px" }}><User size={14} /> {selectedBarber?.name}</span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">Serviço:</span>
-                  <span className="summary-value flex-center" style={{ gap: "6px" }}><Scissors size={14} /> {selectedService?.name}</span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">Valor:</span>
-                  <span className="summary-value gold-text flex-center" style={{ gap: "4px" }}><DollarSign size={14} /> R$ {selectedService?.price.toFixed(2)}</span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">Data e Hora:</span>
-                  <span className="summary-value flex-center" style={{ gap: "6px" }}><CalendarIcon size={14} /> {selectedSlot ? formatSelectedDateTime(selectedSlot.dateTime) : ""}</span>
+            <div className="step-four-layout">
+              <div className="booking-summary-card glass-card">
+                <h3 className="title-serif gold-glow" style={{ fontSize: "1.2rem", marginBottom: "16px" }}>Resumo da Reserva</h3>
+                <div className="summary-grid">
+                  <div className="summary-item">
+                    <span className="summary-label">Barbeiro:</span>
+                    <span className="summary-value flex-center" style={{ gap: "6px" }}><User size={14} /> {selectedBarber?.name}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="summary-label">Serviço:</span>
+                    <span className="summary-value flex-center" style={{ gap: "6px" }}><Scissors size={14} /> {selectedService?.name}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="summary-label">Valor:</span>
+                    <span className="summary-value gold-text flex-center" style={{ gap: "4px" }}><DollarSign size={14} /> R$ {selectedService?.price.toFixed(2)}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="summary-label">Data e Hora:</span>
+                    <span className="summary-value flex-center" style={{ gap: "6px" }}><CalendarIcon size={14} /> {selectedSlot ? formatSelectedDateTime(selectedSlot.dateTime) : ""}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="glass-card form-card" style={{ maxWidth: "540px", margin: "0 auto" }}>
-              <form onSubmit={handleFormSubmit}>
-                <div className="form-group">
-                  <label className="form-label"><User size={14} style={{ marginRight: "6px" }} /> Nome Completo</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Seu nome completo"
-                    value={clientData.name}
-                    onChange={(e) => setClientData({ ...clientData, name: e.target.value })}
-                    required
-                    disabled={submitting}
-                  />
-                </div>
+              <div className="glass-card form-card">
+                <form onSubmit={handleFormSubmit}>
+                  <div className="form-group">
+                    <label className="form-label"><User size={14} style={{ marginRight: "6px" }} /> Nome Completo</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Seu nome completo"
+                      value={clientData.name}
+                      onChange={(e) => setClientData({ ...clientData, name: e.target.value })}
+                      required
+                      disabled={submitting}
+                    />
+                  </div>
 
-                <div className="form-group">
-                  <label className="form-label"><Mail size={14} style={{ marginRight: "6px" }} /> E-mail</label>
-                  <input
-                    type="email"
-                    className="form-input"
-                    placeholder="Ex: seuemail@provedor.com"
-                    value={clientData.email}
-                    onChange={(e) => setClientData({ ...clientData, email: e.target.value })}
-                    required
-                    disabled={submitting}
-                  />
-                  <small style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
-                    Usado para identificacao do seu agendamento.
-                  </small>
-                </div>
+                  <div className="form-group">
+                    <label className="form-label"><Mail size={14} style={{ marginRight: "6px" }} /> E-mail</label>
+                    <input
+                      type="email"
+                      className="form-input"
+                      placeholder="Ex: seuemail@provedor.com"
+                      value={clientData.email}
+                      onChange={(e) => setClientData({ ...clientData, email: e.target.value })}
+                      required
+                      disabled={submitting}
+                    />
+                    <small style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                      Usado para identificacao do seu agendamento.
+                    </small>
+                  </div>
 
-                <div className="form-group">
-                  <label className="form-label"><Phone size={14} style={{ marginRight: "6px" }} /> Telefone / WhatsApp</label>
-                  <input
-                    type="tel"
-                    className="form-input"
-                    placeholder="Ex: (11) 99999-9999"
-                    value={clientData.phone}
-                    onChange={(e) => setClientData({ ...clientData, phone: e.target.value })}
-                    required
-                    disabled={submitting}
-                  />
-                </div>
+                  <div className="form-group">
+                    <label className="form-label"><Phone size={14} style={{ marginRight: "6px" }} /> Telefone / WhatsApp</label>
+                    <input
+                      type="tel"
+                      className="form-input"
+                      placeholder="Ex: (11) 99999-9999"
+                      value={clientData.phone}
+                      onChange={(e) => setClientData({ ...clientData, phone: e.target.value })}
+                      required
+                      disabled={submitting}
+                    />
+                  </div>
 
-                <div className="navigation-actions flex-center" style={{ gap: "20px", marginTop: "24px" }}>
-                  <button type="button" onClick={handlePrevStep} className="btn-outline" disabled={submitting}>
-                    <ChevronLeft size={18} />
-                    <span>Voltar</span>
-                  </button>
-                  <button type="submit" className="btn-gold" disabled={submitting}>
-                    {submitting ? (
-                      <>
-                        <Loader2 size={18} className="spinner" /> Processando...
-                      </>
-                    ) : (
-                      <>
-                        <UserCheck size={18} />
-                        <span>Confirmar Agendamento</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+                  <div className="navigation-actions flex-center" style={{ gap: "20px", marginTop: "24px" }}>
+                    <button type="button" onClick={handlePrevStep} className="btn-outline" disabled={submitting}>
+                      <ChevronLeft size={18} />
+                      <span>Voltar</span>
+                    </button>
+                    <button type="submit" className="btn-gold" disabled={submitting}>
+                      {submitting ? (
+                        <>
+                          <Loader2 size={18} className="spinner" /> Processando...
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck size={18} />
+                          <span>Confirmar Agendamento</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
@@ -906,12 +908,47 @@ export default function BookingFlow({ initialBarbers, initialServices }: Booking
         }
 
         /* Resumo */
-        .booking-summary-card {
-          padding: 24px;
-          border-radius: 14px;
+        .step-four-layout {
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
           max-width: 540px;
           margin: 0 auto;
           width: 100%;
+        }
+
+        .booking-summary-card {
+          padding: 24px;
+          border-radius: 14px;
+          width: 100%;
+          margin: 0 auto;
+        }
+
+        .form-card {
+          width: 100%;
+          padding: 24px;
+          border-radius: 14px;
+          margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+          .step-four-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 32px;
+            max-width: 960px;
+            margin: 0 auto;
+          }
+
+          .booking-summary-card {
+            margin: 0 !important;
+            height: fit-content;
+          }
+
+          .form-card {
+            margin: 0 !important;
+            max-width: none !important;
+          }
         }
 
         .summary-grid {

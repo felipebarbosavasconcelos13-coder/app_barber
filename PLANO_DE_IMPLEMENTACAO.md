@@ -476,25 +476,45 @@ Para dar total liberdade ao barbeiro sobre a copy institucional de sua marca, to
 
 ---
 
-## 📅 Fase 33: Refinamento de Design Premium, Acessibilidade & Mobile Touch-First (Proposta)
+## 📅 Fase 33: Refinamento de Design Premium, Acessibilidade & Mobile Touch-First (Concluída em 24/05/2026)
 
 ### **Resumo do Recurso**
-Com base nas diretrizes das skills `frontend-design`, `mobile-design` e `ui-visual-validator`, aplicaremos uma camada de refinamento estético de altíssimo nível para desktop e mobile, além de alinhar o aplicativo com rigorosos requisitos de acessibilidade (WCAG 2.2) e comportamento de app nativo.
+Com base nas diretrizes das skills `frontend-design`, `mobile-design` e `ui-visual-validator`, aplicamos uma camada de refinamento estético de altíssimo nível para desktop e mobile, além de alinhar o aplicativo com rigorosos requisitos de acessibilidade (WCAG 2.2) e comportamento de app nativo.
 
 1. **Aprimoramento Visual Luxury Minimal (Design System)**:
-   - Refinar a borda dourada translúcida e as propriedades de vidro (`.glass-card`).
-   - Adicionar uma transição de entrada suave (`gold-glow-entrance`) para revelar elementos com elegância.
-   - Tornar o scroll do carrossel de agendamento de dias de data (`.days-selector-wrapper`) extremamente agradável e preciso com `scroll-snap-type` e `scroll-snap-align`.
+   - Refinamos a borda dourada translúcida e as propriedades de vidro (`.glass-card`).
+   - Adicionamos uma transição de entrada suave (`gold-glow-entrance`) para revelar elementos com elegância.
+   - Tornamos o scroll do carrossel de agendamento de dias de data (`.days-selector-wrapper`) extremamente agradável e preciso com `scroll-snap-type` e `scroll-snap-align`.
 
 2. **Acessibilidade de Teclado & Visibilidade (WCAG 2.2)**:
-   - Forçar `:focus-visible` em todos os botões clicáveis, agendadores, slots e inputs, destacando-os com uma borda gold nítida e sombra neon dourada translúcida de `0 0 0 3px var(--accent-gold-glow)`.
-   - Elevar o contraste de cores das classes de texto secundário (`--text-secondary: #c8c8cc`) e texto mutado (`--text-muted: #8e8e93`) para estar em conformidade absoluta de contraste de texto da WCAG.
+   - Forçamos `:focus-visible` em todos os botões clicáveis, agendadores, slots e inputs, destacando-os com uma borda gold nítida e sombra dourada translúcida.
+   - Elevamos o contraste de cores das classes de texto secundário (`--text-secondary: #c8c8cc`) e texto mutado (`--text-muted: #8e8e93`) para estar em conformidade absoluta de contraste de texto da WCAG.
 
 3. **Comportamento Touch-First de App Nativo**:
-   - Ajustar o tamanho dos slots de agendamento (`.slot-btn`) no mobile para expandir a área de toque para cliques fáceis, mantendo a altura confortável Fitts' Law.
-   - Desativar a seleção de texto (`user-select: none`) em botões, abas e cards interativos no celular para evitar comportamentos indesejados ao realizar múltiplos cliques rápidos.
-   - Adicionar feedbacks táteis instantâneos em estado de clique (`:active { transform: scale(0.98); }`) em botões e cards de seleção.
+   - Ajustamos o tamanho dos slots de agendamento (`.slot-btn`) no mobile para expandir a área de toque para cliques fáceis, mantendo a altura confortável Fitts' Law.
+   - Desativamos a seleção de texto (`user-select: none`) em botões, abas e cards interativos no celular para evitar comportamentos indesejados ao realizar múltiplos cliques rápidos.
+   - Adicionamos feedbacks táteis instantâneos em estado de clique (`:active { transform: scale(0.98); }`) em botões e cards de seleção.
 
 4. **Auditoria Visual & Homologação**:
-   - Compilar a aplicação (`npm run build`) para atestar a estabilidade estrutural do Next.js e TypeScript.
-   - Realizar uma rigorosa auditoria visual cética (Visual Validation Audit) confirmando a integridade das modificações visuais do app.
+   - Compilamos a aplicação (`npm run build`) para atestar a estabilidade estrutural do Next.js e TypeScript.
+   - Realizamos uma rigorosa auditoria visual cética (Visual Validation Audit) confirmando a integridade das modificações visuais do app.
+
+---
+
+## 📅 Fase 34: Correção de Layout no Desktop & Fix do Texto "Sobre a Barbearia" (Concluída em 24/05/2026)
+
+### **Resumo do Recurso**
+Esta fase foi focada em resolver dois problemas reportados pelo usuário: o layout do desktop do passo 4 (Identificação) que aparecia espremido/desproporcional, e o bug que impedia o salvamento e atualização correta do texto "Sobre a Barbearia" no banco de dados Supabase através do Painel Administrativo.
+
+1. **Layout Responsivo de Duas Colunas no Desktop (Passo 4 - Identificação)**:
+   - Reestruturamos a marcação do Passo 4 em `src/components/BookingFlow.tsx` para agrupar o "Resumo da Reserva" e o "Formulário de Cadastro" dentro de um wrapper `.step-four-layout`.
+   - Removemos a limitação estática inline de `maxWidth: "540px"` do card do formulário para permitir flexibilidade de largura de acordo com a viewport.
+   - Criamos regras de CSS responsivo com media queries: no mobile, os dois cards permanecem empilhados verticalmente com largura confortável; no desktop (a partir de 768px), o layout se transforma em um grid elegante de duas colunas lado a lado ocupando 960px de largura e alinhando-se perfeitamente com a régua superior de passos.
+
+2. **Conserto de Salvamento no Painel Admin (`src/components/AdminDashboard.tsx`)**:
+   - Descobrimos que a função `handleSaveSettings` que dispara a chamada PUT para `/api/admin/settings` na aba de configurações gerais não estava enviando o campo `aboutText` no corpo do payload JSON.
+   - Adicionamos o mapeamento `aboutText: settings.aboutText` no payload JSON enviado para a API de persistência de configurações, resolvendo de forma definitiva o problema de salvamento do texto personalizado.
+
+3. **Verificação Técnica e Homologação**:
+   - Compilamos a aplicação em ambiente local de produção (`npm run build`) para verificar a integridade estrutural e tipagem estática.
+   - Realizamos o versionamento definitivo e enviamos as alterações para o repositório remoto master.

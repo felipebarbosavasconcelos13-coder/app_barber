@@ -610,6 +610,7 @@ export default function AdminDashboard() {
           logoUrl: settings.logoUrl,
           address: settings.address,
           phone: settings.phone,
+          aboutText: settings.aboutText, // Correção de envio
           evolutionUrl: settings.evolutionUrl,
           evolutionApiKey: settings.evolutionApiKey,
           evolutionInstance: settings.evolutionInstance,

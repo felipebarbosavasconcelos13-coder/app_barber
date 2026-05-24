@@ -406,5 +406,19 @@ gantt
 - **Homologação Geral do Build** ✅:
   - Executado o build de produção geral via `npm run build` na raiz do workspace, atestando conformidade estrutural absoluta e tipos TypeScript livres de erros.
 
+---
+
+### **Fase 34: Correção de Layout no Desktop & Fix do Texto "Sobre a Barbearia" (Concluída em 24/05/2026)**
+- **Layout Responsivo de Duas Colunas no Desktop (Passo 4 - Identificação)** ✅:
+  - Otimizada a experiência do usuário final em telas desktop no fluxo de agendamento. Reestruturada a marcação do Passo 4 em `src/components/BookingFlow.tsx` para usar o contêiner `.step-four-layout`.
+  - Substituída a limitação estática inline de largura máxima de `540px` no card do formulário de identificação por regras CSS responsivas no bloco `<style jsx>`.
+  - No desktop (viewport a partir de 768px), o Passo 4 agora exibe o "Resumo da Reserva" (coluna da esquerda, proporção `1fr`) e o "Formulário de Identificação" (coluna da direita, proporção `1.2fr`) lado a lado em um grid fluído de `960px` de largura, alinhando-se de forma nobre com a régua de passos superior. No mobile, os cards continuam empilhados verticalmente com excelente visibilidade e usabilidade tátil.
+- **Conserto de Persistência no Painel Admin (`src/components/AdminDashboard.tsx`)** ✅:
+  - Identificado e resolvido um bug crítico no formulário de configurações do painel. A chamada PUT do endpoint `/api/admin/settings` na função `handleSaveSettings` estava omitindo o campo `aboutText` do payload JSON de envio, o que impedia a atualização das informações no banco de dados remoto Supabase.
+  - Adicionado `aboutText: settings.aboutText` no payload do fetch JSON, garantindo a gravação definitiva e sincronização imediata do "Sobre a Barbearia" com a Landing Page pública.
+- **Homologação Técnica e Build de Produção** ✅:
+  - Executado `npm run build` com sucesso absoluto na compilação estática do Next.js e TypeScript, garantindo toda a integridade das modificações.
+
+
 
 
